@@ -2,17 +2,26 @@
    APPLICATION DE GESTION RH - SCRIPT DE BASE ORACLE 11g Enterprise Edition
    -----------------------------------------------------------------------------
    Blocs couverts : 1 Besoin | 2 Recrutement | 3 Embauche | 4 Contrat/Onboarding
-                    + Securite (RBAC), GED, Notifications, Audit.
+                    + Securite (RBAC), GED, Notifications, Journaux de securite.
 
-   ARCHITECTURE DE TRACABILITE (4 niveaux)
+   OBJETS UTILISES : tables, sequences, triggers, fonctions (+ index et contraintes
+   rattaches aux tables). Aucun package, aucune procedure stockee.
+
+   TRACABILITE (3 niveaux)
    N1  Colonnes d'audit sur CHAQUE table metier :
          DATE_CREATION, CREE_PAR, DATE_MODIFICATION, MODIFIE_PAR, VERSION_LIGNE
          (VERSION_LIGNE sert aussi au verrouillage optimiste cote application).
-   N2  AUDIT_LOG : journal "avant / apres" colonne par colonne (INSERT/UPDATE/DELETE),
-         alimente par des triggers generes automatiquement.
-   N3  WORKFLOW_HISTORIQUE : toutes les transitions de statut (qui, quand, de quoi vers quoi).
-   N4  Historisation metier : DEMANDE_VALIDATION, CONTRAT (1 ligne par acte),
-         AFFECTATION, UTILISATEUR_ROLE (dates debut/fin), LOG_CONNEXION, LOG_ACCES_DOCUMENT.
+   N2  Historisation des RELATIONS : une table datee (DATE_DEBUT / DATE_FIN) pour chaque
+         relation qui change dans le temps. L'enregistrement courant a DATE_FIN nulle.
+         Nouvelles tables (alimentees automatiquement par triggers) :
+           DEPARTEMENT_RESPONSABLE   departement  <-> responsable
+           DEPARTEMENT_RATTACHEMENT  departement  <-> departement parent
+           POSTE_DEPARTEMENT         poste        <-> departement
+           CANDIDATURE_RECRUTEUR     candidature  <-> recruteur
+           TACHE_ASSIGNATION         tache d'onboarding <-> assignee
+         Deja existantes : DEMANDE_VALIDATION, CONTRAT (1 ligne par acte),
+           AFFECTATION (employe <-> poste <-> superieur), UTILISATEUR_ROLE.
+   N3  Journaux de securite en ajout seul : LOG_CONNEXION, LOG_ACCES_DOCUMENT.
    PROTECTIONS : pas de suppression physique sur les tables metier, tables de journal
          en ajout seul, matricule immuable, termes d'un contrat verrouilles.
 
@@ -20,11 +29,11 @@
    Avec un pool de connexions, USER = compte technique. L'application doit donc,
    a chaque emprunt de connexion, executer :
          DBMS_SESSION.SET_IDENTIFIER('login_de_l_utilisateur');
-   (et DBMS_SESSION.CLEAR_IDENTIFIER a la restitution). PKG_TRACE.FN_USER lit cette valeur.
+   (et DBMS_SESSION.CLEAR_IDENTIFIER a la restitution). La fonction FN_USER lit cette valeur.
 
    PREREQUIS : executer dans le schema applicatif (ex. RH_APP), encodage UTF-8
                (NLS_LANG=FRENCH_FRANCE.AL32UTF8). Droits : CREATE TABLE, SEQUENCE,
-               TRIGGER, PROCEDURE, INDEX.
+               TRIGGER, PROCEDURE (necessaire pour creer des fonctions), INDEX.
    ============================================================================= */
 
 SET DEFINE OFF
@@ -437,6 +446,97 @@ CREATE TABLE ONBOARDING_TACHE (
 );
 
 /* =============================================================================
+   4bis. HISTORISATION DES RELATIONS (traçabilite metier)
+   -----------------------------------------------------------------------------
+   Chaque table conserve toutes les periodes d'une relation : DATE_DEBUT / DATE_FIN.
+   Ligne courante = DATE_FIN nulle (une seule par objet, garanti par index unique).
+   Les lignes sont creees / cloturees automatiquement par les triggers TAH_* (section 10).
+   Le MOTIF peut etre renseigne ensuite par l'application.
+   ============================================================================= */
+PROMPT === 4bis. Historique des relations ===
+
+-- Departement <-> responsable
+CREATE TABLE DEPARTEMENT_RESPONSABLE (
+  ID              NUMBER(10)    NOT NULL,
+  DEPARTEMENT_ID  NUMBER(10)    NOT NULL,
+  EMPLOYE_ID      NUMBER(10)    NOT NULL,
+  DATE_DEBUT      DATE          DEFAULT SYSDATE NOT NULL,
+  DATE_FIN        DATE,
+  MOTIF           VARCHAR2(300),
+  CONSTRAINT PK_DEPARTEMENT_RESPONSABLE PRIMARY KEY (ID),
+  CONSTRAINT FK_DEPRESP_DEP FOREIGN KEY (DEPARTEMENT_ID) REFERENCES DEPARTEMENT (ID),
+  CONSTRAINT FK_DEPRESP_EMP FOREIGN KEY (EMPLOYE_ID)     REFERENCES EMPLOYE (ID),
+  CONSTRAINT CK_DEPRESP_DATES CHECK (DATE_FIN IS NULL OR DATE_FIN >= DATE_DEBUT)
+);
+CREATE UNIQUE INDEX UX_DEPRESP_COURANT ON DEPARTEMENT_RESPONSABLE
+  (CASE WHEN DATE_FIN IS NULL THEN DEPARTEMENT_ID END);
+
+-- Departement <-> departement parent (reorganisations)
+CREATE TABLE DEPARTEMENT_RATTACHEMENT (
+  ID                     NUMBER(10)    NOT NULL,
+  DEPARTEMENT_ID         NUMBER(10)    NOT NULL,
+  DEPARTEMENT_PARENT_ID  NUMBER(10)    NOT NULL,
+  DATE_DEBUT             DATE          DEFAULT SYSDATE NOT NULL,
+  DATE_FIN               DATE,
+  MOTIF                  VARCHAR2(300),
+  CONSTRAINT PK_DEPARTEMENT_RATTACHEMENT PRIMARY KEY (ID),
+  CONSTRAINT FK_DEPRAT_DEP  FOREIGN KEY (DEPARTEMENT_ID)        REFERENCES DEPARTEMENT (ID),
+  CONSTRAINT FK_DEPRAT_PAR  FOREIGN KEY (DEPARTEMENT_PARENT_ID) REFERENCES DEPARTEMENT (ID),
+  CONSTRAINT CK_DEPRAT_AUTO CHECK (DEPARTEMENT_ID <> DEPARTEMENT_PARENT_ID),
+  CONSTRAINT CK_DEPRAT_DATES CHECK (DATE_FIN IS NULL OR DATE_FIN >= DATE_DEBUT)
+);
+CREATE UNIQUE INDEX UX_DEPRAT_COURANT ON DEPARTEMENT_RATTACHEMENT
+  (CASE WHEN DATE_FIN IS NULL THEN DEPARTEMENT_ID END);
+
+-- Poste <-> departement (un poste peut etre transfere d'un departement a un autre)
+CREATE TABLE POSTE_DEPARTEMENT (
+  ID              NUMBER(10)    NOT NULL,
+  POSTE_ID        NUMBER(10)    NOT NULL,
+  DEPARTEMENT_ID  NUMBER(10)    NOT NULL,
+  DATE_DEBUT      DATE          DEFAULT SYSDATE NOT NULL,
+  DATE_FIN        DATE,
+  MOTIF           VARCHAR2(300),
+  CONSTRAINT PK_POSTE_DEPARTEMENT PRIMARY KEY (ID),
+  CONSTRAINT FK_POSTDEP_POSTE FOREIGN KEY (POSTE_ID)       REFERENCES POSTE (ID),
+  CONSTRAINT FK_POSTDEP_DEP   FOREIGN KEY (DEPARTEMENT_ID) REFERENCES DEPARTEMENT (ID),
+  CONSTRAINT CK_POSTDEP_DATES CHECK (DATE_FIN IS NULL OR DATE_FIN >= DATE_DEBUT)
+);
+CREATE UNIQUE INDEX UX_POSTDEP_COURANT ON POSTE_DEPARTEMENT
+  (CASE WHEN DATE_FIN IS NULL THEN POSTE_ID END);
+
+-- Candidature <-> recruteur (reattributions du dossier)
+CREATE TABLE CANDIDATURE_RECRUTEUR (
+  ID              NUMBER(10)    NOT NULL,
+  CANDIDATURE_ID  NUMBER(10)    NOT NULL,
+  RECRUTEUR_ID    NUMBER(10)    NOT NULL,
+  DATE_DEBUT      DATE          DEFAULT SYSDATE NOT NULL,
+  DATE_FIN        DATE,
+  MOTIF           VARCHAR2(300),
+  CONSTRAINT PK_CANDIDATURE_RECRUTEUR PRIMARY KEY (ID),
+  CONSTRAINT FK_CDTREC_CDT  FOREIGN KEY (CANDIDATURE_ID) REFERENCES CANDIDATURE (ID),
+  CONSTRAINT FK_CDTREC_RECR FOREIGN KEY (RECRUTEUR_ID)   REFERENCES UTILISATEUR (ID),
+  CONSTRAINT CK_CDTREC_DATES CHECK (DATE_FIN IS NULL OR DATE_FIN >= DATE_DEBUT)
+);
+CREATE UNIQUE INDEX UX_CDTREC_COURANT ON CANDIDATURE_RECRUTEUR
+  (CASE WHEN DATE_FIN IS NULL THEN CANDIDATURE_ID END);
+
+-- Tache d'onboarding <-> personne assignee (reassignations)
+CREATE TABLE TACHE_ASSIGNATION (
+  ID                  NUMBER(10)    NOT NULL,
+  ONBOARDING_TACHE_ID NUMBER(10)    NOT NULL,
+  ASSIGNEE_ID         NUMBER(10)    NOT NULL,
+  DATE_DEBUT          DATE          DEFAULT SYSDATE NOT NULL,
+  DATE_FIN            DATE,
+  MOTIF               VARCHAR2(300),
+  CONSTRAINT PK_TACHE_ASSIGNATION PRIMARY KEY (ID),
+  CONSTRAINT FK_TASS_TACHE FOREIGN KEY (ONBOARDING_TACHE_ID) REFERENCES ONBOARDING_TACHE (ID),
+  CONSTRAINT FK_TASS_ASSIG FOREIGN KEY (ASSIGNEE_ID)         REFERENCES UTILISATEUR (ID),
+  CONSTRAINT CK_TASS_DATES CHECK (DATE_FIN IS NULL OR DATE_FIN >= DATE_DEBUT)
+);
+CREATE UNIQUE INDEX UX_TASS_COURANT ON TACHE_ASSIGNATION
+  (CASE WHEN DATE_FIN IS NULL THEN ONBOARDING_TACHE_ID END);
+
+/* =============================================================================
    5. GED, NOTIFICATIONS, COMPTEUR DE MATRICULE
    ============================================================================= */
 PROMPT === 5. GED / Notifications ===
@@ -495,47 +595,9 @@ CREATE TABLE COMPTEUR_MATRICULE (
 );
 
 /* =============================================================================
-   6. TABLES DE JOURNAL (ajout seul)
+   6. JOURNAUX DE SECURITE (ajout seul)
    ============================================================================= */
 PROMPT === 6. Journaux ===
-
-CREATE TABLE AUDIT_LOG (
-  ID                 NUMBER(15)      NOT NULL,
-  DATE_ACTION        TIMESTAMP(6)    DEFAULT SYSTIMESTAMP NOT NULL,
-  NOM_TABLE          VARCHAR2(30)    NOT NULL,
-  ID_ENREGISTREMENT  NUMBER(15)      NOT NULL,
-  TYPE_ACTION        CHAR(1)         NOT NULL,
-  NOM_COLONNE        VARCHAR2(30)    NOT NULL,
-  ANCIENNE_VALEUR    VARCHAR2(4000),
-  NOUVELLE_VALEUR    VARCHAR2(4000),
-  UTILISATEUR_APPLI  VARCHAR2(100)   NOT NULL,
-  UTILISATEUR_BD     VARCHAR2(30)    NOT NULL,
-  ADRESSE_IP         VARCHAR2(45),
-  HOTE               VARCHAR2(100),
-  MODULE_APPLI       VARCHAR2(64),
-  SESSION_ID         NUMBER,
-  TRANSACTION_ID     VARCHAR2(60),
-  CONSTRAINT PK_AUDIT_LOG PRIMARY KEY (ID),
-  CONSTRAINT CK_AUD_ACTION CHECK (TYPE_ACTION IN ('I','U','D'))
-);
--- OPTION Enterprise Edition (licence Partitioning) : partitionnement mensuel automatique.
--- Remplacer le CREATE TABLE ci-dessus par :
---   ... ) PARTITION BY RANGE (DATE_ACTION)
---         INTERVAL (NUMTOYMINTERVAL(1,'MONTH'))
---         (PARTITION P_INIT VALUES LESS THAN (TIMESTAMP '2026-01-01 00:00:00'));
-
-CREATE TABLE WORKFLOW_HISTORIQUE (
-  ID                  NUMBER(15)      NOT NULL,
-  NOM_TABLE           VARCHAR2(30)    NOT NULL,
-  ID_ENREGISTREMENT   NUMBER(15)      NOT NULL,
-  NOM_COLONNE_STATUT  VARCHAR2(30)    NOT NULL,
-  ANCIEN_STATUT       VARCHAR2(30),
-  NOUVEAU_STATUT      VARCHAR2(30)    NOT NULL,
-  DATE_TRANSITION     TIMESTAMP(6)    DEFAULT SYSTIMESTAMP NOT NULL,
-  UTILISATEUR         VARCHAR2(100)   NOT NULL,
-  COMMENTAIRE         VARCHAR2(1000),
-  CONSTRAINT PK_WORKFLOW_HISTORIQUE PRIMARY KEY (ID)
-);
 
 CREATE TABLE LOG_CONNEXION (
   ID               NUMBER(15)     NOT NULL,
@@ -608,148 +670,55 @@ CREATE INDEX IX_DOC_ENTITE  ON DOCUMENT (ENTITE_RATTACHEMENT, ENTITE_ID);
 CREATE INDEX IX_DOC_PREC    ON DOCUMENT (DOCUMENT_PRECEDENT_ID);
 CREATE INDEX IX_NOTIF_STAT  ON NOTIFICATION (STATUT_ENVOI, DATE_ENVOI_PREVUE);
 CREATE INDEX IX_NOTIF_DEST  ON NOTIFICATION (DESTINATAIRE_ID);
-CREATE INDEX IX_AUD_OBJ     ON AUDIT_LOG (NOM_TABLE, ID_ENREGISTREMENT);
-CREATE INDEX IX_AUD_DATE    ON AUDIT_LOG (DATE_ACTION);
-CREATE INDEX IX_AUD_USER    ON AUDIT_LOG (UTILISATEUR_APPLI, DATE_ACTION);
-CREATE INDEX IX_WF_OBJ      ON WORKFLOW_HISTORIQUE (NOM_TABLE, ID_ENREGISTREMENT);
 CREATE INDEX IX_LOGC_USER   ON LOG_CONNEXION (UTILISATEUR_ID, DATE_EVENEMENT);
 CREATE INDEX IX_LOGD_DOC    ON LOG_ACCES_DOCUMENT (DOCUMENT_ID, DATE_ACCES);
+CREATE INDEX IX_DEPRESP_DEP ON DEPARTEMENT_RESPONSABLE (DEPARTEMENT_ID, DATE_DEBUT);
+CREATE INDEX IX_DEPRESP_EMP ON DEPARTEMENT_RESPONSABLE (EMPLOYE_ID);
+CREATE INDEX IX_DEPRAT_DEP  ON DEPARTEMENT_RATTACHEMENT (DEPARTEMENT_ID, DATE_DEBUT);
+CREATE INDEX IX_DEPRAT_PAR  ON DEPARTEMENT_RATTACHEMENT (DEPARTEMENT_PARENT_ID);
+CREATE INDEX IX_POSTDEP_POSTE ON POSTE_DEPARTEMENT (POSTE_ID, DATE_DEBUT);
+CREATE INDEX IX_POSTDEP_DEP ON POSTE_DEPARTEMENT (DEPARTEMENT_ID);
+CREATE INDEX IX_CDTREC_CDT  ON CANDIDATURE_RECRUTEUR (CANDIDATURE_ID, DATE_DEBUT);
+CREATE INDEX IX_CDTREC_RECR ON CANDIDATURE_RECRUTEUR (RECRUTEUR_ID);
+CREATE INDEX IX_TASS_TACHE  ON TACHE_ASSIGNATION (ONBOARDING_TACHE_ID, DATE_DEBUT);
+CREATE INDEX IX_TASS_ASSIG  ON TACHE_ASSIGNATION (ASSIGNEE_ID);
 
 /* =============================================================================
-   8. PACKAGE DE TRACABILITE
+   8. FONCTIONS
    ============================================================================= */
-PROMPT === 8. Package PKG_TRACE ===
+PROMPT === 8. Fonctions ===
 
-CREATE OR REPLACE PACKAGE PKG_TRACE AS
-  -- Utilisateur applicatif (CLIENT_IDENTIFIER) ou, a defaut, utilisateur Oracle
-  FUNCTION  FN_USER RETURN VARCHAR2;
-
-  -- Conversions en texte independantes des parametres NLS
-  FUNCTION  STR(p IN VARCHAR2)  RETURN VARCHAR2;
-  FUNCTION  STR(p IN NUMBER)    RETURN VARCHAR2;
-  FUNCTION  STR(p IN DATE)      RETURN VARCHAR2;
-  FUNCTION  STR(p IN TIMESTAMP) RETURN VARCHAR2;
-
-  -- Commentaire a joindre a la prochaine transition de statut (ex. motif de refus).
-  -- A appeler AVANT l'UPDATE du statut.
-  PROCEDURE SET_COMMENTAIRE(p_texte IN VARCHAR2);
-
-  PROCEDURE LOG_COL(p_table  IN VARCHAR2, p_id  IN NUMBER, p_action IN VARCHAR2,
-                    p_col    IN VARCHAR2, p_old IN VARCHAR2, p_new IN VARCHAR2,
-                    p_masque IN BOOLEAN DEFAULT FALSE);
-
-  PROCEDURE LOG_STATUT(p_table IN VARCHAR2, p_id IN NUMBER, p_col IN VARCHAR2,
-                       p_old   IN VARCHAR2, p_new IN VARCHAR2);
-
-  -- Genere EMP-AAAA-NNNN (p_annee NULL = annee courante)
-  FUNCTION  FN_NEXT_MATRICULE(p_annee IN NUMBER DEFAULT NULL) RETURN VARCHAR2;
-END PKG_TRACE;
+-- Utilisateur applicatif (CLIENT_IDENTIFIER) ou, a defaut, utilisateur Oracle
+CREATE OR REPLACE FUNCTION FN_USER RETURN VARCHAR2 IS
+BEGIN
+  RETURN SUBSTR(NVL(SYS_CONTEXT('USERENV','CLIENT_IDENTIFIER'), USER), 1, 100);
+END FN_USER;
 /
 
-CREATE OR REPLACE PACKAGE BODY PKG_TRACE AS
-  g_commentaire VARCHAR2(1000);
+-- Genere EMP-AAAA-NNNN (p_annee NULL = annee courante)
+CREATE OR REPLACE FUNCTION FN_NEXT_MATRICULE(p_annee IN NUMBER DEFAULT NULL) RETURN VARCHAR2 IS
+  v_annee NUMBER(4) := NVL(p_annee, EXTRACT(YEAR FROM SYSDATE));
+  v_n     NUMBER;
+BEGIN
+  UPDATE COMPTEUR_MATRICULE
+     SET DERNIER_NUMERO = DERNIER_NUMERO + 1
+   WHERE ANNEE = v_annee
+  RETURNING DERNIER_NUMERO INTO v_n;
 
-  FUNCTION FN_USER RETURN VARCHAR2 IS
-  BEGIN
-    RETURN SUBSTR(NVL(SYS_CONTEXT('USERENV','CLIENT_IDENTIFIER'), USER), 1, 100);
-  END FN_USER;
-
-  FUNCTION STR(p IN VARCHAR2) RETURN VARCHAR2 IS
-  BEGIN
-    RETURN SUBSTR(p, 1, 4000);
-  END STR;
-
-  FUNCTION STR(p IN NUMBER) RETURN VARCHAR2 IS
-  BEGIN
-    RETURN TO_CHAR(p, 'TM', 'NLS_NUMERIC_CHARACTERS=''.,''');
-  END STR;
-
-  FUNCTION STR(p IN DATE) RETURN VARCHAR2 IS
-  BEGIN
-    RETURN TO_CHAR(p, 'YYYY-MM-DD HH24:MI:SS');
-  END STR;
-
-  FUNCTION STR(p IN TIMESTAMP) RETURN VARCHAR2 IS
-  BEGIN
-    RETURN TO_CHAR(p, 'YYYY-MM-DD HH24:MI:SS.FF3');
-  END STR;
-
-  PROCEDURE SET_COMMENTAIRE(p_texte IN VARCHAR2) IS
-  BEGIN
-    g_commentaire := SUBSTR(p_texte, 1, 1000);
-  END SET_COMMENTAIRE;
-
-  PROCEDURE LOG_COL(p_table  IN VARCHAR2, p_id  IN NUMBER, p_action IN VARCHAR2,
-                    p_col    IN VARCHAR2, p_old IN VARCHAR2, p_new IN VARCHAR2,
-                    p_masque IN BOOLEAN DEFAULT FALSE) IS
-    v_old VARCHAR2(4000) := p_old;
-    v_new VARCHAR2(4000) := p_new;
-  BEGIN
-    -- On ne journalise que ce qui a reellement change / existe
-    IF p_action = 'U' AND (p_old = p_new OR (p_old IS NULL AND p_new IS NULL)) THEN
-      RETURN;
-    ELSIF p_action = 'I' AND p_new IS NULL THEN
-      RETURN;
-    ELSIF p_action = 'D' AND p_old IS NULL THEN
-      RETURN;
-    END IF;
-
-    IF p_masque THEN   -- donnees sensibles (ex. hash de mot de passe) : valeurs masquees
-      IF v_old IS NOT NULL THEN v_old := '***'; END IF;
-      IF v_new IS NOT NULL THEN v_new := '***'; END IF;
-    END IF;
-
-    INSERT INTO AUDIT_LOG
-      (NOM_TABLE, ID_ENREGISTREMENT, TYPE_ACTION, NOM_COLONNE, ANCIENNE_VALEUR, NOUVELLE_VALEUR,
-       UTILISATEUR_APPLI, UTILISATEUR_BD, ADRESSE_IP, HOTE, MODULE_APPLI, SESSION_ID, TRANSACTION_ID)
-    VALUES
-      (p_table, p_id, p_action, p_col, v_old, v_new,
-       FN_USER, SYS_CONTEXT('USERENV','SESSION_USER'),
-       SYS_CONTEXT('USERENV','IP_ADDRESS'),
-       SUBSTR(SYS_CONTEXT('USERENV','HOST'), 1, 100),
-       SUBSTR(SYS_CONTEXT('USERENV','MODULE'), 1, 64),
-       TO_NUMBER(SYS_CONTEXT('USERENV','SID')),
-       DBMS_TRANSACTION.LOCAL_TRANSACTION_ID);
-  END LOG_COL;
-
-  PROCEDURE LOG_STATUT(p_table IN VARCHAR2, p_id IN NUMBER, p_col IN VARCHAR2,
-                       p_old   IN VARCHAR2, p_new IN VARCHAR2) IS
-  BEGIN
-    IF p_new IS NULL OR (p_old IS NOT NULL AND p_old = p_new) THEN
-      RETURN;
-    END IF;
-    INSERT INTO WORKFLOW_HISTORIQUE
-      (NOM_TABLE, ID_ENREGISTREMENT, NOM_COLONNE_STATUT, ANCIEN_STATUT, NOUVEAU_STATUT,
-       UTILISATEUR, COMMENTAIRE)
-    VALUES
-      (p_table, p_id, p_col, p_old, p_new, FN_USER, g_commentaire);
-    g_commentaire := NULL;
-  END LOG_STATUT;
-
-  FUNCTION FN_NEXT_MATRICULE(p_annee IN NUMBER DEFAULT NULL) RETURN VARCHAR2 IS
-    v_annee NUMBER(4) := NVL(p_annee, EXTRACT(YEAR FROM SYSDATE));
-    v_n     NUMBER;
-  BEGIN
-    UPDATE COMPTEUR_MATRICULE
-       SET DERNIER_NUMERO = DERNIER_NUMERO + 1
-     WHERE ANNEE = v_annee
-    RETURNING DERNIER_NUMERO INTO v_n;
-
-    IF SQL%ROWCOUNT = 0 THEN
-      BEGIN
-        INSERT INTO COMPTEUR_MATRICULE (ANNEE, DERNIER_NUMERO) VALUES (v_annee, 1);
-        v_n := 1;
-      EXCEPTION
-        WHEN DUP_VAL_ON_INDEX THEN   -- cree en parallele par une autre session
-          UPDATE COMPTEUR_MATRICULE
-             SET DERNIER_NUMERO = DERNIER_NUMERO + 1
-           WHERE ANNEE = v_annee
-          RETURNING DERNIER_NUMERO INTO v_n;
-      END;
-    END IF;
-    RETURN 'EMP-' || v_annee || '-' || LPAD(v_n, 4, '0');
-  END FN_NEXT_MATRICULE;
-END PKG_TRACE;
+  IF SQL%ROWCOUNT = 0 THEN
+    BEGIN
+      INSERT INTO COMPTEUR_MATRICULE (ANNEE, DERNIER_NUMERO) VALUES (v_annee, 1);
+      v_n := 1;
+    EXCEPTION
+      WHEN DUP_VAL_ON_INDEX THEN   -- cree en parallele par une autre session
+        UPDATE COMPTEUR_MATRICULE
+           SET DERNIER_NUMERO = DERNIER_NUMERO + 1
+         WHERE ANNEE = v_annee
+        RETURNING DERNIER_NUMERO INTO v_n;
+    END;
+  END IF;
+  RETURN 'EMP-' || v_annee || '-' || LPAD(v_n, 4, '0');
+END FN_NEXT_MATRICULE;
 /
 
 /* =============================================================================
@@ -759,7 +728,6 @@ END PKG_TRACE;
      - ajout des 5 colonnes d'audit (N1)
      - sequence SEQ_<TABLE>
      - TBR_<TABLE> : BEFORE INSERT/UPDATE -> ID, dates, utilisateur, version
-     - TAR_<TABLE> : AFTER I/U/D -> AUDIT_LOG (N2) + WORKFLOW_HISTORIQUE (N3)
      - TBD_<TABLE> : interdit le DELETE physique (tables sensibles)
    Pour chaque table de journal : sequence, TBR_ (ID), TBX_ (UPDATE/DELETE interdits).
    ============================================================================= */
@@ -773,21 +741,21 @@ DECLARE
     'CANDIDAT','EMPLOYE','DEPARTEMENT','POSTE','DEMANDE_RECRUTEMENT','DEMANDE_VALIDATION',
     'OFFRE_EMPLOI','CANDIDATURE','ENTRETIEN','EVALUATION_CANDIDAT','EVALUATION_CRITERE',
     'PROPOSITION_EMBAUCHE','CONTRAT','AFFECTATION','MODELE_ONB_TACHE','ONBOARDING',
-    'ONBOARDING_TACHE','DOCUMENT','NOTIFICATION');
+    'ONBOARDING_TACHE','DOCUMENT','NOTIFICATION',
+    'DEPARTEMENT_RESPONSABLE','DEPARTEMENT_RATTACHEMENT','POSTE_DEPARTEMENT',
+    'CANDIDATURE_RECRUTEUR','TACHE_ASSIGNATION');
 
-  v_journaux t_liste := t_liste(
-    'AUDIT_LOG','WORKFLOW_HISTORIQUE','LOG_CONNEXION','LOG_ACCES_DOCUMENT');
+  v_journaux t_liste := t_liste('LOG_CONNEXION','LOG_ACCES_DOCUMENT');
 
   v_sans_suppression t_liste := t_liste(
     'UTILISATEUR','CANDIDAT','EMPLOYE','POSTE','DEMANDE_RECRUTEMENT','DEMANDE_VALIDATION',
     'OFFRE_EMPLOI','CANDIDATURE','ENTRETIEN','EVALUATION_CANDIDAT','EVALUATION_CRITERE',
-    'PROPOSITION_EMBAUCHE','CONTRAT','AFFECTATION','ONBOARDING','ONBOARDING_TACHE','DOCUMENT');
+    'PROPOSITION_EMBAUCHE','CONTRAT','AFFECTATION','ONBOARDING','ONBOARDING_TACHE','DOCUMENT',
+    'DEPARTEMENT_RESPONSABLE','DEPARTEMENT_RATTACHEMENT','POSTE_DEPARTEMENT',
+    'CANDIDATURE_RECRUTEUR','TACHE_ASSIGNATION');
 
   v_t     VARCHAR2(30);
   v_sql   VARCHAR2(32767);
-  v_cols  VARCHAR2(32767);
-  v_stat  VARCHAR2(4000);
-  v_masq  VARCHAR2(5);
 BEGIN
   ---------------------------------------------------------------------------
   -- A. Tables metier
@@ -812,7 +780,7 @@ BEGIN
       SELECT SEQ_#T#.NEXTVAL INTO :NEW.ID FROM DUAL;
     END IF;
     :NEW.DATE_CREATION     := SYSTIMESTAMP;
-    :NEW.CREE_PAR          := PKG_TRACE.FN_USER;
+    :NEW.CREE_PAR          := FN_USER;
     :NEW.DATE_MODIFICATION := NULL;
     :NEW.MODIFIE_PAR       := NULL;
     :NEW.VERSION_LIGNE     := 1;
@@ -821,47 +789,10 @@ BEGIN
     :NEW.DATE_CREATION     := :OLD.DATE_CREATION;
     :NEW.CREE_PAR          := :OLD.CREE_PAR;
     :NEW.DATE_MODIFICATION := SYSTIMESTAMP;
-    :NEW.MODIFIE_PAR       := PKG_TRACE.FN_USER;
+    :NEW.MODIFIE_PAR       := FN_USER;
     :NEW.VERSION_LIGNE     := NVL(:OLD.VERSION_LIGNE, 0) + 1;
   END IF;
 END;]';
-    EXECUTE IMMEDIATE REPLACE(v_sql, '#T#', v_t);
-
-    -- Trigger N2/N3 : journal colonne par colonne + historique de statut
-    v_cols := NULL;
-    v_stat := NULL;
-    FOR c IN (SELECT COLUMN_NAME, DATA_TYPE
-                FROM USER_TAB_COLUMNS
-               WHERE TABLE_NAME = v_t
-                 AND COLUMN_NAME NOT IN ('ID','DATE_CREATION','CREE_PAR','DATE_MODIFICATION',
-                                         'MODIFIE_PAR','VERSION_LIGNE')
-               ORDER BY COLUMN_ID) LOOP
-      IF c.DATA_TYPE IN ('VARCHAR2','NUMBER','DATE') OR c.DATA_TYPE LIKE 'TIMESTAMP%' THEN
-        v_masq := CASE WHEN c.COLUMN_NAME = 'MOT_DE_PASSE_HASH' THEN 'TRUE' ELSE 'FALSE' END;
-        v_cols := v_cols || '  PKG_TRACE.LOG_COL(''' || v_t || ''', v_id, v_act, '''
-                  || c.COLUMN_NAME || ''', PKG_TRACE.STR(:OLD.' || c.COLUMN_NAME
-                  || '), PKG_TRACE.STR(:NEW.' || c.COLUMN_NAME || '), ' || v_masq || ');' || CHR(10);
-      END IF;
-      IF c.COLUMN_NAME LIKE 'STATUT\_%' ESCAPE '\' AND v_t <> 'NOTIFICATION' THEN
-        v_stat := v_stat || '  IF NOT DELETING THEN PKG_TRACE.LOG_STATUT(''' || v_t || ''', v_id, '''
-                  || c.COLUMN_NAME || ''', PKG_TRACE.STR(:OLD.' || c.COLUMN_NAME
-                  || '), PKG_TRACE.STR(:NEW.' || c.COLUMN_NAME || ')); END IF;' || CHR(10);
-      END IF;
-    END LOOP;
-
-    v_sql := q'[CREATE OR REPLACE TRIGGER TAR_#T# AFTER INSERT OR UPDATE OR DELETE ON #T# FOR EACH ROW
-DECLARE
-  v_act VARCHAR2(1);
-  v_id  NUMBER;
-BEGIN
-  IF INSERTING THEN
-    v_act := 'I'; v_id := :NEW.ID;
-  ELSIF UPDATING THEN
-    v_act := 'U'; v_id := :NEW.ID;
-  ELSE
-    v_act := 'D'; v_id := :OLD.ID;
-  END IF;
-]' || v_cols || v_stat || 'END;';
     EXECUTE IMMEDIATE REPLACE(v_sql, '#T#', v_t);
 
     -- Pas de suppression physique sur les tables sensibles
@@ -915,7 +846,7 @@ FOR EACH ROW
 BEGIN
   IF INSERTING THEN
     IF :NEW.MATRICULE IS NULL THEN
-      :NEW.MATRICULE := PKG_TRACE.FN_NEXT_MATRICULE(
+      :NEW.MATRICULE := FN_NEXT_MATRICULE(
                           EXTRACT(YEAR FROM NVL(:NEW.DATE_EMBAUCHE_INITIALE, SYSDATE)));
     END IF;
   ELSIF :OLD.MATRICULE <> :NEW.MATRICULE THEN
@@ -939,6 +870,94 @@ BEGIN
      OR NVL(:OLD.DATE_FIN, DATE '1900-01-01') <> NVL(:NEW.DATE_FIN, DATE '1900-01-01')) THEN
     RAISE_APPLICATION_ERROR(-20011,
       'Contrat valide : termes non modifiables. Creer un avenant ou un renouvellement.');
+  END IF;
+END;
+/
+
+-- ---------------------------------------------------------------------------
+-- Historisation des relations (TAH_ = After Historique).
+-- A chaque creation ou changement de la relation sur la table principale :
+--   1) la ligne d'historique courante (DATE_FIN nulle) est cloturee,
+--   2) une nouvelle ligne est ouverte avec la nouvelle valeur.
+-- ---------------------------------------------------------------------------
+
+-- Departement : responsable + departement parent
+CREATE OR REPLACE TRIGGER TAH_DEPARTEMENT
+AFTER INSERT OR UPDATE OF RESPONSABLE_ID, DEPARTEMENT_PARENT_ID ON DEPARTEMENT
+FOR EACH ROW
+BEGIN
+  IF INSERTING OR NVL(:OLD.RESPONSABLE_ID, -1) <> NVL(:NEW.RESPONSABLE_ID, -1) THEN
+    IF UPDATING THEN
+      UPDATE DEPARTEMENT_RESPONSABLE SET DATE_FIN = SYSDATE
+       WHERE DEPARTEMENT_ID = :NEW.ID AND DATE_FIN IS NULL;
+    END IF;
+    IF :NEW.RESPONSABLE_ID IS NOT NULL THEN
+      INSERT INTO DEPARTEMENT_RESPONSABLE (DEPARTEMENT_ID, EMPLOYE_ID, DATE_DEBUT)
+      VALUES (:NEW.ID, :NEW.RESPONSABLE_ID, SYSDATE);
+    END IF;
+  END IF;
+
+  IF INSERTING OR NVL(:OLD.DEPARTEMENT_PARENT_ID, -1) <> NVL(:NEW.DEPARTEMENT_PARENT_ID, -1) THEN
+    IF UPDATING THEN
+      UPDATE DEPARTEMENT_RATTACHEMENT SET DATE_FIN = SYSDATE
+       WHERE DEPARTEMENT_ID = :NEW.ID AND DATE_FIN IS NULL;
+    END IF;
+    IF :NEW.DEPARTEMENT_PARENT_ID IS NOT NULL THEN
+      INSERT INTO DEPARTEMENT_RATTACHEMENT (DEPARTEMENT_ID, DEPARTEMENT_PARENT_ID, DATE_DEBUT)
+      VALUES (:NEW.ID, :NEW.DEPARTEMENT_PARENT_ID, SYSDATE);
+    END IF;
+  END IF;
+END;
+/
+
+-- Poste : departement de rattachement
+CREATE OR REPLACE TRIGGER TAH_POSTE
+AFTER INSERT OR UPDATE OF DEPARTEMENT_ID ON POSTE
+FOR EACH ROW
+BEGIN
+  IF INSERTING OR :OLD.DEPARTEMENT_ID <> :NEW.DEPARTEMENT_ID THEN
+    IF UPDATING THEN
+      UPDATE POSTE_DEPARTEMENT SET DATE_FIN = SYSDATE
+       WHERE POSTE_ID = :NEW.ID AND DATE_FIN IS NULL;
+    END IF;
+    INSERT INTO POSTE_DEPARTEMENT (POSTE_ID, DEPARTEMENT_ID, DATE_DEBUT)
+    VALUES (:NEW.ID, :NEW.DEPARTEMENT_ID, SYSDATE);
+  END IF;
+END;
+/
+
+-- Candidature : recruteur en charge du dossier
+CREATE OR REPLACE TRIGGER TAH_CANDIDATURE
+AFTER INSERT OR UPDATE OF RECRUTEUR_ID ON CANDIDATURE
+FOR EACH ROW
+BEGIN
+  IF INSERTING OR NVL(:OLD.RECRUTEUR_ID, -1) <> NVL(:NEW.RECRUTEUR_ID, -1) THEN
+    IF UPDATING THEN
+      UPDATE CANDIDATURE_RECRUTEUR SET DATE_FIN = SYSDATE
+       WHERE CANDIDATURE_ID = :NEW.ID AND DATE_FIN IS NULL;
+    END IF;
+    IF :NEW.RECRUTEUR_ID IS NOT NULL THEN
+      INSERT INTO CANDIDATURE_RECRUTEUR (CANDIDATURE_ID, RECRUTEUR_ID, DATE_DEBUT)
+      VALUES (:NEW.ID, :NEW.RECRUTEUR_ID, SYSDATE);
+    END IF;
+  END IF;
+END;
+/
+
+-- Tache d'onboarding : personne assignee
+CREATE OR REPLACE TRIGGER TAH_ONBOARDING_TACHE
+AFTER INSERT OR UPDATE OF ASSIGNEE_A_ID ON ONBOARDING_TACHE
+FOR EACH ROW
+BEGIN
+  IF INSERTING OR NVL(:OLD.ASSIGNEE_A_ID, -1) <> NVL(:NEW.ASSIGNEE_A_ID, -1) THEN
+    IF UPDATING THEN
+      UPDATE TACHE_ASSIGNATION SET DATE_FIN = SYSDATE
+       WHERE ONBOARDING_TACHE_ID = :NEW.ID AND DATE_FIN IS NULL;
+    END IF;
+    IF :NEW.ASSIGNEE_A_ID IS NOT NULL THEN
+      INSERT INTO TACHE_ASSIGNATION (ONBOARDING_TACHE_ID, ASSIGNEE_ID, DATE_DEBUT)
+      VALUES (:NEW.ID, :NEW.ASSIGNEE_A_ID, SYSDATE);
+    END IF;
   END IF;
 END;
 /
@@ -972,9 +991,12 @@ COMMENT ON TABLE ONBOARDING IS 'Bloc 4 : parcours d''integration d''un employe (
 COMMENT ON TABLE ONBOARDING_TACHE IS 'Bloc 4 : taches de la checklist assignees aux acteurs, avec echeance et statut.';
 COMMENT ON TABLE DOCUMENT IS 'Metadonnees GED : URL de stockage, empreinte SHA-256, versions, confidentialite. Rattachement polymorphe a CV, contrat, RIB, piece d''identite...';
 COMMENT ON TABLE NOTIFICATION IS 'File d''attente des e-mails/notifications automatiques (etat, tentatives, erreurs).';
+COMMENT ON TABLE DEPARTEMENT_RESPONSABLE IS 'Historique des responsables de departement (DATE_DEBUT / DATE_FIN). Alimente par le trigger TAH_DEPARTEMENT.';
+COMMENT ON TABLE DEPARTEMENT_RATTACHEMENT IS 'Historique du rattachement hierarchique des departements (parent). Alimente par le trigger TAH_DEPARTEMENT.';
+COMMENT ON TABLE POSTE_DEPARTEMENT IS 'Historique des departements de rattachement d''un poste. Alimente par le trigger TAH_POSTE.';
+COMMENT ON TABLE CANDIDATURE_RECRUTEUR IS 'Historique des recruteurs en charge d''une candidature. Alimente par le trigger TAH_CANDIDATURE.';
+COMMENT ON TABLE TACHE_ASSIGNATION IS 'Historique des assignations d''une tache d''onboarding. Alimente par le trigger TAH_ONBOARDING_TACHE.';
 COMMENT ON TABLE COMPTEUR_MATRICULE IS 'Compteur annuel garantissant des matricules uniques et sans trou.';
-COMMENT ON TABLE AUDIT_LOG IS 'Journal d''audit avant/apres colonne par colonne (qui, quand, depuis ou). Ajout seul. Alimente par triggers.';
-COMMENT ON TABLE WORKFLOW_HISTORIQUE IS 'Historique des transitions de statut de toutes les entites (moteur de workflow). Ajout seul.';
 COMMENT ON TABLE LOG_CONNEXION IS 'Journal des connexions, echecs, verrouillages et deconnexions. Ajout seul.';
 COMMENT ON TABLE LOG_ACCES_DOCUMENT IS 'Journal des acces aux documents sensibles (consultation, telechargement, suppression). Ajout seul.';
 
@@ -1057,27 +1079,31 @@ PROMPT === 13. Verification ===
 
 SELECT OBJECT_TYPE, COUNT(*) AS NB
   FROM USER_OBJECTS
- WHERE OBJECT_TYPE IN ('TABLE','SEQUENCE','TRIGGER','INDEX','PACKAGE','PACKAGE BODY')
+ WHERE OBJECT_TYPE IN ('TABLE','SEQUENCE','TRIGGER','FUNCTION','INDEX','PACKAGE','PACKAGE BODY','PROCEDURE')
  GROUP BY OBJECT_TYPE ORDER BY OBJECT_TYPE;
 
 -- Objets invalides (doit retourner 0 ligne)
 SELECT OBJECT_NAME, OBJECT_TYPE FROM USER_OBJECTS WHERE STATUS <> 'VALID';
 
--- Controle de la tracabilite : doit afficher des lignes d'audit pour les donnees de reference
-SELECT NOM_TABLE, TYPE_ACTION, COUNT(*) AS NB FROM AUDIT_LOG GROUP BY NOM_TABLE, TYPE_ACTION ORDER BY 1;
+-- Controle : aucun package ni procedure ne doit exister (0 ligne attendue)
+SELECT OBJECT_NAME, OBJECT_TYPE FROM USER_OBJECTS WHERE OBJECT_TYPE IN ('PACKAGE','PACKAGE BODY','PROCEDURE');
 
 /* =============================================================================
    EXEMPLE DE TEST (a executer a la main apres installation)
    -----------------------------------------------------------------------------
    EXEC DBMS_SESSION.SET_IDENTIFIER('marie.rh');
    INSERT INTO CANDIDAT (NOM, PRENOM, EMAIL) VALUES ('Dupont','Jean','jean.dupont@mail.com');
+   INSERT INTO CANDIDAT (NOM, PRENOM, EMAIL) VALUES ('Martin','Awa','awa.martin@mail.com');
    INSERT INTO EMPLOYE (NOM, PRENOM, CANDIDAT_ID, DATE_EMBAUCHE_INITIALE)
-          SELECT NOM, PRENOM, ID, TRUNC(SYSDATE) FROM CANDIDAT WHERE EMAIL = 'jean.dupont@mail.com';
-   SELECT MATRICULE FROM EMPLOYE;                      -- EMP-2026-0001
-   EXEC PKG_TRACE.SET_COMMENTAIRE('Fin de periode d''integration');
-   UPDATE EMPLOYE SET STATUT_ACTIVITE = 'ACTIF';
-   SELECT * FROM WORKFLOW_HISTORIQUE ORDER BY ID;      -- transitions de statut
-   SELECT * FROM AUDIT_LOG WHERE NOM_TABLE = 'EMPLOYE' ORDER BY ID;
-   DELETE FROM EMPLOYE;                                -- ORA-20002 : suppression interdite
+          SELECT NOM, PRENOM, ID, TRUNC(SYSDATE) FROM CANDIDAT;
+   SELECT MATRICULE FROM EMPLOYE;                       -- EMP-2026-0001, EMP-2026-0002
+
+   -- Historique du responsable d'un departement
+   INSERT INTO DEPARTEMENT (CODE, LIBELLE, RESPONSABLE_ID)
+          SELECT 'INFO', 'Informatique', MIN(ID) FROM EMPLOYE;
+   UPDATE DEPARTEMENT SET RESPONSABLE_ID = (SELECT MAX(ID) FROM EMPLOYE) WHERE CODE = 'INFO';
+   SELECT * FROM DEPARTEMENT_RESPONSABLE ORDER BY ID;   -- 2 lignes : la 1re cloturee, la 2e courante
+
+   DELETE FROM EMPLOYE;                                 -- ORA-20002 : suppression interdite
    ROLLBACK;
    ============================================================================= */
