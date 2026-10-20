@@ -1,0 +1,18 @@
+-- Contrat : une fois valide, ses termes ne changent plus -> creer un AVENANT / RENOUVELLEMENT.
+CREATE OR REPLACE TRIGGER TBU_CONTRAT_FIGE
+BEFORE UPDATE ON CONTRAT
+FOR EACH ROW
+BEGIN
+  IF :OLD.STATUT_CONTRAT <> 'EN_ATTENTE' AND (
+        :OLD.EMPLOYE_ID    <> :NEW.EMPLOYE_ID
+     OR :OLD.POSTE_ID      <> :NEW.POSTE_ID
+     OR :OLD.TYPE_CONTRAT  <> :NEW.TYPE_CONTRAT
+     OR :OLD.TYPE_ACTE     <> :NEW.TYPE_ACTE
+     OR :OLD.DATE_DEBUT    <> :NEW.DATE_DEBUT
+     OR :OLD.SALAIRE_BRUT  <> :NEW.SALAIRE_BRUT
+     OR NVL(:OLD.DATE_FIN, DATE '1900-01-01') <> NVL(:NEW.DATE_FIN, DATE '1900-01-01')) THEN
+    RAISE_APPLICATION_ERROR(-20011,
+      'Contrat valide : termes non modifiables. Creer un avenant ou un renouvellement.');
+  END IF;
+END;
+/
