@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Confirmation de recrutement - ConceptionLogicielRH</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fa;
+            color: #243247;
+        }
+
+        header {
+            background: #172b4d;
+            color: white;
+            padding: 22px 35px;
+        }
+
+        header h2 { margin: 0 0 8px; }
+
+        header a {
+            color: #dbeafe;
+            text-decoration: none;
+        }
+
+        main {
+            max-width: 850px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .carte {
+            background: white;
+            padding: 30px;
+            border: 1px solid #dfe6f0;
+            border-radius: 12px;
+        }
+
+        h1 { color: #172b4d; }
+
+        .description {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .information {
+            padding: 15px;
+            background: #eef5ff;
+            border-radius: 8px;
+            color: #244575;
+            line-height: 1.6;
+            margin: 22px 0;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin: 20px 0 8px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+
+        button, .retour {
+            border: 0;
+            border-radius: 7px;
+            padding: 12px 18px;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        button {
+            background: #16794b;
+            color: white;
+        }
+
+        .retour {
+            background: #e8edf5;
+            color: #243247;
+        }
+
+        .note {
+            margin-top: 22px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h2>ConceptionLogicielRH</h2>
+    <a href="/rh/candidatures">← Retour aux candidatures</a>
+</header>
+
+<main>
+    <section class="carte">
+        <h1>Confirmation de recrutement</h1>
+
+        <p class="description">
+            Préparez la confirmation du candidat retenu et indiquez
+            la date prévue de sa prise de fonction.
+        </p>
+
+        <div class="information">
+            Cette page concerne uniquement les candidats dont la décision
+            de recrutement est favorable.
+        </div>
+
+        <form>
+            <label for="nom">Nom du candidat</label>
+            <input
+                type="text"
+                id="nom"
+                name="nom"
+                placeholder="Nom du candidat"
+                required
+            >
+
+            <label for="email">Adresse e-mail du candidat</label>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="exemple@email.com"
+                required
+            >
+
+            <label for="poste">Poste obtenu</label>
+            <input
+                type="text"
+                id="poste"
+                name="poste"
+                placeholder="Intitulé du poste"
+                required
+            >
+
+            <label for="contrat">Type de contrat</label>
+            <select id="contrat" name="contrat" required>
+                <option value="">-- Sélectionner le contrat --</option>
+                <option value="CDD">CDD</option>
+                <option value="CDI">CDI</option>
+                <option value="stage">Stage</option>
+            </select>
+
+            <label for="debut">Date de début du travail</label>
+            <input
+                type="date"
+                id="debut"
+                name="dateDebut"
+                required
+            >
+
+            <label for="message">Message de confirmation</label>
+            <textarea
+                id="message"
+                name="message"
+                placeholder="Informations complémentaires destinées au candidat..."
+            ></textarea>
+
+            <div class="actions">
+                <button type="button">
+                    Confirmer le recrutement
+                </button>
+
+                <a class="retour" href="/rh/candidatures">
+                    Retour
+                </a>
+            </div>
+        </form>
+
+        <p class="note">
+            Maquette visuelle : le formulaire ne sauvegarde pas encore
+            les informations et n'envoie pas d'e-mail.
+            Ces fonctionnalités seront ajoutées lors du raccordement
+            au fonctionnement de l'application.
+        </p>
+    </section>
+</main>
+</body>
+</html>

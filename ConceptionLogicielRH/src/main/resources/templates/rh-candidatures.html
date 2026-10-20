@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Suivi des candidatures - ConceptionLogicielRH</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fa;
+            color: #243247;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        aside {
+            width: 245px;
+            flex-shrink: 0;
+            background: #172b4d;
+            color: white;
+            padding: 28px 18px;
+        }
+
+        aside h2 {
+            font-size: 21px;
+            margin-top: 0;
+        }
+
+        aside p {
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        aside nav {
+            margin-top: 35px;
+        }
+
+        aside nav a {
+            display: block;
+            padding: 13px;
+            margin-bottom: 8px;
+            color: #e2e8f0;
+            text-decoration: none;
+            border-radius: 7px;
+        }
+
+        aside nav a.active,
+        aside nav a:hover {
+            background: #29466f;
+            color: white;
+        }
+
+        main {
+            flex: 1;
+            min-width: 0;
+            padding: 35px;
+        }
+
+        .entete {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .entete h1 {
+            margin: 0;
+            color: #172b4d;
+        }
+
+        .profil {
+            background: white;
+            padding: 12px 18px;
+            border: 1px solid #dfe6f0;
+            border-radius: 9px;
+        }
+
+        .resume {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin: 28px 0;
+        }
+
+        .carte {
+            background: white;
+            border: 1px solid #dfe6f0;
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .carte p {
+            margin-bottom: 8px;
+            color: #64748b;
+        }
+
+        .nombre {
+            font-size: 28px;
+            font-weight: bold;
+            color: #172b4d;
+        }
+
+        .tableau {
+            background: white;
+            border: 1px solid #dfe6f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 25px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            min-width: 650px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 14px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #475569;
+        }
+
+        .statut {
+            display: inline-block;
+            padding: 6px 9px;
+            background: #fff2cc;
+            color: #875d00;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .bouton {
+            display: inline-block;
+            padding: 9px 12px;
+            background: #2457c5;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .note {
+            margin-top: 20px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 850px) {
+            .layout { flex-direction: column; }
+
+            aside { width: 100%; }
+
+            aside nav {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                margin-top: 20px;
+            }
+
+            .resume {
+                grid-template-columns: 1fr;
+            }
+
+            main { padding: 22px; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="layout">
+
+    <aside>
+        <h2>ConceptionLogicielRH</h2>
+        <p>Espace Ressources humaines</p>
+
+        <nav>
+            <a href="/rh/candidatures" class="active">
+                Candidatures
+            </a>
+            <a href="#entretiens">Entretiens</a>
+            <a href="#evaluations">Évaluations</a>
+        </nav>
+    </aside>
+
+    <main>
+        <div class="entete">
+            <div>
+                <h1>Suivi des candidatures</h1>
+                <p>Consultez les profils et suivez les recrutements.</p>
+            </div>
+
+            <div class="profil">👤 Responsable RH</div>
+        </div>
+
+        <div class="resume">
+            <section class="carte">
+                <p>Candidatures reçues</p>
+                <div class="nombre">—</div>
+            </section>
+
+            <section class="carte">
+                <p>Entretiens à organiser</p>
+                <div class="nombre">—</div>
+            </section>
+
+            <section class="carte">
+                <p>Candidats retenus</p>
+                <div class="nombre">—</div>
+            </section>
+        </div>
+
+        <section class="tableau">
+            <h2>Liste des candidatures</h2>
+            <p>Retrouvez ici les dossiers transmis par les candidats.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Candidat</th>
+                        <th>Poste demandé</th>
+                        <th>Date de réception</th>
+                        <th>Statut</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td colspan="5">
+                            Aucune candidature enregistrée pour le moment.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="tableau" id="entretiens">
+            <h2>Entretiens</h2>
+            <p>
+                Les entretiens pourront être planifiés et suivis
+                depuis cet espace.
+            </p>
+        </section>
+
+        <section class="tableau" id="evaluations">
+            <h2>Évaluations</h2>
+            <p>
+                Les évaluations permettront de consigner les observations
+                et les résultats des entretiens.
+            </p>
+        </section>
+
+        <p class="note">
+            Cette page est actuellement une maquette visuelle.
+            Les candidatures, entretiens et évaluations seront reliés
+            aux données du projet lors de l'étape de fonctionnement.
+        </p>
+    </main>
+
+</div>
+</body>
+</html>

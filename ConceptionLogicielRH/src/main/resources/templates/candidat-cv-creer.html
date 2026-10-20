@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Créer mon CV - ConceptionLogicielRH</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fa;
+            color: #243247;
+        }
+
+        header {
+            background: #172b4d;
+            color: white;
+            padding: 20px 7%;
+        }
+
+        header h2 {
+            margin: 0;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 35px auto;
+            padding: 0 20px 40px;
+        }
+
+        .retour {
+            color: #2457c5;
+            text-decoration: none;
+        }
+
+        .intro {
+            margin-bottom: 25px;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 22px;
+            border: 1px solid #dfe6f0;
+            border-radius: 12px;
+        }
+
+        .section h2 {
+            margin-top: 0;
+            color: #172b4d;
+            font-size: 20px;
+        }
+
+        .grille {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .champ {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-bottom: 16px;
+        }
+
+        .large {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font: inherit;
+            background: white;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .bouton {
+            display: inline-block;
+            padding: 13px 20px;
+            border: none;
+            border-radius: 7px;
+            background: #2457c5;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .secondaire {
+            background: #e5eaf2;
+            color: #172b4d;
+        }
+
+        .note {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .grille {
+                grid-template-columns: 1fr;
+            }
+
+            .large {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h2>ConceptionLogicielRH</h2>
+    <p>Espace candidat · Création du CV</p>
+</header>
+
+<main>
+    <a class="retour" href="/candidat/cv">← Retour à mon espace candidat</a>
+
+    <div class="intro">
+        <h1>Créer mon CV</h1>
+        <p>Complétez les rubriques ci-dessous pour préparer votre candidature.</p>
+        <p class="note">Les champs marqués d'un * sont obligatoires.</p>
+    </div>
+
+    <form>
+        <section class="section">
+            <h2>1. Informations personnelles</h2>
+
+            <div class="grille">
+                <div class="champ">
+                    <label for="nom">Nom *</label>
+                    <input id="nom" name="nom" required>
+                </div>
+
+                <div class="champ">
+                    <label for="prenom">Prénom *</label>
+                    <input id="prenom" name="prenom" required>
+                </div>
+
+                <div class="champ">
+                    <label for="email">Adresse e-mail *</label>
+                    <input id="email" name="email" type="email" required>
+                </div>
+
+                <div class="champ">
+                    <label for="telephone">Téléphone *</label>
+                    <input id="telephone" name="telephone"
+                           type="tel" required>
+                </div>
+
+                <div class="champ large">
+                    <label for="adresse">Adresse</label>
+                    <input id="adresse" name="adresse">
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>2. Profil professionnel</h2>
+
+            <div class="champ">
+                <label for="profil">Présentez-vous en quelques lignes</label>
+                <textarea id="profil" name="profil"
+                          placeholder="Votre parcours, vos objectifs et vos points forts..."></textarea>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>3. Formation et diplômes</h2>
+
+            <div class="grille">
+                <div class="champ">
+                    <label for="diplome">Diplôme ou formation</label>
+                    <input id="diplome" name="diplome"
+                           placeholder="Ex. : Licence en informatique">
+                </div>
+
+                <div class="champ">
+                    <label for="etablissement">Établissement</label>
+                    <input id="etablissement" name="etablissement">
+                </div>
+
+                <div class="champ">
+                    <label for="annee">Année d'obtention</label>
+                    <input id="annee" name="annee"
+                           type="number" min="1950" max="2100">
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>4. Expérience professionnelle</h2>
+
+            <div class="grille">
+                <div class="champ">
+                    <label for="poste">Poste occupé</label>
+                    <input id="poste" name="poste">
+                </div>
+
+                <div class="champ">
+                    <label for="entreprise">Entreprise</label>
+                    <input id="entreprise" name="entreprise">
+                </div>
+
+                <div class="champ">
+                    <label for="periode">Période</label>
+                    <input id="periode" name="periode"
+                           placeholder="Ex. : 2023 - 2025">
+                </div>
+
+                <div class="champ large">
+                    <label for="missions">Missions et réalisations</label>
+                    <textarea id="missions" name="missions"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>5. Compétences et langues</h2>
+
+            <div class="champ">
+                <label for="competences">Compétences</label>
+                <textarea id="competences" name="competences"
+                          placeholder="Ex. : Excel, gestion de projet, communication..."></textarea>
+            </div>
+
+            <div class="champ">
+                <label for="langues">Langues parlées</label>
+                <textarea id="langues" name="langues"
+                          placeholder="Ex. : Français, malgache, anglais..."></textarea>
+            </div>
+        </section>
+
+        <div class="actions">
+            <button class="bouton" type="button">
+                Enregistrer mon CV
+            </button>
+
+            <a class="bouton secondaire" href="/candidat/cv">
+                Annuler
+            </a>
+        </div>
+
+        <p class="note">
+            Pour le moment, ce formulaire est visuel :
+            l'enregistrement et le téléchargement PDF seront ajoutés ensuite.
+        </p>
+    </form>
+</main>
+
+</body>
+</html>

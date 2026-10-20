@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ma candidature - ConceptionLogicielRH</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fa;
+            color: #243247;
+        }
+
+        header {
+            background: #172b4d;
+            color: white;
+            padding: 20px 7%;
+        }
+
+        main {
+            max-width: 850px;
+            margin: 35px auto;
+            padding: 0 20px 40px;
+        }
+
+        .retour {
+            color: #2457c5;
+            text-decoration: none;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            margin-top: 22px;
+            border: 1px solid #dfe6f0;
+            border-radius: 12px;
+        }
+
+        .section h2 {
+            margin-top: 0;
+            color: #172b4d;
+            font-size: 20px;
+        }
+
+        .champ {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background: white;
+            font: inherit;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .note {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .bouton {
+            padding: 13px 20px;
+            background: #2457c5;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .actions {
+            margin-top: 22px;
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h2>ConceptionLogicielRH</h2>
+    <p>Espace candidat · Ma candidature</p>
+</header>
+
+<main>
+    <a class="retour" href="/candidat/offres">
+        ← Retour aux offres d'emploi
+    </a>
+
+    <h1>Déposer ma candidature</h1>
+    <p>Complétez les informations nécessaires pour postuler.</p>
+
+    <form>
+        <section class="section">
+            <h2>1. Informations du candidat</h2>
+
+            <div class="champ">
+                <label for="nom">Nom *</label>
+                <input id="nom" name="nom" required>
+            </div>
+
+            <div class="champ">
+                <label for="prenom">Prénom *</label>
+                <input id="prenom" name="prenom" required>
+            </div>
+
+            <div class="champ">
+                <label for="email">Adresse e-mail *</label>
+                <input id="email" name="email" type="email" required>
+            </div>
+
+            <div class="champ">
+                <label for="telephone">Téléphone *</label>
+                <input id="telephone" name="telephone" type="tel" required>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>2. Offre choisie</h2>
+
+            <div class="champ">
+                <label for="offre">Poste souhaité *</label>
+                <select id="offre" name="offre" required>
+                    <option value="">-- Choisir une offre --</option>
+                    <option value="assistant-rh">Assistant(e) RH</option>
+                    <option value="developpeur-java">Développeur Java</option>
+                    <option value="assistant-comptable">Assistant(e) comptable</option>
+                    <option value="assistant-administratif">
+                        Assistant(e) administratif(ve)
+                    </option>
+                </select>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>3. Mon CV</h2>
+
+            <div class="champ">
+                <label for="cv">Joindre mon CV (PDF ou DOCX)</label>
+                <input id="cv" name="cv" type="file"
+                       accept=".pdf,.docx">
+            </div>
+
+            <p class="note">
+                Vous pourrez également utiliser le CV créé dans votre espace candidat.
+                La liaison automatique sera ajoutée ultérieurement.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>4. Message de motivation</h2>
+
+            <div class="champ">
+                <label for="motivation">
+                    Pourquoi souhaitez-vous rejoindre notre entreprise ?
+                </label>
+                <textarea id="motivation" name="motivation"
+                    placeholder="Présentez brièvement votre motivation..."></textarea>
+            </div>
+        </section>
+
+        <div class="actions">
+            <button class="bouton" type="button">
+                Envoyer ma candidature
+            </button>
+        </div>
+
+        <p class="note">
+            Cette page constitue actuellement une maquette visuelle.
+            L'enregistrement réel de la candidature sera développé ensuite.
+        </p>
+    </form>
+</main>
+</body>
+</html>

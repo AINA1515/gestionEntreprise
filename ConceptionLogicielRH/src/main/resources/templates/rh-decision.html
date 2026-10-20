@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Décision de recrutement - ConceptionLogicielRH</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fa;
+            color: #243247;
+        }
+
+        header {
+            background: #172b4d;
+            color: white;
+            padding: 22px 35px;
+        }
+
+        header h2 { margin: 0 0 8px; }
+
+        header a {
+            color: #dbeafe;
+            text-decoration: none;
+        }
+
+        main {
+            max-width: 850px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .carte {
+            background: white;
+            padding: 30px;
+            border: 1px solid #dfe6f0;
+            border-radius: 12px;
+        }
+
+        h1 { color: #172b4d; }
+
+        .description {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin: 20px 0 8px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font: inherit;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+
+        button, .retour {
+            border: 0;
+            border-radius: 7px;
+            padding: 12px 18px;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        button {
+            background: #2457c5;
+            color: white;
+        }
+
+        .retour {
+            background: #e8edf5;
+            color: #243247;
+        }
+
+        .note {
+            margin-top: 22px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h2>ConceptionLogicielRH</h2>
+    <a href="/rh/candidatures">← Retour aux candidatures</a>
+</header>
+
+<main>
+    <section class="carte">
+        <h1>Décision de recrutement</h1>
+
+        <p class="description">
+            Le responsable RH examine le dossier du candidat et consigne
+            la décision prise à l'issue du processus de recrutement.
+        </p>
+
+        <form>
+            <label for="candidat">Nom du candidat</label>
+            <input
+                type="text"
+                id="candidat"
+                name="candidat"
+                placeholder="Ex. : Rakoto Jean"
+                required
+            >
+
+            <label for="poste">Poste concerné</label>
+            <input
+                type="text"
+                id="poste"
+                name="poste"
+                placeholder="Ex. : Assistant(e) RH"
+                required
+            >
+
+            <label for="decision">Décision</label>
+            <select id="decision" name="decision" required>
+                <option value="">-- Sélectionner une décision --</option>
+                <option value="retenu">Candidat retenu</option>
+                <option value="non-retenu">Candidat non retenu</option>
+                <option value="attente">Décision en attente</option>
+            </select>
+
+            <label for="observations">Observations du RH</label>
+            <textarea
+                id="observations"
+                name="observations"
+                placeholder="Commentaires, résultats de l'entretien, évaluation..."
+            ></textarea>
+
+            <div class="actions">
+                <button type="button">
+                    Enregistrer la décision
+                </button>
+
+                <a class="retour" href="/rh/candidatures">
+                    Retour
+                </a>
+            </div>
+        </form>
+
+        <p class="note">
+            Maquette visuelle : l'enregistrement réel de la décision
+            sera raccordé au fonctionnement de l'application ultérieurement.
+            Un candidat retenu pourra ensuite faire l'objet d'une confirmation
+            précisant sa date de début du travail.
+        </p>
+    </section>
+</main>
+</body>
+</html>

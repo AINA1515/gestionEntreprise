@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Espace candidat - ConceptionLogicielRH</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fa;
+            color: #243247;
+        }
+        header {
+            background: #172b4d;
+            color: white;
+            padding: 20px 7%;
+        }
+        main {
+            max-width: 1000px;
+            margin: 45px auto;
+            padding: 0 20px;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+            margin-top: 30px;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 14px;
+            border: 1px solid #dfe6f0;
+        }
+        .icon { font-size: 38px; }
+        .button {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 13px 18px;
+            background: #2457c5;
+            color: white;
+            border-radius: 7px;
+            text-decoration: none;
+        }
+        .dark { background: #172b4d; }
+        @media (max-width: 650px) {
+            .cards { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h2>ConceptionLogicielRH</h2>
+    <p>Espace candidat</p>
+</header>
+
+<main>
+    <p>Accueil / Mon CV</p>
+    <h1>Préparez votre candidature</h1>
+    <p>Choisissez comment vous souhaitez préparer votre CV.</p>
+
+    <div class="cards">
+        <section class="card">
+            <div class="icon">📝</div>
+            <h2>Créer mon CV</h2>
+            <p>
+                Complétez vos informations personnelles, vos formations,
+                vos expériences et vos compétences.
+            </p>
+            <a class="button" href="/candidat/cv/creer">
+                Compléter mon CV
+            </a>
+        </section>
+
+        <section class="card">
+            <div class="icon">📄</div>
+            <h2>Importer un CV existant</h2>
+            <p>
+                Sélectionnez un fichier CV sur votre ordinateur
+                au format PDF ou DOCX.
+            </p>
+            <a class="button dark" href="/candidat/cv/importer">
+                Choisir mon fichier
+            </a>
+        </section>
+    </div>
+
+    <section class="card" style="margin-top: 24px;">
+        <div class="icon">💼</div>
+        <h2>Offres d'emploi</h2>
+        <p>Découvrez les postes disponibles et trouvez une opportunité qui vous correspond.</p>
+        <a class="button" href="/candidat/offres">
+            Consulter les offres
+        </a>
+    </section>
+
+
+</main>
+</body>
+</html>

@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mes demandes - ConceptionLogicielRH</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fa;
+            color: #243247;
+        }
+        .layout { display: flex; min-height: 100vh; }
+        aside {
+            width: 250px;
+            flex-shrink: 0;
+            background: #172b4d;
+            color: white;
+            padding: 25px;
+        }
+        aside a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 12px 0;
+        }
+        aside a:hover { color: #a9c7ff; }
+        main { flex: 1; padding: 35px; min-width: 0; }
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 3px 12px #172b4d0d;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5eaf1;
+        }
+        th { color: #64748b; font-size: 13px; }
+        .empty { text-align: center; padding: 35px 10px; color: #64748b; }
+        .button {
+            display: inline-block;
+            background: #2457c5;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 7px;
+            text-decoration: none;
+        }
+        @media (max-width: 700px) {
+            .layout { flex-direction: column; }
+            aside { width: 100%; }
+            main { padding: 20px; overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside>
+        <h2>ConceptionLogicielRH</h2>
+        <p>Espace Manager</p>
+        <hr>
+        <a href="/manager/dashboard">▦ Tableau de bord</a>
+        <a href="/manager/dashboard?vue=nouvelle-demande">＋ Nouvelle demande</a>
+        <a href="/manager/dashboard?vue=mes-demandes">▤ Mes demandes</a>
+    </aside>
+
+    <main>
+        <p>Espace Manager / Mes demandes</p>
+        <h1>Mes demandes</h1>
+        <p>Consultez le suivi de vos demandes de personnel.</p>
+
+        <section class="panel">
+            <h2>Historique des demandes</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Poste demandé</th>
+                        <th>Date de la demande</th>
+                        <th>Effectif</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4" class="empty">
+                            Aucune demande enregistrée pour le moment.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top:25px">
+                <a class="button" href="/manager/dashboard?vue=nouvelle-demande">
+                    ＋ Créer une demande
+                </a>
+            </p>
+        </section>
+    </main>
+</div>
+</body>
+</html>
