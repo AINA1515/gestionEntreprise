@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tableau de bord | ConceptionLogicielRH</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="row g-0 min-vh-100">
+
+    <aside class="col-md-3 col-xl-2 bg-dark text-white p-3 d-flex flex-column">
+        <div class="fs-5 fw-bold mb-4">
+            ConceptionLogicielRH
+            <small class="d-block fs-6 fw-normal text-white-50">Espace Manager</small>
+        </div>
+
+        <div class="small text-uppercase text-white-50 px-2 mb-2">Menu principal</div>
+
+        <nav class="nav nav-pills flex-column gap-1">
+            <a href="/manager/dashboard" class="nav-link active">
+                <i class="bi bi-grid me-2" aria-hidden="true"></i>Tableau de bord
+            </a>
+            <a href="/manager/dashboard?vue=nouvelle-demande" class="nav-link text-white">
+                <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Nouvelle demande
+            </a>
+            <a href="/manager/dashboard?vue=mes-demandes" class="nav-link text-white">
+                <i class="bi bi-card-list me-2" aria-hidden="true"></i>Mes demandes
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-4 border-top border-secondary small text-white-50">
+            ConceptionLogicielRH<br>
+            Gestion des ressources humaines
+        </div>
+    </aside>
+
+    <main class="col-md-9 col-xl-10 bg-body-tertiary p-3 p-md-4">
+
+        <header class="d-flex justify-content-between align-items-center gap-3 mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb small mb-1">
+                        <li class="breadcrumb-item">Espace Manager</li>
+                        <li class="breadcrumb-item active" aria-current="page">Accueil</li>
+                    </ol>
+                </nav>
+                <h1 class="h3 mb-0">Tableau de bord</h1>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <span class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center p-2 fs-4" aria-hidden="true">
+                    <i class="bi bi-person"></i>
+                </span>
+                <div class="d-none d-sm-block">
+                    <div class="fw-semibold small">Manager</div>
+                    <div class="text-body-secondary small">Espace Manager</div>
+                </div>
+            </div>
+        </header>
+
+        <section class="mb-4">
+            <h2 class="h4">Bonjour, Manager !</h2>
+            <p class="text-body-secondary">
+                Bienvenue dans votre espace de travail.<br>
+                Retrouvez ici le suivi de vos demandes de personnel.
+            </p>
+        </section>
+
+        <section class="row mb-4">
+            <div class="col-md-6 col-xl-4">
+                <div class="card shadow-sm">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <span class="rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center p-3 fs-3" aria-hidden="true">
+                            <i class="bi bi-card-list"></i>
+                        </span>
+                        <div>
+                            <div class="small text-body-secondary">Nombre de demandes</div>
+                            <div class="fs-2 fw-bold">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                    <h2 class="h5 mb-0">Mes demandes récentes</h2>
+                    <a href="/manager/dashboard?vue=mes-demandes" class="small fw-semibold text-decoration-none">
+                        Voir mes demandes
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Poste demandé</th>
+                            <th>Date de la demande</th>
+                            <th>Effectif</th>
+                            <th>Statut</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr>
+                            <td colspan="4" class="text-center text-body-secondary py-4">
+                                Aucune demande à afficher pour le moment.<br>
+                                Vos demandes apparaîtront ici après leur enregistrement.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <a class="btn btn-primary mt-3"
+                   href="/manager/dashboard?vue=nouvelle-demande">
+                    <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Nouvelle demande
+                </a>
+            </div>
+        </section>
+
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

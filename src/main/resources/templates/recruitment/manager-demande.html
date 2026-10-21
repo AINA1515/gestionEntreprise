@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nouvelle demande - ConceptionLogicielRH</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="row g-0 min-vh-100">
+
+    <aside class="col-md-3 col-xl-2 bg-dark text-white p-3">
+        <h2 class="h5 fw-bold">ConceptionLogicielRH</h2>
+        <p class="text-white-50 mb-2">Espace Manager</p>
+        <hr class="border-secondary">
+
+        <nav class="nav nav-pills flex-column gap-1">
+            <a href="/manager/dashboard" class="nav-link text-white">
+                <i class="bi bi-grid me-2" aria-hidden="true"></i>Tableau de bord
+            </a>
+            <a href="/manager/dashboard?vue=nouvelle-demande" class="nav-link text-white">
+                <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Nouvelle demande
+            </a>
+            <a href="/manager/dashboard?vue=mes-demandes" class="nav-link text-white">
+                <i class="bi bi-card-list me-2" aria-hidden="true"></i>Mes demandes
+            </a>
+        </nav>
+    </aside>
+
+    <main class="col-md-9 col-xl-10 bg-body-tertiary p-3 p-md-4">
+        <div class="col-xl-8">
+
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb small mb-1">
+                    <li class="breadcrumb-item">Espace Manager</li>
+                    <li class="breadcrumb-item active" aria-current="page">Nouvelle demande</li>
+                </ol>
+            </nav>
+
+            <h1 class="h3">Nouvelle demande de personnel</h1>
+            <p class="text-body-secondary mb-4">Renseignez les informations nécessaires à votre demande.</p>
+
+            <form action="#" method="post" class="card shadow-sm">
+                <div class="card-body p-4">
+
+                    <div class="mb-3">
+                        <label for="poste" class="form-label">Poste demandé</label>
+                        <input id="poste" name="poste" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="departement" class="form-label">Département</label>
+                        <input id="departement" name="departement" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="effectif" class="form-label">Effectif demandé</label>
+                        <input id="effectif" name="effectif" type="number" min="1" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="motif" class="form-label">Motif de la demande</label>
+                        <textarea id="motif" name="motif" rows="4" class="form-control" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="budget" class="form-label">Budget estimé</label>
+                        <input id="budget" name="budget" type="number" min="0" step="0.01" class="form-control" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="dateSouhaitee" class="form-label">Date souhaitée</label>
+                        <input id="dateSouhaitee" name="dateSouhaitee" type="date" class="form-control" required>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            Enregistrer la demande
+                        </button>
+
+                        <a href="/manager/dashboard" class="btn btn-link">Annuler</a>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

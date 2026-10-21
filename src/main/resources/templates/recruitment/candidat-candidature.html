@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ma candidature - ConceptionLogicielRH</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body class="bg-body-tertiary">
+
+<header class="bg-primary text-white py-3 mb-4">
+    <div class="container">
+        <h2 class="h4 mb-0">ConceptionLogicielRH</h2>
+        <p class="mb-0 small text-white-50">Espace candidat · Ma candidature</p>
+    </div>
+</header>
+
+<main class="container pb-5">
+    <div class="col-lg-8 mx-auto">
+
+        <a class="btn btn-link px-0 mb-3" href="/candidat/offres">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Retour aux offres d'emploi
+        </a>
+
+        <h1 class="h2">Déposer ma candidature</h1>
+        <p class="text-body-secondary mb-4">Complétez les informations nécessaires pour postuler.</p>
+
+        <form>
+            <section class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">1. Informations du candidat</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="nom" class="form-label">Nom *</label>
+                        <input id="nom" name="nom" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="prenom" class="form-label">Prénom *</label>
+                        <input id="prenom" name="prenom" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Adresse e-mail *</label>
+                        <input id="email" name="email" type="email" class="form-control" required>
+                    </div>
+
+                    <div>
+                        <label for="telephone" class="form-label">Téléphone *</label>
+                        <input id="telephone" name="telephone" type="tel" class="form-control" required>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">2. Offre choisie</div>
+                <div class="card-body">
+                    <label for="offre" class="form-label">Poste souhaité *</label>
+                    <select id="offre" name="offre" class="form-select" required>
+                        <option value="">-- Choisir une offre --</option>
+                        <option value="assistant-rh">Assistant(e) RH</option>
+                        <option value="developpeur-java">Développeur Java</option>
+                        <option value="assistant-comptable">Assistant(e) comptable</option>
+                        <option value="assistant-administratif">
+                            Assistant(e) administratif(ve)
+                        </option>
+                    </select>
+                </div>
+            </section>
+
+            <section class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">3. Mon CV</div>
+                <div class="card-body">
+                    <label for="cv" class="form-label">Joindre mon CV (PDF ou DOCX)</label>
+                    <input id="cv" name="cv" type="file" class="form-control"
+                           accept=".pdf,.docx">
+
+                    <p class="form-text mb-0 mt-2">
+                        Vous pourrez également utiliser le CV créé dans votre espace candidat.
+                        La liaison automatique sera ajoutée ultérieurement.
+                    </p>
+                </div>
+            </section>
+
+            <section class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold">4. Message de motivation</div>
+                <div class="card-body">
+                    <label for="motivation" class="form-label">
+                        Pourquoi souhaitez-vous rejoindre notre entreprise ?
+                    </label>
+                    <textarea id="motivation" name="motivation" rows="5" class="form-control"
+                        placeholder="Présentez brièvement votre motivation..."></textarea>
+                </div>
+            </section>
+
+            <div class="mb-3">
+                <button class="btn btn-primary" type="button">
+                    Envoyer ma candidature
+                </button>
+            </div>
+
+            <p class="form-text">
+                Cette page constitue actuellement une maquette visuelle.
+                L'enregistrement réel de la candidature sera développé ensuite.
+            </p>
+        </form>
+
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,41 +1,146 @@
 # TODO P3 – Bloc 2 (Recrutement)
 
-**Projet :** Application Gestion RH · Spring Boot (`com.itu.gestionRH`) · JPA · API REST `/api/v1` · JWT · Front SPA
-**État de départ :** entités et repositories existants ; controllers et services = classes vides à implémenter.
-**Équipe :** P1 Fondations/Sécurité · P2 Organisation + Bloc 1 · P3 Bloc 2 · P4 Bloc 3 + Contrats · P5 Bloc 4 + Transverse
+**Projet :** Gestion RH · Spring Boot 4.1.1 · JPA · Spring Security · Thymeleaf · Oracle
+**Lire d'abord :** `00_VUE_ENSEMBLE_equipe.md`
+**Ton rôle :** transformer une demande validée en **offre d'emploi**, gérer les **candidatures**, les **entretiens** et les **évaluations**. Ta sortie (candidature `RETENUE`) déclenche, côté P4, l'**envoi automatique de la proposition d'embauche** (fonctionnalité F2).
 
-## Ce que je fournis aux autres
-- Candidatures au statut `Retenue` (point de départ de P4)
-- Évaluations et historique de traitement
+---
 
-## Ce que j'attends des autres
-- P1 : authentification, rôle `CANDIDAT`, layout front
-- P2 : demandes au statut `Validee`
-- P5 : `NotificationService`, `DocumentService` (upload CV)
+## 0. Livrables / dépendances
 
-## Backend (`/api/v1/recrutement`)
-- [ ] `POST /offres` : créer une `OffreEmploi` **uniquement** à partir d'une demande `Validee` ; statuts `Brouillon / Publiee / Cloturee`
-- [ ] `GET /offres` : liste publique (candidats) et interne (filtres)
-- [ ] Publication / clôture d'une offre
-- [ ] `POST /candidatures` : postuler (CV + lettre) ; empêcher la double candidature à la même offre
-- [ ] `GET /candidatures` : filtres par offre / statut (RH) ; candidatures du candidat connecté
-- [ ] `PATCH /candidatures/{id}/statut` : `Recue → Preselectionnee → En_Entretien → Retenue / Rejetee` (contrôle des transitions)
-- [ ] `CandidatureRecruteurService` : historiser quel recruteur traite quelle candidature
-- [ ] `EntretienService` : planifier un entretien (date, intervenant, lieu/lien)
-- [ ] `POST /candidatures/{id}/evaluations` : `EvaluationCandidat` (note, avis, décision `Favorable / Defavorable / Reserve`)
-- [ ] `EvaluationCritereService` : grille détaillée par critère
-- [ ] Transmettre les profils présélectionnés au manager concerné
-- [ ] Notifications : accusé de réception, changement de statut, convocation entretien
-- [ ] Tests : transitions de statut, droits d'accès par rôle
+| Tu fournis | À qui | Pour quand |
+|---|---|---|
+| Données de test : offre `PUBLIEE` + candidatures à tous les statuts | P4 | **J4** |
+| `CandidatureService.changerStatut(...)` + `CandidatureRetenueEvent` | P4 (F2) | **J8** |
+| Évaluations (`EvaluationCandidat`) lisibles par service | P4 (F1) | J8 |
+| Historique de traitement des candidatures | RH, Direction | J10 |
 
-## Frontend
-- [ ] **Candidat :** liste des offres, détail, formulaire de candidature + upload CV, suivi de ses candidatures
-- [ ] **Chargé de recrutement :** création / publication d'offre, tableau de présélection, planification d'entretiens
-- [ ] **Manager :** liste des candidats présélectionnés, fiche et grille d'évaluation
+| Tu attends | De qui | Solution de repli |
+|---|---|---|
+| Demandes `VALIDEE` | P2 | insérer une demande `VALIDEE` dans le script de démo |
+| Compte `CANDIDAT`, login | P1 | profil `dev` |
+| `DocumentFacade.stocker` (CV, lettre) | P5 | stockage provisoire dans `./uploads` puis brancher |
+| `NotificationFacade`, `WorkflowEngine` | P5 | `log.info` temporaire |
 
-## Recette (Étape 5)
-- [ ] Scénario : offre → candidature → présélection → entretien → évaluation → candidature retenue
+---
 
-## Écarts à trancher
-1. Statuts de candidature : `enum` partagée avec P4.
-2. Où stocker le CV : `cv_url` sur `Candidat` ou `Document` via la GED (à caler avec P5).
+## Partie A – Offres d'emploi (`OFFRE_EMPLOI`) (J3-J6)
+
+Statuts : `BROUILLON, PUBLIEE, CLOTUREE` · diffusion : `INTERNE, EXTERNE, MIXTE`.
+
+- [ ] `OffreEmploiService.creerDepuisDemande(demandeId, form)` :
+  - La demande doit être **`VALIDEE`** (sinon `BusinessException`) et ne doit pas déjà avoir une offre active
+  - Pré-remplir `titre` et `description_poste` depuis le poste ; `profil_recherche`, `diffusion`, `date_limite_candidature` saisis par le Chargé RH
+  - Statut initial `BROUILLON`
+- [ ] `publier(id)` : `BROUILLON → PUBLIEE`, renseigne `DATE_PUBLICATION`, vérifie que titre/description/profil sont remplis et que `date_limite_candidature` est dans le futur
+- [ ] `cloturer(id)` : `PUBLIEE → CLOTUREE`, renseigne `DATE_CLOTURE`
+  - **Clôture automatique** (tâche planifiée `@Scheduled(cron = "0 0 1 * * *")`) quand `date_limite_candidature` est dépassée
+  - À la clôture : les candidatures encore `RECUE` restent consultables ; les candidats concernés peuvent être prévenus (bonus)
+- [ ] `lister` : version **publique/candidat** (offres `PUBLIEE` dont la diffusion est `EXTERNE`/`MIXTE`, non expirées) et version **interne** (tous statuts, filtres : statut, département, texte) avec pagination
+- [ ] Endpoints REST `POST /api/v1/recrutement/offres`, `GET /api/v1/recrutement/offres` (spec §5.2)
+- [ ] Tests : création depuis demande non validée → refus ; publication d'une offre incomplète → refus ; offre clôturée invisible côté candidat
+
+---
+
+## Partie B – Candidatures (`CANDIDATURE`) (J4-J9)
+
+Statuts : `RECUE, PRESELECTIONNEE, EN_ENTRETIEN, RETENUE, REJETEE`. Contrainte base : `UNIQUE (OFFRE_ID, CANDIDAT_ID)`.
+
+### B1. Postuler (rôle CANDIDAT)
+- [ ] `CandidatureService.postuler(offreId, form, fichierCv, lettre)` :
+  - L'offre est `PUBLIEE` et non expirée
+  - **Pas de double candidature** : contrôle applicatif (`existsByOffreIdAndCandidatId`) **et** gestion de l'exception de la contrainte `UK_CDT_OFFRE_CAND` (deux clics rapides)
+  - CV : appeler `DocumentFacade.stocker(..., TypeDocument.CV, "CANDIDATURE", id, ...)` (décision D7 : le CV est dans la GED, `CANDIDAT.CV_URL` pointe vers le courant) ; lettre de motivation facultative (`LETTRE_MOTIVATION`)
+  - Statut initial `RECUE`, `DATE_POSTULATION` = aujourd'hui
+  - **Accusé de réception** par e-mail (notification `CANDIDATURE_RECUE`)
+  - Notifier le Chargé de recrutement
+- [ ] `mesCandidatures()` : uniquement celles du candidat connecté (via `Utilisateur.candidatId`)
+- [ ] Le candidat peut **retirer** sa candidature tant qu'elle n'est pas `EN_ENTRETIEN` (statut `REJETEE` avec motif « retirée par le candidat » ou champ dédié – à décider, ne pas supprimer)
+
+### B2. Traitement RH
+- [ ] `lister(filtres, pageable)` : filtres offre, statut, texte (nom/e-mail) ; accessible CHARGE_RECRUTEMENT (tout) et MANAGER (**seulement** les candidatures `PRESELECTIONNEE+` de ses offres)
+- [ ] `changerStatut(id, nouveauStatut, motif)` — contrôle via `WorkflowEngine` :
+  - `RECUE → PRESELECTIONNEE | REJETEE`
+  - `PRESELECTIONNEE → EN_ENTRETIEN | REJETEE`
+  - `EN_ENTRETIEN → RETENUE | REJETEE`
+  - États `RETENUE` et `REJETEE` **terminaux**
+  - `REJETEE` exige un **motif** ; le candidat est notifié du changement de statut
+- [ ] **Passage à `EN_ENTRETIEN` automatique** à la planification du premier entretien (Partie C) ; **passage à `RETENUE`** uniquement si une évaluation `FAVORABLE` existe (règle à confirmer avec le groupe)
+- [ ] **Publier `CandidatureRetenueEvent(candidatureId)` après commit** (`ApplicationEventPublisher`) quand le statut devient `RETENUE` → **P4 en fait la proposition d'embauche automatique** (F2). Ne **pas** appeler P4 directement : ça évite un couplage et un blocage si P4 est en retard
+- [ ] Quand une candidature est `RETENUE`, **rejeter automatiquement les autres candidatures** de la même offre si l'effectif demandé est atteint (option, avec notification) — à décider avec P2 (effectif de la demande)
+- [ ] **Transmission au manager** : vue « Candidats présélectionnés » pour le manager de la demande + notification quand de nouveaux profils sont transmis (`CANDIDATURES_TRANSMISES`)
+- [ ] Endpoints REST `GET /api/v1/recrutement/candidatures`, `POST /candidatures`, `PATCH /candidatures/{id}/statut` (spec §5.2)
+
+### B3. Historique recruteur (`CandidatureRecruteur`)
+- [ ] `CandidatureRecruteurService.assigner(candidatureId, recruteurId)` : ferme la ligne courante (`DATE_FIN`) puis insère la nouvelle ; une candidature a **un seul recruteur actif** à la fois
+- [ ] Assigner automatiquement le Chargé RH qui présélectionne s'il n'y en a pas
+- [ ] Écran « Historique de traitement » sur la fiche candidature
+
+---
+
+## Partie C – Entretiens et évaluations (J7-J10)
+
+### C1. Entretiens (`ENTRETIEN`) – types `RH, TECHNIQUE, FINAL` · statuts `PLANIFIE, REALISE, ANNULE, REPORTE`
+- [ ] `EntretienService.planifier(candidatureId, form)` : date/heure **future**, type, intervenant (utilisateur Manager/RH), lieu ou lien visio
+  - Refuser si le candidat n'est pas `PRESELECTIONNEE` ou `EN_ENTRETIEN`
+  - **Détection de conflit** : l'intervenant ne peut pas avoir deux entretiens qui se chevauchent
+  - Notification de **convocation** (candidat + intervenant) avec date/lieu
+- [ ] `reporter`, `annuler` (motif) → nouvelle notification ; un entretien `REALISE` ne se modifie plus
+- [ ] Un entretien devient `REALISE` quand l'évaluation est saisie
+- [ ] (Bonus) génération d'un fichier `.ics` pour l'agenda
+
+### C2. Évaluation (`EVALUATION_CANDIDAT` + `EVALUATION_CRITERE`)
+- [ ] `EvaluationCandidatService.saisir(entretienId, form)` : `note_technique` entre **0 et 20**, `commentaires`, `decision` (`FAVORABLE/DEFAVORABLE/RESERVE`)
+  - **Une seule évaluation par entretien** (`UK_EVAL_ENTRETIEN`)
+  - Seul l'intervenant désigné (ou un RH) peut saisir
+- [ ] `EvaluationCritereService` : grille détaillée (`CRITERE`, `NOTE` 0-20, `POIDS` > 0) ; **la note technique globale peut être calculée** = moyenne pondérée (Σ note×poids / Σ poids) – recalcul automatique à chaque modification de critère
+- [ ] Endpoint REST `POST /api/v1/recrutement/candidatures/{id}/evaluations` (spec §5.2)
+- [ ] Fournir à P4 `EvaluationCandidatService.derniereDecision(candidatureId)` (utilisé par la validation auto F1)
+
+### C3. Notifications du Bloc 2 (via `NotificationFacade` de P5)
+| Code modèle | Quand | Destinataire |
+|---|---|---|
+| `CANDIDATURE_RECUE` | candidature déposée | candidat |
+| `CANDIDATURE_STATUT` | changement de statut | candidat |
+| `ENTRETIEN_CONVOCATION` | entretien planifié/reporté/annulé | candidat + intervenant |
+| `CANDIDATURES_TRANSMISES` | profils présélectionnés envoyés | manager |
+| `EVALUATION_SAISIE` | évaluation terminée | chargé RH |
+
+---
+
+## Partie D – Frontend Thymeleaf (J5-J11)
+
+Maquettes à brancher : `recruitment/candidat-offres.html`, `candidat-candidature.html`, `rh-candidatures.html`, `security/candidat-cv.html`, `candidat-cv-creer.html`.
+
+- [ ] **Candidat – `candidat-offres.html`** : liste paginée des offres publiées, recherche par mot-clé, détail d'une offre, bouton « Postuler » (désactivé si déjà candidat ou offre expirée)
+- [ ] **Candidat – `candidat-candidature.html`** : formulaire (CV + lettre), contrôle côté client du type (`pdf, doc, docx`) et de la taille (voir `app.stockage.taille-max-mo`), page de confirmation
+- [ ] **Candidat – espace « Mes candidatures »** : statut avec `badgeStatut` et frise (Reçue → Présélectionnée → Entretien → Retenue/Rejetée), proposition d'embauche si disponible (écran de P4)
+- [ ] **Candidat – `candidat-cv.html` / `candidat-cv-creer.html`** : consultation et création du CV en ligne ; **à clarifier en J1** (le CV créé en ligne est-il un `DOCUMENT` généré ?), importation d'un fichier via P5
+- [ ] **Chargé RH – création/publication d'offre** : formulaire depuis une demande `VALIDEE`, boutons Publier / Clôturer
+- [ ] **Chargé RH – `rh-candidatures.html`** : tableau de présélection (filtres offre/statut), actions groupées « Présélectionner », « Rejeter » (motif), planification d'entretien, voir CV (lien GED sécurisé)
+- [ ] **Manager** : liste des candidats présélectionnés de son département, fiche candidat (CV, historique), **grille d'évaluation** (critères dynamiques + note globale calculée + décision)
+- [ ] Vérifier chaque écran avec un rôle non autorisé (403)
+
+---
+
+## Tests (à fournir avec la PR)
+- [ ] Postuler deux fois à la même offre → refus (applicatif **et** contrainte de base)
+- [ ] Postuler à une offre `CLOTUREE` ou expirée → refus
+- [ ] Transitions de statut : toutes les autorisées + `RETENUE→REJETEE`, `REJETEE→PRESELECTIONNEE`, `RECUE→RETENUE` refusées
+- [ ] Rejet sans motif → refus
+- [ ] Conflit d'horaire d'un intervenant → refus
+- [ ] Note hors 0–20 → refus ; calcul de la moyenne pondérée
+- [ ] `CandidatureRetenueEvent` publié **une seule fois**, seulement au passage à `RETENUE`
+- [ ] Un manager ne voit pas les candidatures d'un autre département ; un candidat ne voit que les siennes
+
+## Recette (J13-J14)
+- [ ] **S3 :** offre → candidature → présélection → entretien → évaluation → `RETENUE`
+- [ ] Vérifier la réception des e-mails (accusé de réception, convocation, changement de statut)
+- [ ] Vérifier que le passage à `RETENUE` déclenche bien la proposition automatique chez P4 (**S4**)
+
+## Écarts / points à trancher
+1. Statuts de candidature : enum `StatutCandidature` partagée avec P4 → **résolu** (créée par P1, valeurs en majuscules).
+2. Stockage du CV : décision D7 (GED recommandée) → à confirmer avec P5.
+3. Faut-il rejeter automatiquement les autres candidatures quand l'effectif est atteint ? (à décider avec P2).
+4. Condition exacte pour passer à `RETENUE` : une évaluation `FAVORABLE` obligatoire, ou simple décision du Chargé RH ?
+5. Retrait de candidature par le candidat : quel statut (`REJETEE` + motif ou nouvel état) ? Le `CHECK` actuel n'a pas de statut `RETIREE`.

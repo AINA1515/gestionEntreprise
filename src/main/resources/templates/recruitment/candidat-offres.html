@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Offres d'emploi - ConceptionLogicielRH</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body class="bg-body-tertiary">
+
+<header class="bg-primary text-white py-3 mb-4">
+    <div class="container">
+        <h2 class="h4 mb-0">ConceptionLogicielRH</h2>
+        <p class="mb-0 small text-white-50">Espace candidat</p>
+    </div>
+</header>
+
+<main class="container pb-5">
+
+    <a class="btn btn-link px-0 mb-3" href="/candidat/cv">
+        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Retour à mon espace candidat
+    </a>
+
+    <div class="mb-4">
+        <h1 class="h2">Nos offres d'emploi</h1>
+        <p class="text-body-secondary">
+            Découvrez les opportunités et trouvez le poste
+            qui correspond à votre profil.
+        </p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                <input type="search" class="form-control" placeholder="Rechercher un poste...">
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <select class="form-select">
+                <option value="">Tous les départements</option>
+                <option>Ressources humaines</option>
+                <option>Informatique</option>
+                <option>Finance et comptabilité</option>
+                <option>Administration</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <select class="form-select">
+                <option value="">Tous les contrats</option>
+                <option>CDI</option>
+                <option>CDD</option>
+                <option>Stage</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
+
+        <div class="col">
+            <article class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <span class="badge text-bg-primary align-self-start mb-2">Ressources humaines</span>
+                    <h2 class="h5 card-title">Assistant(e) RH</h2>
+                    <ul class="list-unstyled text-body-secondary small">
+                        <li><i class="bi bi-geo-alt me-2" aria-hidden="true"></i>Antananarivo</li>
+                        <li><i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>CDD</li>
+                        <li><i class="bi bi-clock me-2" aria-hidden="true"></i>Temps plein</li>
+                    </ul>
+                    <p class="card-text">
+                        Participer à la gestion administrative du personnel,
+                        au suivi des dossiers et aux activités de recrutement.
+                    </p>
+                    <a class="btn btn-primary mt-auto align-self-start" href="#offre-assistant-rh">
+                        Voir l'offre
+                    </a>
+                </div>
+            </article>
+        </div>
+
+        <div class="col">
+            <article class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <span class="badge text-bg-primary align-self-start mb-2">Informatique</span>
+                    <h2 class="h5 card-title">Développeur Java</h2>
+                    <ul class="list-unstyled text-body-secondary small">
+                        <li><i class="bi bi-geo-alt me-2" aria-hidden="true"></i>Antananarivo</li>
+                        <li><i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>CDI</li>
+                        <li><i class="bi bi-clock me-2" aria-hidden="true"></i>Temps plein</li>
+                    </ul>
+                    <p class="card-text">
+                        Participer au développement, aux tests et à la
+                        maintenance des applications de l'entreprise.
+                    </p>
+                    <a class="btn btn-primary mt-auto align-self-start" href="#offre-developpeur">
+                        Voir l'offre
+                    </a>
+                </div>
+            </article>
+        </div>
+
+        <div class="col">
+            <article class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <span class="badge text-bg-primary align-self-start mb-2">Finance et comptabilité</span>
+                    <h2 class="h5 card-title">Assistant(e) comptable</h2>
+                    <ul class="list-unstyled text-body-secondary small">
+                        <li><i class="bi bi-geo-alt me-2" aria-hidden="true"></i>Antananarivo</li>
+                        <li><i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>CDD</li>
+                        <li><i class="bi bi-clock me-2" aria-hidden="true"></i>Temps plein</li>
+                    </ul>
+                    <p class="card-text">
+                        Contribuer au suivi des factures, à la saisie
+                        comptable et à la préparation des documents financiers.
+                    </p>
+                    <a class="btn btn-primary mt-auto align-self-start" href="#offre-comptable">
+                        Voir l'offre
+                    </a>
+                </div>
+            </article>
+        </div>
+
+        <div class="col">
+            <article class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <span class="badge text-bg-primary align-self-start mb-2">Administration</span>
+                    <h2 class="h5 card-title">Assistant(e) administratif(ve)</h2>
+                    <ul class="list-unstyled text-body-secondary small">
+                        <li><i class="bi bi-geo-alt me-2" aria-hidden="true"></i>Antananarivo</li>
+                        <li><i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>Stage</li>
+                        <li><i class="bi bi-clock me-2" aria-hidden="true"></i>Temps plein</li>
+                    </ul>
+                    <p class="card-text">
+                        Assurer le classement des documents, le suivi
+                        administratif et l'organisation des dossiers.
+                    </p>
+                    <a class="btn btn-primary mt-auto align-self-start" href="#offre-administration">
+                        Voir l'offre
+                    </a>
+                </div>
+            </article>
+        </div>
+
+    </div>
+
+    <p class="form-text">
+        Les offres affichées sont des exemples pour la maquette.
+        Elles ne correspondent pas encore à des postes réellement ouverts.
+    </p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
