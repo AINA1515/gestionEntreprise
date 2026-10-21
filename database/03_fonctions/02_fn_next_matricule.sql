@@ -16,14 +16,6 @@ BEGIN
       WHEN DUP_VAL_ON_INDEX THEN   -- cree en parallele par une autre session
         UPDATE COMPTEUR_MATRICULE
            SET DERNIER_NUMERO = DERNIER_NUMERO + 1-- PROMPT === 8. Fonctions ===
-
--- Utilisateur applicatif (CLIENT_IDENTIFIER) ou, a defaut, utilisateur Oracle
-CREATE OR REPLACE FUNCTION FN_USER RETURN VARCHAR2 IS
-BEGIN
-  RETURN SUBSTR(NVL(SYS_CONTEXT('USERENV','CLIENT_IDENTIFIER'), USER), 1, 100);
-END FN_USER;
-/
-
          WHERE ANNEE = v_annee
         RETURNING DERNIER_NUMERO INTO v_n;
     END;
