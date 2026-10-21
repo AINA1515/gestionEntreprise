@@ -14,7 +14,8 @@
 | Enums (`com.itu.gestionRH.enums`), exceptions, `GlobalExceptionHandler` | Tous | **J2** |
 | Profil `dev` (sécurité désactivée, utilisateur fictif) | Tous | **J2** |
 | Script de données de démo (1 utilisateur par rôle, etc.) | Tous | **J3** |
-| Login + rôles + `UtilisateurCourant` + `@PreAuthorize` | Tous | **J6** |
+| Login + rôles + `UtilisateurCourant` + `@PreAuthorize` | Tous | *
+*J6** |
 | Layout Thymeleaf (menu dynamique, fragments communs) | Tous | **J6** |
 | `LogAccesDocumentService.journaliser(...)` | P5 | **J5** |
 | Écrans admin utilisateurs / rôles | Tous | **J10** |

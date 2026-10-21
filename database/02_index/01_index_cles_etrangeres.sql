@@ -1,7 +1,7 @@
 /* =============================================================================
    7. INDEX SUR CLES ETRANGERES ET RECHERCHES FREQUENTES
    ============================================================================= */
-PROMPT === 7. Index ===
+-- PROMPT === 7. Index ===
 
 CREATE INDEX IX_UTIL_EMP    ON UTILISATEUR (EMPLOYE_ID);
 CREATE INDEX IX_UTIL_CAND   ON UTILISATEUR (CANDIDAT_ID);

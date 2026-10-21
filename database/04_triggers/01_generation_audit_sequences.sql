@@ -8,7 +8,7 @@
      - TBD_<TABLE> : interdit le DELETE physique (tables sensibles)
    Pour chaque table de journal : sequence, TBR_ (ID), TBX_ (UPDATE/DELETE interdits).
    ============================================================================= */
-PROMPT === 9. Generation des triggers ===
+-- PROMPT === 9. Generation des triggers ===
 
 DECLARE
   TYPE t_liste IS TABLE OF VARCHAR2(30);

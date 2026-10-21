@@ -1,7 +1,7 @@
 /* =============================================================================
    6. JOURNAUX DE SECURITE (ajout seul)
    ============================================================================= */
-PROMPT === 6. Journaux ===
+-- PROMPT === 6. Journaux ===
 
 CREATE TABLE LOG_CONNEXION (
   ID               NUMBER(15)     NOT NULL,

@@ -1,7 +1,7 @@
 /* =============================================================================
    2. STRUCTURE ORGANISATIONNELLE + BLOC 1 : EXPRESSION DU BESOIN
    ============================================================================= */
-PROMPT === 2. Organisation et Bloc 1 ===
+-- PROMPT === 2. Organisation et Bloc 1 ===
 
 CREATE TABLE DEPARTEMENT (
   ID                      NUMBER(10)    NOT NULL,

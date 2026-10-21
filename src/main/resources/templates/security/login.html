@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Connexion | ConceptionLogicielRH</title>
-     <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="bootstrap/css/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/bootstrap/css/bootstrap-icons.min.css}" rel="stylesheet">
 </head>
 <body>
 <div class="row g-0 min-vh-100">
@@ -145,7 +145,7 @@
 
     </main>
 
-</div><script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+</div><script th:src="@{bootstrap/js/bootstrap.bundle.min.js}"></script>
 
 </body>
 </html>

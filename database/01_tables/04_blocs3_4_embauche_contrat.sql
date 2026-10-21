@@ -1,7 +1,7 @@
 /* =============================================================================
    4. BLOC 3 : EMBAUCHE   |   BLOC 4 : CONTRATS, AFFECTATIONS, ONBOARDING
    ============================================================================= */
-PROMPT === 4. Blocs 3 et 4 ===
+-- PROMPT === 4. Blocs 3 et 4 ===
 
 CREATE TABLE PROPOSITION_EMBAUCHE (
   ID                      NUMBER(10)     NOT NULL,

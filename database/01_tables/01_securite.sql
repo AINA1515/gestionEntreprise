@@ -1,7 +1,7 @@
 /* =============================================================================
    1. SECURITE / RBAC
    ============================================================================= */
-PROMPT === 1. Securite ===
+-- PROMPT === 1. Securite ===
 
 -- CANDIDAT est cree ici car il est reference par EMPLOYE et UTILISATEUR.
 -- Une personne externe qui postule. Conserve son historique meme apres embauche.

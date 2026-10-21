@@ -1,7 +1,7 @@
 /* =============================================================================
    12. DONNEES DE REFERENCE
    ============================================================================= */
-PROMPT === 12. Donnees de reference ===
+-- PROMPT === 12. Donnees de reference ===
 
 INSERT INTO ROLE_RH (CODE, LIBELLE, DESCRIPTION) VALUES ('MANAGER', 'Manager / Chef de departement', 'Exprime les besoins, evalue les candidats, realise les taches d''accueil');
 INSERT INTO ROLE_RH (CODE, LIBELLE, DESCRIPTION) VALUES ('CHARGE_RECRUTEMENT', 'Charge de recrutement RH', 'Qualifie les demandes, publie les offres, preselectionne, emet les propositions');
