@@ -1,5 +1,12 @@
 package com.itu.gestionRH.entity.security;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.CompteStatut;
+import com.itu.gestionRH.entity.enums.CompteType;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,6 +27,11 @@ import com.itu.gestionRH.entity.organization.Employe;
 @Table(name = "UTILISATEUR")
 public class Utilisateur {
 
+    protected Utilisateur() {}
+
+    public static Utilisateur nouvelle() { return new Utilisateur(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "utilisateurGen")
     @SequenceGenerator(name = "utilisateurGen", sequenceName = "SEQ_UTILISATEUR", allocationSize = 1)
@@ -38,12 +50,14 @@ public class Utilisateur {
     private String motDePasseHash;
 
     @Column(name = "TYPE_COMPTE", nullable = false, length = 10)
-    private String typeCompte;
+    @Enumerated(EnumType.STRING)
+    private CompteType typeCompte;
 
     @Column(name = "STATUT_COMPTE", nullable = false, length = 12)
-    private String statutCompte;
+    @Enumerated(EnumType.STRING)
+    private CompteStatut statutCompte;
 
-    @Column(name = "NB_ECHECS_CONNEXION")
+    @Column(name = "NB_ECHECS_CONNEXION", precision = 3, scale = 0, nullable = false)
     private Integer nbEchecsConnexion;
 
     @Column(name = "DATE_DERNIERE_CONNEXION")
@@ -65,27 +79,25 @@ public class Utilisateur {
     private Candidat candidat;
 
     // Colonnes d'audit gérées par le trigger TBR_UTILISATEUR (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getLogin() {
@@ -120,11 +132,11 @@ public class Utilisateur {
         this.motDePasseHash = motDePasseHash;
     }
 
-    public String getTypeCompte() {
+    public CompteType getTypeCompte() {
         return typeCompte;
     }
 
-    public void setTypeCompte(String typeCompte) {
+    public void setTypeCompte(CompteType typeCompte) {
         this.typeCompte = typeCompte;
     }
 
@@ -138,11 +150,11 @@ public class Utilisateur {
         return candidat != null ? candidat.getId() : null;
     }
 
-    public String getStatutCompte() {
+    public CompteStatut getStatutCompte() {
         return statutCompte;
     }
 
-    public void setStatutCompte(String statutCompte) {
+    public void setStatutCompte(CompteStatut statutCompte) {
         this.statutCompte = statutCompte;
     }
 
@@ -190,39 +202,19 @@ public class Utilisateur {
         return dateCreation;
     }
 
-    public void setDateCreation(LocalDateTime dateCreation) {
-        this.dateCreation = dateCreation;
-    }
-
     public String getCreePar() {
         return creePar;
-    }
-
-    public void setCreePar(String creePar) {
-        this.creePar = creePar;
     }
 
     public LocalDateTime getDateModification() {
         return dateModification;
     }
 
-    public void setDateModification(LocalDateTime dateModification) {
-        this.dateModification = dateModification;
-    }
-
     public String getModifiePar() {
         return modifiePar;
     }
 
-    public void setModifiePar(String modifiePar) {
-        this.modifiePar = modifiePar;
-    }
-
     public Long getVersionLigne() {
         return versionLigne;
-    }
-
-    public void setVersionLigne(Long versionLigne) {
-        this.versionLigne = versionLigne;
     }
 }

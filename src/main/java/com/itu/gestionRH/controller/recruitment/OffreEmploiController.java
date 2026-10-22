@@ -49,7 +49,7 @@ public class OffreEmploiController {
     @Transactional(readOnly = true)
     public List<OffreResponse> lister(@RequestParam(defaultValue = "PUBLIEE") String statut) {
         return offreRepository.findAll().stream()
-                .filter(o -> statut.equalsIgnoreCase(o.getStatutOffre()))
+                .filter(o -> statut.equalsIgnoreCase(o.getStatutOffre().name()))
                 .map(OffreEmploiController::toResponse)
                 .toList();
     }
@@ -69,6 +69,6 @@ public class OffreEmploiController {
             departement = o.getDemande().getPoste().getDepartement().getLibelle();
         }
         return new OffreResponse(o.getId(), o.getTitre(), o.getDescriptionPoste(), o.getProfilRecherche(),
-                departement, o.getDatePublication(), o.getDateLimiteCandidature(), o.getStatutOffre());
+                departement, o.getDatePublication(), o.getDateLimiteCandidature(), o.getStatutOffre().name());
     }
 }

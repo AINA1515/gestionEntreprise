@@ -65,7 +65,7 @@ public class CandidatureController {
                                             @RequestParam(required = false) String statut) {
         return candidatureRepository.findAll().stream()
                 .filter(c -> offreId == null || (c.getOffre() != null && offreId.equals(c.getOffre().getId())))
-                .filter(c -> statut == null || statut.equals(c.getStatutCandidature()))
+                .filter(c -> statut == null || statut.equals(c.getStatutCandidature().name()))
                 .map(CandidatureController::toResponse).toList();
     }
 
@@ -80,6 +80,6 @@ public class CandidatureController {
                 + (cand.getNom() == null ? "" : cand.getNom())).trim();
         return new CandidatureResponse(c.getId(), nom, cand != null ? cand.getEmail() : null,
                 c.getOffre() != null ? c.getOffre().getTitre() : null,
-                c.getDatePostulation(), c.getStatutCandidature());
+                c.getDatePostulation(), c.getStatutCandidature().name());
     }
 }

@@ -1,5 +1,14 @@
 package com.itu.gestionRH.entity.documents;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.DocumentStatut;
+import com.itu.gestionRH.entity.enums.DocumentConfidentialite;
+import com.itu.gestionRH.entity.enums.DocumentEntite;
+import com.itu.gestionRH.entity.enums.TypeDocument;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,6 +27,11 @@ import jakarta.persistence.FetchType;
 @Table(name = "DOCUMENT")
 public class Document {
 
+    protected Document() {}
+
+    public static Document nouvelle() { return new Document(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "documentGen")
     @SequenceGenerator(name = "documentGen", sequenceName = "SEQ_DOCUMENT", allocationSize = 1)
@@ -27,12 +41,14 @@ public class Document {
     private String nomFichier;
 
     @Column(name = "TYPE_DOCUMENT", nullable = false, length = 25)
-    private String typeDocument;
+    @Enumerated(EnumType.STRING)
+    private TypeDocument typeDocument;
 
     @Column(name = "ENTITE_RATTACHEMENT", nullable = false, length = 30)
-    private String entiteRattachement;
+    @Enumerated(EnumType.STRING)
+    private DocumentEntite entiteRattachement;
 
-    @Column(name = "ENTITE_ID", nullable = false)
+    @Column(name = "ENTITE_ID", nullable = false, precision = 10, scale = 0)
     private Long entiteId;
 
     @Column(name = "URL_STOCKAGE_GED", nullable = false, length = 1000)
@@ -41,13 +57,13 @@ public class Document {
     @Column(name = "TYPE_MIME", length = 100)
     private String typeMime;
 
-    @Column(name = "TAILLE_OCTETS")
+    @Co, precision = 12, scale = 0lumn(name = "TAILLE_OCTETS")
     private Long tailleOctets;
 
     @Column(name = "EMPREINTE_SHA256", length = 64)
-    private String empreinteSha256;
+    private String, precision = 5, scale = 0 empreinteSha256;
 
-    @Column(name = "NUMERO_VERSION")
+    @Column(name = "NUMERO_VERSION", nullable = false)
     private Integer numeroVersion;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -55,38 +71,41 @@ public class Document {
     private Document documentPrecedent;
 
     @Column(name = "CONFIDENTIALITE", nullable = false, length = 12)
-    private String confidentialite;
+    @Enumerated(EnumType.STRING)
+    private DocumentConfidentialite confidentialite;
 
     @Column(name = "STATUT_DOCUMENT", nullable = false, length = 10)
-    private String statutDocument;
+    @Enumerated(EnumType.STRING)
+    private DocumentStatut statutDocument;
 
     // Colonnes d'audit gérées par le trigger TBR_DOCUMENT (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getNomFichier() { return nomFichier; }
     public void setNomFichier(String nomFichier) { this.nomFichier = nomFichier; }
 
-    public String getTypeDocument() { return typeDocument; }
-    public void setTypeDocument(String typeDocument) { this.typeDocument = typeDocument; }
+    public TypeDocument getTypeDocument() { return typeDocument; }
+    public void setTypeDocument(TypeDocument typeDocument) { this.typeDocument = typeDocument; }
 
-    public String getEntiteRattachement() { return entiteRattachement; }
-    public void setEntiteRattachement(String entiteRattachement) { this.entiteRattachement = entiteRattachement; }
+    public DocumentEntite getEntiteRattachement() { return entiteRattachement; }
+    public void setEntiteRattachement(DocumentEntite entiteRattachement) { this.entiteRattachement = entiteRattachement; }
 
     public Long getEntiteId() { return entiteId; }
     public void setEntiteId(Long entiteId) { this.entiteId = entiteId; }
@@ -109,24 +128,19 @@ public class Document {
     public Document getDocumentPrecedent() { return documentPrecedent; }
     public void setDocumentPrecedent(Document documentPrecedent) { this.documentPrecedent = documentPrecedent; }
 
-    public String getConfidentialite() { return confidentialite; }
-    public void setConfidentialite(String confidentialite) { this.confidentialite = confidentialite; }
+    public DocumentConfidentialite getConfidentialite() { return confidentialite; }
+    public void setConfidentialite(DocumentConfidentialite confidentialite) { this.confidentialite = confidentialite; }
 
-    public String getStatutDocument() { return statutDocument; }
-    public void setStatutDocument(String statutDocument) { this.statutDocument = statutDocument; }
+    public DocumentStatut getStatutDocument() { return statutDocument; }
+    public void setStatutDocument(DocumentStatut statutDocument) { this.statutDocument = statutDocument; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

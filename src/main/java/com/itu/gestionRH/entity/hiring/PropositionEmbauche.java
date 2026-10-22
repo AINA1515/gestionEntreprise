@@ -1,5 +1,12 @@
 package com.itu.gestionRH.entity.hiring;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.PropositionStatut;
+import com.itu.gestionRH.entity.enums.ContratType;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -25,6 +32,11 @@ import com.itu.gestionRH.entity.recruitment.Candidature;
 @Table(name = "PROPOSITION_EMBAUCHE")
 public class PropositionEmbauche {
 
+    protected PropositionEmbauche() {}
+
+    public static PropositionEmbauche nouvelle() { return new PropositionEmbauche(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "propositionEmbaucheGen")
     @SequenceGenerator(name = "propositionEmbaucheGen", sequenceName = "SEQ_PROPOSITION_EMBAUCHE", allocationSize = 1)
@@ -39,7 +51,8 @@ public class PropositionEmbauche {
     private Utilisateur redacteur;
 
     @Column(name = "TYPE_CONTRAT_PROPOSE", nullable = false, length = 12)
-    private String typeContratPropose;
+    @Enumerated(EnumType.STRING)
+    private ContratType typeContratPropose;
 
     @Column(name = "SALAIRE_BRUT_PROPOSE", precision = 15, scale = 2)
     private BigDecimal salaireBrutPropose;
@@ -64,26 +77,28 @@ public class PropositionEmbauche {
     private Employe employe;
 
     @Column(name = "STATUT_PROPOSITION", nullable = false, length = 10)
-    private String statutProposition;
+    @Enumerated(EnumType.STRING)
+    private PropositionStatut statutProposition;
 
     // Colonnes d'audit gérées par le trigger TBR_PROPOSITION_EMBAUCHE (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public Candidature getCandidature() { return candidature; }
     public void setCandidature(Candidature candidature) { this.candidature = candidature; }
@@ -91,8 +106,8 @@ public class PropositionEmbauche {
     public Utilisateur getRedacteur() { return redacteur; }
     public void setRedacteur(Utilisateur redacteur) { this.redacteur = redacteur; }
 
-    public String getTypeContratPropose() { return typeContratPropose; }
-    public void setTypeContratPropose(String typeContratPropose) { this.typeContratPropose = typeContratPropose; }
+    public ContratType getTypeContratPropose() { return typeContratPropose; }
+    public void setTypeContratPropose(ContratType typeContratPropose) { this.typeContratPropose = typeContratPropose; }
 
     public BigDecimal getSalaireBrutPropose() { return salaireBrutPropose; }
     public void setSalaireBrutPropose(BigDecimal salaireBrutPropose) { this.salaireBrutPropose = salaireBrutPropose; }
@@ -115,21 +130,16 @@ public class PropositionEmbauche {
     public Employe getEmploye() { return employe; }
     public void setEmploye(Employe employe) { this.employe = employe; }
 
-    public String getStatutProposition() { return statutProposition; }
-    public void setStatutProposition(String statutProposition) { this.statutProposition = statutProposition; }
+    public PropositionStatut getStatutProposition() { return statutProposition; }
+    public void setStatutProposition(PropositionStatut statutProposition) { this.statutProposition = statutProposition; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

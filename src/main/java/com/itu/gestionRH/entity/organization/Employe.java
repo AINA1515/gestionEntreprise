@@ -1,5 +1,11 @@
 package com.itu.gestionRH.entity.organization;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.EmployeStatut;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,6 +25,11 @@ import jakarta.persistence.JoinColumn;
 @Table(name = "EMPLOYE")
 public class Employe {
 
+    protected Employe() {}
+
+    public static Employe nouvelle() { return new Employe(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "employeGen")
     @SequenceGenerator(name = "employeGen", sequenceName = "SEQ_EMPLOYE", allocationSize = 1)
@@ -55,30 +66,32 @@ public class Employe {
     private String motifSortie;
 
     @Column(name = "STATUT_ACTIVITE", nullable = false, length = 15)
-    private String statutActivite;
+    @Enumerated(EnumType.STRING)
+    private EmployeStatut statutActivite;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CANDIDAT_ID")
     private Candidat candidat;
 
     // Colonnes d'audit gérées par le trigger TBR_EMPLOYE (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getMatricule() { return matricule; }
     public void setMatricule(String matricule) { this.matricule = matricule; }
@@ -110,24 +123,19 @@ public class Employe {
     public String getMotifSortie() { return motifSortie; }
     public void setMotifSortie(String motifSortie) { this.motifSortie = motifSortie; }
 
-    public String getStatutActivite() { return statutActivite; }
-    public void setStatutActivite(String statutActivite) { this.statutActivite = statutActivite; }
+    public EmployeStatut getStatutActivite() { return statutActivite; }
+    public void setStatutActivite(EmployeStatut statutActivite) { this.statutActivite = statutActivite; }
 
     public Candidat getCandidat() { return candidat; }
     public void setCandidat(Candidat candidat) { this.candidat = candidat; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

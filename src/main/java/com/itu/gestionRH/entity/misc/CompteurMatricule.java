@@ -12,14 +12,22 @@ import java.io.Serializable;
 @Table(name = "COMPTEUR_MATRICULE")
 public class CompteurMatricule {
 
+    protected CompteurMatricule() {}
+
+    public static CompteurMatricule nouvelle() { return new CompteurMatricule(); }
+    public static CompteurMatricule pourAnnee(Integer annee) {
+        CompteurMatricule compteur = new CompteurMatricule();
+        compteur.id = new CompteurMatriculeId(annee);
+        return compteur;
+    }
+
     @EmbeddedId
     private CompteurMatriculeId id;
 
-    @Column(name = "DERNIER_NUMERO")
+    @Column(name = "DERNIER_NUMERO", precision = 6, scale = 0, nullable = false)
     private Integer dernierNumero;
 
     public CompteurMatriculeId getId() { return id; }
-    public void setId(CompteurMatriculeId id) { this.id = id; }
 
     public Integer getDernierNumero() { return dernierNumero; }
     public void setDernierNumero(Integer dernierNumero) { this.dernierNumero = dernierNumero; }
@@ -29,8 +37,11 @@ public class CompteurMatricule {
 
         private static final long serialVersionUID = 1L;
 
-        @Column(name = "ANNEE")
+    , precision = 4, scale = 0    @Column(name = "ANNEE", nullable = false)
         private Integer annee;
+
+        protected CompteurMatriculeId() {}
+        public CompteurMatriculeId(Integer annee) { this.annee = annee; }
 
         public Integer getAnnee() { return annee; }
         public void setAnnee(Integer annee) { this.annee = annee; }

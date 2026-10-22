@@ -1,5 +1,8 @@
 package com.itu.gestionRH.entity.security;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.LogAccesType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,6 +21,11 @@ import com.itu.gestionRH.entity.documents.Document;
 @Table(name = "LOG_ACCES_DOCUMENT")
 public class LogAccesDocument {
 
+    protected LogAccesDocument() {}
+
+    public static LogAccesDocument nouvelle() { return new LogAccesDocument(); }
+
+    @Column(name = "ID", precision = 15, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "logAccesDocumentGen")
     @SequenceGenerator(name = "logAccesDocumentGen", sequenceName = "SEQ_LOG_ACCES_DOCUMENT", allocationSize = 1)
@@ -31,7 +39,8 @@ public class LogAccesDocument {
     private String login;
 
     @Column(name = "TYPE_ACCES", nullable = false, length = 15)
-    private String typeAcces;
+    @Enumerated(EnumType.STRING)
+    private LogAccesType typeAcces;
 
     @Column(name = "DATE_ACCES", nullable = false)
     private LocalDateTime dateAcces;
@@ -44,10 +53,6 @@ public class LogAccesDocument {
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Document getDocument() {
@@ -66,11 +71,11 @@ public class LogAccesDocument {
         this.login = login;
     }
 
-    public String getTypeAcces() {
+    public LogAccesType getTypeAcces() {
         return typeAcces;
     }
 
-    public void setTypeAcces(String typeAcces) {
+    public void setTypeAcces(LogAccesType typeAcces) {
         this.typeAcces = typeAcces;
     }
 

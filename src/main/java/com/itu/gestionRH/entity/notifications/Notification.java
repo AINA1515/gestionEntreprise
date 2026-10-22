@@ -1,5 +1,11 @@
 package com.itu.gestionRH.entity.notifications;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.NotificationStatut;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,6 +24,11 @@ import com.itu.gestionRH.entity.security.Utilisateur;
 @Table(name = "NOTIFICATION")
 public class Notification {
 
+    protected Notification() {}
+
+    public static Notification nouvelle() { return new Notification(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "notificationGen")
     @SequenceGenerator(name = "notificationGen", sequenceName = "SEQ_NOTIFICATION", allocationSize = 1)
@@ -42,13 +53,14 @@ public class Notification {
     @Column(name = "ENTITE_RATTACHEMENT", length = 30)
     private String entiteRattachement;
 
-    @Column(name = "ENTITE_ID")
+    @Column(name = "ENTITE_ID", precision = 10, scale = 0)
     private Long entiteId;
 
     @Column(name = "STATUT_ENVOI", nullable = false, length = 10)
-    private String statutEnvoi;
+    @Enumerated(EnumType.STRING)
+    private NotificationStatut statutEnvoi;
 
-    @Column(name = "NB_TENTATIVES")
+    @Co, precision = 3, scale = 0lumn(name = "NB_TENTATIVES")
     private Integer nbTentatives;
 
     @Column(name = "DATE_ENVOI_PREVUE", nullable = false)
@@ -61,23 +73,24 @@ public class Notification {
     private String messageErreur;
 
     // Colonnes d'audit gérées par le trigger TBR_NOTIFICATION (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public Utilisateur getDestinataire() { return destinataire; }
     public void setDestinataire(Utilisateur destinataire) { this.destinataire = destinataire; }
@@ -100,8 +113,8 @@ public class Notification {
     public Long getEntiteId() { return entiteId; }
     public void setEntiteId(Long entiteId) { this.entiteId = entiteId; }
 
-    public String getStatutEnvoi() { return statutEnvoi; }
-    public void setStatutEnvoi(String statutEnvoi) { this.statutEnvoi = statutEnvoi; }
+    public NotificationStatut getStatutEnvoi() { return statutEnvoi; }
+    public void setStatutEnvoi(NotificationStatut statutEnvoi) { this.statutEnvoi = statutEnvoi; }
 
     public Integer getNbTentatives() { return nbTentatives; }
     public void setNbTentatives(Integer nbTentatives) { this.nbTentatives = nbTentatives; }
@@ -116,17 +129,12 @@ public class Notification {
     public void setMessageErreur(String messageErreur) { this.messageErreur = messageErreur; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

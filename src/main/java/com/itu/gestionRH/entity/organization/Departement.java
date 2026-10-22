@@ -1,5 +1,8 @@
 package com.itu.gestionRH.entity.organization;
 
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,6 +21,11 @@ import jakarta.persistence.FetchType;
 @Table(name = "DEPARTEMENT")
 public class Departement {
 
+    protected Departement() {}
+
+    public static Departement nouvelle() { return new Departement(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "departementGen")
     @SequenceGenerator(name = "departementGen", sequenceName = "SEQ_DEPARTEMENT", allocationSize = 1)
@@ -29,13 +37,13 @@ public class Departement {
     @Column(name = "LIBELLE", nullable = false, length = 150)
     private String libelle;
 
-    @Column(name = "RESPONSABLE_ID")
+    @Column(name = "RESPONSABLE_ID", precision = 10, scale = 0)
     private Long responsableId;
 
-    @Column(name = "DEPARTEMENT_PARENT_ID")
-    private Long departementParentId;
+    @Column(nam, precision = 10, scale = 0e = "DEPARTEMENT_PARENT_ID")
+    private Lon, precision = 1, scale = 0g departementParentId;
 
-    @Column(name = "EST_ACTIF")
+    @Column(name = "EST_ACTIF", nullable = false)
     private Boolean estActif;
 
     @OneToMany(mappedBy = "departement", fetch = FetchType.LAZY)
@@ -49,23 +57,24 @@ public class Departement {
     private List<DepartementRattachment> departementRattachements = new ArrayList<>();
 
     // Colonnes d'audit gérées par le trigger TBR_DEPARTEMENT (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
@@ -92,17 +101,12 @@ public class Departement {
     public void setDepartementRattachements(List<DepartementRattachment> departementRattachements) { this.departementRattachements = departementRattachements; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

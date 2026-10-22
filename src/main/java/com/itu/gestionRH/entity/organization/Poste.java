@@ -1,5 +1,11 @@
 package com.itu.gestionRH.entity.organization;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.PosteStatut;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -24,6 +30,11 @@ import java.util.List;
 @Table(name = "POSTE")
 public class Poste {
 
+    protected Poste() {}
+
+    public static Poste nouvelle() { return new Poste(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "posteGen")
     @SequenceGenerator(name = "posteGen", sequenceName = "SEQ_POSTE", allocationSize = 1)
@@ -39,7 +50,8 @@ public class Poste {
     private String description;
 
     @Column(name = "STATUT_POSTE", nullable = false, length = 10)
-    private String statutPoste;
+    @Enumerated(EnumType.STRING)
+    private PosteStatut statutPoste;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DEPARTEMENT_ID", nullable = false)
@@ -54,23 +66,24 @@ public class Poste {
     @OneToMany(mappedBy = "poste", fetch = FetchType.LAZY)
     private List<PosteDepartement> posteDepartements = new ArrayList<>();
 
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getCodePoste() { return codePoste; }
     public void setCodePoste(String codePoste) { this.codePoste = codePoste; }
@@ -81,8 +94,8 @@ public class Poste {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public String getStatutPoste() { return statutPoste; }
-    public void setStatutPoste(String statutPoste) { this.statutPoste = statutPoste; }
+    public PosteStatut getStatutPoste() { return statutPoste; }
+    public void setStatutPoste(PosteStatut statutPoste) { this.statutPoste = statutPoste; }
 
     public Departement getDepartement() { return departement; }
     public void setDepartement(Departement departement) { this.departement = departement; }
@@ -97,17 +110,12 @@ public class Poste {
     public void setPosteDepartements(List<PosteDepartement> posteDepartements) { this.posteDepartements = posteDepartements; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

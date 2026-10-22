@@ -1,5 +1,12 @@
 package com.itu.gestionRH.entity.recruitment;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.DemandeStatut;
+import com.itu.gestionRH.entity.enums.TypeDemande;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -26,6 +33,11 @@ import java.util.List;
 @Table(name = "DEMANDE_RECRUTEMENT")
 public class DemandeRecrutement {
 
+    protected DemandeRecrutement() {}
+
+    public static DemandeRecrutement nouvelle() { return new DemandeRecrutement(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "demandeRecrutementGen")
     @SequenceGenerator(name = "demandeRecrutementGen", sequenceName = "SEQ_DEMANDE_RECRUTEMENT", allocationSize = 1)
@@ -40,15 +52,16 @@ public class DemandeRecrutement {
     private Utilisateur manager;
 
     @Column(name = "TYPE_DEMANDE", nullable = false, length = 15)
-    private String typeDemande;
+    @Enumerated(EnumType.STRING)
+    private TypeDemande typeDemande;
 
-    @Column(name = "EMPLOYE_REMPLACE_ID")
+    @Column(name = "EMPLOYE_REMPLACE_ID", precision = 10, scale = 0)
     private Long employeRemplaceId;
 
     @Column(name = "MOTIF", nullable = false, length = 1000)
     private String motif;
 
-    @Column(name = "EFFECTIF_DEMANDE")
+    @Colum, precision = 3, scale = 0n(name = "EFFECTIF_DEMANDE")
     private Integer effectifDemande;
 
     @Column(name = "BUDGET_ALLOUE", precision = 15, scale = 2)
@@ -58,7 +71,8 @@ public class DemandeRecrutement {
     private LocalDate dateSouhaitee;
 
     @Column(name = "STATUT_VALIDATION", nullable = false, length = 20)
-    private String statutValidation;
+    @Enumerated(EnumType.STRING)
+    private DemandeStatut statutValidation;
 
     @OneToMany(mappedBy = "demande", fetch = FetchType.LAZY)
     private List<OffreEmploi> offresEmplois = new ArrayList<>();
@@ -66,23 +80,24 @@ public class DemandeRecrutement {
     @OneToMany(mappedBy = "demande", fetch = FetchType.LAZY)
     private List<DemandeValidation> demandesValidations = new ArrayList<>();
 
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public Poste getPoste() { return poste; }
     public void setPoste(Poste poste) { this.poste = poste; }
@@ -90,8 +105,8 @@ public class DemandeRecrutement {
     public Utilisateur getManager() { return manager; }
     public void setManager(Utilisateur manager) { this.manager = manager; }
 
-    public String getTypeDemande() { return typeDemande; }
-    public void setTypeDemande(String typeDemande) { this.typeDemande = typeDemande; }
+    public TypeDemande getTypeDemande() { return typeDemande; }
+    public void setTypeDemande(TypeDemande typeDemande) { this.typeDemande = typeDemande; }
 
     public Long getEmployeRemplaceId() { return employeRemplaceId; }
     public void setEmployeRemplaceId(Long employeRemplaceId) { this.employeRemplaceId = employeRemplaceId; }
@@ -108,8 +123,8 @@ public class DemandeRecrutement {
     public LocalDate getDateSouhaitee() { return dateSouhaitee; }
     public void setDateSouhaitee(LocalDate dateSouhaitee) { this.dateSouhaitee = dateSouhaitee; }
 
-    public String getStatutValidation() { return statutValidation; }
-    public void setStatutValidation(String statutValidation) { this.statutValidation = statutValidation; }
+    public DemandeStatut getStatutValidation() { return statutValidation; }
+    public void setStatutValidation(DemandeStatut statutValidation) { this.statutValidation = statutValidation; }
 
     public List<OffreEmploi> getOffresEmplois() { return offresEmplois; }
     public void setOffresEmplois(List<OffreEmploi> offresEmplois) { this.offresEmplois = offresEmplois; }
@@ -118,17 +133,12 @@ public class DemandeRecrutement {
     public void setDemandesValidations(List<DemandeValidation> demandesValidations) { this.demandesValidations = demandesValidations; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

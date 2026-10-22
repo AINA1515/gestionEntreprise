@@ -1,5 +1,12 @@
 package com.itu.gestionRH.entity.onboarding;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.TacheStatut;
+import com.itu.gestionRH.entity.enums.ServiceResponsable;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -23,6 +30,11 @@ import com.itu.gestionRH.entity.history.TacheAssignment;
 @Table(name = "ONBOARDING_TACHE")
 public class OnboardingTache {
 
+    protected OnboardingTache() {}
+
+    public static OnboardingTache nouvelle() { return new OnboardingTache(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "onboardingTacheGen")
     @SequenceGenerator(name = "onboardingTacheGen", sequenceName = "SEQ_ONBOARDING_TACHE", allocationSize = 1)
@@ -43,16 +55,18 @@ public class OnboardingTache {
     private String description;
 
     @Column(name = "SERVICE_RESPONSABLE", nullable = false, length = 20)
-    private String serviceResponsable;
+    @Enumerated(EnumType.STRING)
+    private ServiceResponsable serviceResponsable;
 
-    @Column(name = "ASSIGNEE_A_ID")
+    @Column(name = "ASSIGNEE_A_ID", precision = 10, scale = 0)
     private Long assigneeAId;
 
-    @Column(name = "EST_OBLIGATOIRE")
+    @Colu, precision = 1, scale = 0mn(name = "EST_OBLIGATOIRE")
     private Boolean estObligatoire;
 
     @Column(name = "STATUT_TACHE", nullable = false, length = 10)
-    private String statutTache;
+    @Enumerated(EnumType.STRING)
+    private TacheStatut statutTache;
 
     @Column(name = "DATE_LIMITE")
     private LocalDate dateLimite;
@@ -67,23 +81,24 @@ public class OnboardingTache {
     private List<TacheAssignment> tacheAssignments = new ArrayList<>();
 
     // Colonnes d'audit gérées par le trigger TBR_ONBOARDING_TACHE (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public Onboarding getOnboarding() { return onboarding; }
     public void setOnboarding(Onboarding onboarding) { this.onboarding = onboarding; }
@@ -97,8 +112,8 @@ public class OnboardingTache {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public String getServiceResponsable() { return serviceResponsable; }
-    public void setServiceResponsable(String serviceResponsable) { this.serviceResponsable = serviceResponsable; }
+    public ServiceResponsable getServiceResponsable() { return serviceResponsable; }
+    public void setServiceResponsable(ServiceResponsable serviceResponsable) { this.serviceResponsable = serviceResponsable; }
 
     public Long getAssigneeAId() { return assigneeAId; }
     public void setAssigneeAId(Long assigneeAId) { this.assigneeAId = assigneeAId; }
@@ -106,8 +121,8 @@ public class OnboardingTache {
     public Boolean getEstObligatoire() { return estObligatoire; }
     public void setEstObligatoire(Boolean estObligatoire) { this.estObligatoire = estObligatoire; }
 
-    public String getStatutTache() { return statutTache; }
-    public void setStatutTache(String statutTache) { this.statutTache = statutTache; }
+    public TacheStatut getStatutTache() { return statutTache; }
+    public void setStatutTache(TacheStatut statutTache) { this.statutTache = statutTache; }
 
     public LocalDate getDateLimite() { return dateLimite; }
     public void setDateLimite(LocalDate dateLimite) { this.dateLimite = dateLimite; }
@@ -122,17 +137,12 @@ public class OnboardingTache {
     public void setTacheAssignments(List<TacheAssignment> tacheAssignments) { this.tacheAssignments = tacheAssignments; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

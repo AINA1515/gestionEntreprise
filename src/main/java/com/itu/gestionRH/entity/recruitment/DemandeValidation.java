@@ -1,5 +1,12 @@
 package com.itu.gestionRH.entity.recruitment;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.DecisionValidation;
+import com.itu.gestionRH.entity.enums.EtapeValidation;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -19,6 +26,11 @@ import com.itu.gestionRH.entity.security.Utilisateur;
 @Table(name = "DEMANDE_VALIDATION")
 public class DemandeValidation {
 
+    protected DemandeValidation() {}
+
+    public static DemandeValidation nouvelle() { return new DemandeValidation(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "demandeValidationGen")
     @SequenceGenerator(name = "demandeValidationGen", sequenceName = "SEQ_DEMANDE_VALIDATION", allocationSize = 1)
@@ -29,10 +41,12 @@ public class DemandeValidation {
     private DemandeRecrutement demande;
 
     @Column(name = "ETAPE", nullable = false, length = 10)
-    private String etape;
+    @Enumerated(EnumType.STRING)
+    private EtapeValidation etape;
 
     @Column(name = "DECISION", nullable = false, length = 10)
-    private String decision;
+    @Enumerated(EnumType.STRING)
+    private DecisionValidation decision;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "VALIDEUR_ID", nullable = false)
@@ -45,32 +59,33 @@ public class DemandeValidation {
     private String justification;
 
     // Colonnes d'audit gérées par le trigger TBR_DEMANDE_VALIDATION (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public DemandeRecrutement getDemande() { return demande; }
     public void setDemande(DemandeRecrutement demande) { this.demande = demande; }
 
-    public String getEtape() { return etape; }
-    public void setEtape(String etape) { this.etape = etape; }
+    public EtapeValidation getEtape() { return etape; }
+    public void setEtape(EtapeValidation etape) { this.etape = etape; }
 
-    public String getDecision() { return decision; }
-    public void setDecision(String decision) { this.decision = decision; }
+    public DecisionValidation getDecision() { return decision; }
+    public void setDecision(DecisionValidation decision) { this.decision = decision; }
 
     public Utilisateur getValidateur() { return validateur; }
     public void setValidateur(Utilisateur validateur) { this.validateur = validateur; }
@@ -82,17 +97,12 @@ public class DemandeValidation {
     public void setJustification(String justification) { this.justification = justification; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

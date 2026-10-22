@@ -1,5 +1,12 @@
 package com.itu.gestionRH.entity.recruitment;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.EntretienStatut;
+import com.itu.gestionRH.entity.enums.TypeEntretien;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,6 +27,11 @@ import com.itu.gestionRH.entity.security.Utilisateur;
 @Table(name = "ENTRETIEN")
 public class Entretien {
 
+    protected Entretien() {}
+
+    public static Entretien nouvelle() { return new Entretien(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "entretienGen")
     @SequenceGenerator(name = "entretienGen", sequenceName = "SEQ_ENTRETIEN", allocationSize = 1)
@@ -34,7 +46,8 @@ public class Entretien {
     private Utilisateur intervenant;
 
     @Column(name = "TYPE_ENTRETIEN", nullable = false, length = 10)
-    private String typeEntretien;
+    @Enumerated(EnumType.STRING)
+    private TypeEntretien typeEntretien;
 
     @Column(name = "DATE_ENTRETIEN", nullable = false)
     private LocalDate dateEntretien;
@@ -43,29 +56,31 @@ public class Entretien {
     private String lieu;
 
     @Column(name = "STATUT_ENTRETIEN", nullable = false, length = 10)
-    private String statutEntretien;
+    @Enumerated(EnumType.STRING)
+    private EntretienStatut statutEntretien;
 
     @OneToOne(mappedBy = "entretien", fetch = FetchType.LAZY)
     private EvaluationCandidat evaluation;
 
     // Colonnes d'audit gérées par le trigger TBR_ENTRETIEN (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public Candidature getCandidature() { return candidature; }
     public void setCandidature(Candidature candidature) { this.candidature = candidature; }
@@ -73,8 +88,8 @@ public class Entretien {
     public Utilisateur getIntervenant() { return intervenant; }
     public void setIntervenant(Utilisateur intervenant) { this.intervenant = intervenant; }
 
-    public String getTypeEntretien() { return typeEntretien; }
-    public void setTypeEntretien(String typeEntretien) { this.typeEntretien = typeEntretien; }
+    public TypeEntretien getTypeEntretien() { return typeEntretien; }
+    public void setTypeEntretien(TypeEntretien typeEntretien) { this.typeEntretien = typeEntretien; }
 
     public LocalDate getDateEntretien() { return dateEntretien; }
     public void setDateEntretien(LocalDate dateEntretien) { this.dateEntretien = dateEntretien; }
@@ -82,24 +97,19 @@ public class Entretien {
     public String getLieu() { return lieu; }
     public void setLieu(String lieu) { this.lieu = lieu; }
 
-    public String getStatutEntretien() { return statutEntretien; }
-    public void setStatutEntretien(String statutEntretien) { this.statutEntretien = statutEntretien; }
+    public EntretienStatut getStatutEntretien() { return statutEntretien; }
+    public void setStatutEntretien(EntretienStatut statutEntretien) { this.statutEntretien = statutEntretien; }
 
     public EvaluationCandidat getEvaluation() { return evaluation; }
     public void setEvaluation(EvaluationCandidat evaluation) { this.evaluation = evaluation; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

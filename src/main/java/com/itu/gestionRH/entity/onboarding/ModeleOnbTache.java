@@ -1,5 +1,11 @@
 package com.itu.gestionRH.entity.onboarding;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.ServiceResponsable;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,6 +21,11 @@ import java.time.LocalDateTime;
 @Table(name = "MODELE_ONB_TACHE")
 public class ModeleOnbTache {
 
+    protected ModeleOnbTache() {}
+
+    public static ModeleOnbTache nouvelle() { return new ModeleOnbTache(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "modeleOnbTacheGen")
     @SequenceGenerator(name = "modeleOnbTacheGen", sequenceName = "SEQ_MODELE_ONB_TACHE", allocationSize = 1)
@@ -30,38 +41,40 @@ public class ModeleOnbTache {
     private String description;
 
     @Column(name = "SERVICE_RESPONSABLE", nullable = false, length = 20)
-    private String serviceResponsable;
+    @Enumerated(EnumType.STRING)
+    private ServiceResponsable serviceResponsable;
 
-    @Column(name = "DELAI_JOURS")
+    @Column(name = "DELAI_JOURS", precision = 3, scale = 0, nullable = false)
     private Integer delaiJours;
 
-    @Column(name = "EST_OBLIGATOIRE")
-    private Boolean estObligatoire;
+    @Colum, precision = 1, scale = 0n(name = "EST_OBLIGATOIRE")
+    private, precision = 3, scale = 0 Boolean estObligatoire;
 
-    @Column(name = "ORDRE")
+    @Col, precision = 1, scale = 0umn(name = "ORDRE")
     private Integer ordre;
 
-    @Column(name = "EST_ACTIF")
+    @Column(name = "EST_ACTIF", nullable = false)
     private Boolean estActif;
 
     // Colonnes d'audit gérées par le trigger TBR_MODELE_ONB_TACHE (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
@@ -72,8 +85,8 @@ public class ModeleOnbTache {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public String getServiceResponsable() { return serviceResponsable; }
-    public void setServiceResponsable(String serviceResponsable) { this.serviceResponsable = serviceResponsable; }
+    public ServiceResponsable getServiceResponsable() { return serviceResponsable; }
+    public void setServiceResponsable(ServiceResponsable serviceResponsable) { this.serviceResponsable = serviceResponsable; }
 
     public Integer getDelaiJours() { return delaiJours; }
     public void setDelaiJours(Integer delaiJours) { this.delaiJours = delaiJours; }
@@ -88,17 +101,12 @@ public class ModeleOnbTache {
     public void setEstActif(Boolean estActif) { this.estActif = estActif; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

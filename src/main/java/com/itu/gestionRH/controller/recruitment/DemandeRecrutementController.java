@@ -93,6 +93,6 @@ public class DemandeRecrutementController {
                 poste != null ? poste.getIntitule() : null,
                 poste != null && poste.getDepartement() != null ? poste.getDepartement().getLibelle() : null,
                 d.getEffectifDemande(), d.getMotif(), d.getBudgetAlloue(), d.getDateSouhaitee(),
-                d.getStatutValidation(), d.getDateCreation());
+                d.getStatutValidation().name(), d.getDateCreation());
     }
 }

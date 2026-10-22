@@ -1,5 +1,8 @@
 package com.itu.gestionRH.entity.recruitment;
 
+import jakarta.persistence.Version;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -19,6 +22,11 @@ import java.time.LocalDateTime;
 @Table(name = "EVALUATION_CRITERE")
 public class EvaluationCritere {
 
+    protected EvaluationCritere() {}
+
+    public static EvaluationCritere nouvelle() { return new EvaluationCritere(); }
+
+    @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "evaluationCritereGen")
     @SequenceGenerator(name = "evaluationCritereGen", sequenceName = "SEQ_EVALUATION_CRITERE", allocationSize = 1)
@@ -34,30 +42,31 @@ public class EvaluationCritere {
     @Column(name = "NOTE", nullable = false, precision = 4, scale = 2)
     private BigDecimal note;
 
-    @Column(name = "POIDS")
+    @Column(name = "POIDS", precision = 3, scale = 0, nullable = false)
     private Integer poids;
 
     @Column(name = "COMMENTAIRE", length = 500)
     private String commentaire;
 
     // Colonnes d'audit gérées par le trigger TBR_EVALUATION_CRITERE (script GC-01)
-    @Column(name = "DATE_CREATION", insertable = false, updatable = false)
+    @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
 
-    @Column(name = "CREE_PAR", insertable = false, updatable = false)
+    @Column(name = "CREE_PAR", length = 100, nullable = false, insertable = false, updatable = false)
     private String creePar;
 
     @Column(name = "DATE_MODIFICATION", insertable = false, updatable = false)
     private LocalDateTime dateModification;
 
-    @Column(name = "MODIFIE_PAR", insertable = false, updatable = false)
+    @Column(name = "MODIFIE_PAR", length = 100, insertable = false, updatable = false)
     private String modifiePar;
 
-    @Column(name = "VERSION_LIGNE", insertable = false, updatable = false)
+    @Version
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "VERSION_LIGNE", precision = 10, scale = 0, nullable = false, insertable = false, updatable = false)
     private Long versionLigne;
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public EvaluationCandidat getEvaluation() { return evaluation; }
     public void setEvaluation(EvaluationCandidat evaluation) { this.evaluation = evaluation; }
@@ -75,17 +84,12 @@ public class EvaluationCritere {
     public void setCommentaire(String commentaire) { this.commentaire = commentaire; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
 
     public String getCreePar() { return creePar; }
-    public void setCreePar(String creePar) { this.creePar = creePar; }
 
     public LocalDateTime getDateModification() { return dateModification; }
-    public void setDateModification(LocalDateTime dateModification) { this.dateModification = dateModification; }
 
     public String getModifiePar() { return modifiePar; }
-    public void setModifiePar(String modifiePar) { this.modifiePar = modifiePar; }
 
     public Long getVersionLigne() { return versionLigne; }
-    public void setVersionLigne(Long versionLigne) { this.versionLigne = versionLigne; }
 }

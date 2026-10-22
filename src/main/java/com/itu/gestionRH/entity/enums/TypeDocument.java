@@ -1,0 +1,5 @@
+package com.itu.gestionRH.entity.enums;
+
+public enum TypeDocument {
+    CV, LETTRE_MOTIVATION, CONTRAT_SIGNE, RIB, PIECE_IDENTITE, CARTE_VITALE, REGLEMENT_SIGNE, FICHE_POSTE, PROPOSITION, AUTRE
+}

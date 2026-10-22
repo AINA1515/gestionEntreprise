@@ -1,5 +1,8 @@
 package com.itu.gestionRH.entity.security;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import com.itu.gestionRH.entity.enums.LogConnexionResultat;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,6 +20,11 @@ import java.time.LocalDateTime;
 @Table(name = "LOG_CONNEXION")
 public class LogConnexion {
 
+    protected LogConnexion() {}
+
+    public static LogConnexion nouvelle() { return new LogConnexion(); }
+
+    @Column(name = "ID", precision = 15, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "logConnexionGen")
     @SequenceGenerator(name = "logConnexionGen", sequenceName = "SEQ_LOG_CONNEXION", allocationSize = 1)
@@ -30,7 +38,8 @@ public class LogConnexion {
     private String loginSaisi;
 
     @Column(name = "RESULTAT", nullable = false, length = 12)
-    private String resultat;
+    @Enumerated(EnumType.STRING)
+    private LogConnexionResultat resultat;
 
     @Column(name = "DATE_EVENEMENT", nullable = false)
     private LocalDateTime dateEvenement;
@@ -46,10 +55,6 @@ public class LogConnexion {
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public Utilisateur getUtilisateur() {
@@ -68,11 +73,11 @@ public class LogConnexion {
         this.loginSaisi = loginSaisi;
     }
 
-    public String getResultat() {
+    public LogConnexionResultat getResultat() {
         return resultat;
     }
 
-    public void setResultat(String resultat) {
+    public void setResultat(LogConnexionResultat resultat) {
         this.resultat = resultat;
     }
 
