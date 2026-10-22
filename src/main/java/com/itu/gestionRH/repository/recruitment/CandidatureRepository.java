@@ -14,4 +14,5 @@ public interface CandidatureRepository extends JpaRepository<Candidature, Long> 
     Page<Candidature> findByOffreId(Long offreId, Pageable pageable);
     Page<Candidature> findByCandidatId(Long candidatId, Pageable pageable);
     Page<Candidature> findByOffreIdAndStatutCandidature(Long offreId, CandidatureStatut statut, Pageable pageable);
+    long countByOffreId(Long offreId);
 }

@@ -6,7 +6,7 @@ import AppLayout from './AppLayout.vue'
 const route = useRoute()
 const candidatItems = [
   { to: '/candidat/cv', label: 'Mon CV', icon: 'file-person', roles: ['CANDIDAT'], permission: 'DOCUMENT_CONSULTER_PERSO' },
-  { to: '/candidat/offres', label: 'Offres', icon: 'search', roles: ['CANDIDAT'], permission: 'CANDIDATURE_POSTULER' },
+  { to: '/offres', label: 'Offres', icon: 'search', roles: ['CANDIDAT'] },
   { to: '/candidat/candidature', label: 'Mes candidatures', icon: 'briefcase', roles: ['CANDIDAT'], permission: 'CANDIDATURE_POSTULER' },
 ]
 const rhItems = [

@@ -40,6 +40,8 @@ Les accès HTTP disponibles sont `POST /api/v1/documents`, `GET /api/v1/document
 
 La migration `database/08_migrations/001_notification_est_lue.sql` ajoute `NOTIFICATION.EST_LUE` pour l'état de lecture in-app ; exécuter ce script avant le démarrage avec `ddl-auto=validate`.
 
+La migration `database/08_migrations/002_offre_champs_candidat.sql` ajoute à `OFFRE_EMPLOI` le lieu, le type de contrat et le temps de travail affichés dans l'espace candidat. Exécuter les migrations `08_migrations` dans l'ordre avant le démarrage avec `ddl-auto=validate`.
+
 ## Notifications et e-mails
 
 L'outbox est alimentée dans la transaction métier par les événements de workflow, puis le planificateur envoie les lignes arrivées à échéance. Le verrou Oracle `FOR UPDATE SKIP LOCKED` empêche deux instances de traiter simultanément la même ligne. Les erreurs SMTP sont rejouées après 1, 2, 4 puis 8 minutes ; après cinq tentatives, le statut passe à `ECHEC`. Par défaut, l'envoi SMTP est désactivé et les courriels sont consignés dans les logs pour le développement. Pour activer SMTP, définir `NOTIFICATIONS_MAIL_ENABLED=true`, `SMTP_HOST`, `SMTP_PORT` et, si nécessaire, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH=true`, `SMTP_STARTTLS=true`, ainsi que `NOTIFICATIONS_MAIL_FROM`. `NOTIFICATIONS_SCHEDULER_ENABLED=false` désactive les traitements planifiés. Le cron quotidien des rappels est configurable par `NOTIFICATIONS_REMINDERS_CRON`.

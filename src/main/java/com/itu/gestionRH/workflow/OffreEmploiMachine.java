@@ -17,7 +17,7 @@ public class OffreEmploiMachine {
                 java.util.Set.of(), java.util.Set.of("OFFRE_PUBLIER"),
                 r -> r.entite().getDemande() != null && r.entite().getDemande().getStatutValidation() == DemandeStatut.VALIDEE,
                 r -> {}, "DEMANDE_NON_VALIDEE", "L'offre ne peut être publiée que si la demande liée est validée.");
-        b.transition(OffreStatut.PUBLIEE, "cloturer", OffreStatut.CLOTUREE, "DEMANDE_VERIFIER_RH");
+        b.transition(OffreStatut.PUBLIEE, "cloturer", OffreStatut.CLOTUREE, "OFFRE_PUBLIER");
         machine = b.build();
     }
     public WorkflowTransitionEvent transition(OffreEmploi entity, String action, WorkflowContext context) { return machine.transition(entity, action, context); }

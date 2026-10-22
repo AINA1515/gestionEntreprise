@@ -29,6 +29,12 @@ const EMPLOYE = {
   SORTI: { label: 'Sorti', variant: 'secondary' },
 }
 
+const OFFRE = {
+  BROUILLON: { label: 'Brouillon', variant: 'secondary' },
+  PUBLIEE: { label: 'Publiée', variant: 'success' },
+  CLOTUREE: { label: 'Clôturée', variant: 'dark' },
+}
+
 export const DECISIONS = [
   { value: 'FAVORABLE', label: 'Candidat retenu' },
   { value: 'DEFAVORABLE', label: 'Candidat non retenu' },
@@ -42,7 +48,7 @@ export const TYPES_CONTRAT = [
   { value: 'ALTERNANCE', label: 'Alternance' },
 ]
 
-const TABLES = { demande: DEMANDE, candidature: CANDIDATURE, poste: POSTE, employe: EMPLOYE }
+const TABLES = { demande: DEMANDE, candidature: CANDIDATURE, poste: POSTE, employe: EMPLOYE, offre: OFFRE }
 
 export function useLabels() {
   function statut(type, value) {

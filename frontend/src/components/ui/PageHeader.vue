@@ -21,5 +21,6 @@ defineProps({
     </nav>
     <h1 class="h3 mb-1">{{ title }}</h1>
     <p v-if="subtitle" class="text-body-secondary mb-0">{{ subtitle }}</p>
+    <div v-if="$slots.actions" class="mt-3"><slot name="actions" /></div>
   </header>
 </template>

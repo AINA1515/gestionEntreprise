@@ -11,6 +11,7 @@ import com.itu.gestionRH.controller.hiring.ContratController;
 import com.itu.gestionRH.controller.onboarding.OnboardingTacheController;
 import com.itu.gestionRH.controller.recruitment.DemandeRecrutementController;
 import com.itu.gestionRH.controller.recruitment.OffreEmploiController;
+import com.itu.gestionRH.entity.recruitment.OffreEmploi;
 import com.itu.gestionRH.controller.security.AdminController;
 import com.itu.gestionRH.controller.security.CandidatCandidatureController;
 import com.itu.gestionRH.service.security.AdminService;
@@ -22,6 +23,7 @@ import com.itu.gestionRH.workflow.OffreEmploiMachine;
 import com.itu.gestionRH.workflow.OnboardingTacheMachine;
 import com.itu.gestionRH.service.onboarding.OnboardingTacheService;
 import com.itu.gestionRH.service.recruitment.DemandeRecrutementService;
+import com.itu.gestionRH.service.recruitment.OffreEmploiService;
 import com.itu.gestionRH.repository.onboarding.OnboardingTacheRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -61,6 +63,7 @@ class RbacControllerTest {
     @MockitoBean DemandeRecrutementService demandeService;
     @MockitoBean DemandeRecrutementRepository demandeRepository;
     @MockitoBean OffreEmploiMachine offreMachine;
+    @MockitoBean OffreEmploiService offreService;
     @MockitoBean OffreEmploiRepository offreRepository;
     @MockitoBean AccessScope accessScope;
     @MockitoBean AdminService adminService;
@@ -70,6 +73,7 @@ class RbacControllerTest {
 
     @Test void chaqueRoleDisposeDUneRoutePermiseEtDUneRouteInterdite() throws Exception {
         when(adminService.utilisateurs()).thenReturn(List.of());
+        when(offreService.creer(any())).thenReturn(OffreEmploi.nouvelle());
         when(accessScope.currentUserId()).thenReturn(1L);
         when(tacheRepository.findByAssigneeAId(eq(1L),any(org.springframework.data.domain.Pageable.class)))
                 .thenReturn(org.springframework.data.domain.Page.empty());

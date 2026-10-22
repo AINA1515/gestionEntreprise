@@ -6,6 +6,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.itu.gestionRH.entity.enums.OffreStatut;
+import com.itu.gestionRH.entity.enums.ContratType;
+import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Query;
 
 @Repository
 public interface OffreEmploiRepository extends JpaRepository<OffreEmploi, Long> {
@@ -13,4 +19,21 @@ public interface OffreEmploiRepository extends JpaRepository<OffreEmploi, Long> 
     Page<OffreEmploi> findByStatutOffre(OffreStatut statut, Pageable pageable);
     Page<OffreEmploi> findByDemandeId(Long demandeId, Pageable pageable);
     Page<OffreEmploi> findByStatutOffreAndDemandeId(OffreStatut statut, Long demandeId, Pageable pageable);
+    long countByDemandeIdAndStatutOffreIn(Long demandeId, Collection<OffreStatut> statuts);
+    List<OffreEmploi> findByStatutOffreAndDateLimiteCandidatureBefore(OffreStatut statut, LocalDate date);
+
+    @Query("select o from OffreEmploi o where "
+            + "(:statut is null or o.statutOffre = :statut) "
+            + "and (:publicOnly = false or o.dateLimiteCandidature is null or o.dateLimiteCandidature >= :dateReference) "
+            + "and (:departementId is null or o.demande.poste.departement.id = :departementId) "
+            + "and (:typeContrat is null or o.typeContrat = :typeContrat) "
+            + "and (:texte is null or lower(o.titre) like concat(concat('%', lower(:texte)), '%') "
+            + "or lower(coalesce(o.descriptionPoste, '')) like concat(concat('%', lower(:texte)), '%') "
+            + "or lower(coalesce(o.profilRecherche, '')) like concat(concat('%', lower(:texte)), '%') "
+            + "or lower(o.demande.poste.intitule) like concat(concat('%', lower(:texte)), '%') "
+            + "or lower(o.demande.poste.departement.libelle) like concat(concat('%', lower(:texte)), '%'))")
+    Page<OffreEmploi> rechercher(@Param("statut") OffreStatut statut,
+            @Param("publicOnly") boolean publicOnly, @Param("dateReference") LocalDate dateReference,
+            @Param("departementId") Long departementId, @Param("typeContrat") ContratType typeContrat,
+            @Param("texte") String texte, Pageable pageable);
 }

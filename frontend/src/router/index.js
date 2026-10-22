@@ -4,12 +4,20 @@ import ManagerLayout from '@/components/layout/ManagerLayout.vue'
 import RhLayout from '@/components/layout/RhLayout.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
 import DirectionLayout from '@/components/layout/DirectionLayout.vue'
+import PublicLayout from '@/components/layout/PublicLayout.vue'
 
 const routes = [
   { path: '/', name: 'home', component: () => import('@/views/HomeRedirectView.vue'), meta: { requiresAuth: true } },
   { path: '/login', name: 'login', component: () => import('@/views/auth/LoginView.vue'), meta: { public: true } },
   { path: '/inscription', name: 'inscription', component: () => import('@/views/auth/RegisterView.vue'), meta: { public: true } },
   { path: '/403', name: 'forbidden', component: () => import('@/views/ForbiddenView.vue'), meta: { public: true } },
+  {
+    path: '/offres', component: PublicLayout, meta: { public: true, espace: 'Offres d’emploi' },
+    children: [
+      { path: '', name: 'offres-publiques', component: () => import('@/views/candidat/OffresView.vue'), meta: { public: true } },
+      { path: ':id', name: 'offre-detail', component: () => import('@/views/candidat/OffreDetailView.vue'), meta: { public: true } },
+    ],
+  },
   {
     path: '/manager', component: ManagerLayout, meta: { requiresAuth: true, roles: ['MANAGER'], espace: 'Espace Manager' },
     children: [
@@ -28,7 +36,9 @@ const routes = [
       { path: 'accueil', name: 'rh-accueil', component: () => import('@/views/rh/AccueilView.vue') },
       { path: 'demandes-a-traiter', name: 'rh-demandes-a-traiter', component: () => import('@/views/rh/DemandesATraiterView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['DEMANDE_VERIFIER_RH'] } },
       { path: 'demandes/:id/revue', name: 'rh-demande-revue', component: () => import('@/views/rh/DemandeRevueView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['DEMANDE_VERIFIER_RH'] } },
-      { path: 'offres/nouvelle', name: 'rh-offre-nouvelle', component: () => import('@/views/rh/OffreNouvelleView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['OFFRE_PUBLIER'] } },
+      { path: 'offres', name: 'rh-offres', component: () => import('@/views/rh/OffresView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['OFFRE_PUBLIER'] } },
+      { path: 'offres/nouvelle', name: 'rh-offre-nouvelle', component: () => import('@/views/rh/OffreFormView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['OFFRE_PUBLIER'] } },
+      { path: 'offres/:id/modifier', name: 'rh-offre-modifier', component: () => import('@/views/rh/OffreFormView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['OFFRE_PUBLIER'] } },
       { path: 'candidatures', name: 'rh-candidatures', component: () => import('@/views/rh/CandidaturesView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['CANDIDATURE_CONSULTER'] } },
       { path: 'departements', name: 'rh-departements', component: () => import('@/views/rh/DepartementsView.vue'), meta: { roles: ['GESTIONNAIRE_RH'], permissions: ['CONTRAT_GERER'] } },
       { path: 'postes', name: 'rh-postes', component: () => import('@/views/rh/PostesView.vue'), meta: { roles: ['GESTIONNAIRE_RH'], permissions: ['CONTRAT_GERER'] } },
@@ -49,7 +59,7 @@ const routes = [
       { path: 'cv', name: 'candidat-cv', component: () => import('@/views/candidat/CvAccueilView.vue'), meta: { permissions: ['DOCUMENT_CONSULTER_PERSO'] } },
       { path: 'cv/creer', name: 'candidat-cv-creer', component: () => import('@/views/candidat/CvCreerView.vue'), meta: { permissions: ['DOCUMENT_CONSULTER_PERSO'] } },
       { path: 'cv/importer', name: 'candidat-cv-importer', component: () => import('@/views/candidat/CvImporterView.vue'), meta: { permissions: ['DOCUMENT_CONSULTER_PERSO'] } },
-      { path: 'offres', name: 'candidat-offres', component: () => import('@/views/candidat/OffresView.vue'), meta: { permissions: ['CANDIDATURE_POSTULER'] } },
+      { path: 'offres', name: 'candidat-offres', redirect: { name: 'offres-publiques' } },
       { path: 'candidature', name: 'candidat-candidature', component: () => import('@/views/candidat/CandidatureView.vue'), meta: { permissions: ['CANDIDATURE_POSTULER'] } },
     ],
   },

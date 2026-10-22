@@ -4,6 +4,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import com.itu.gestionRH.entity.enums.OffreStatut;
 import com.itu.gestionRH.entity.enums.OffreDiffusion;
+import com.itu.gestionRH.entity.enums.ContratType;
+import com.itu.gestionRH.entity.enums.OffreTempsTravail;
 import jakarta.persistence.Version;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
@@ -32,6 +34,11 @@ public class OffreEmploi {
 
     public static OffreEmploi nouvelle() { return new OffreEmploi(); }
 
+    public void initialiserEnBrouillon() {
+        if (id != null || statutOffre != null) throw new IllegalStateException("L'offre a déjà été initialisée.");
+        statutOffre = OffreStatut.BROUILLON;
+    }
+
     @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "offreEmploiGen")
@@ -50,6 +57,17 @@ public class OffreEmploi {
 
     @Column(name = "PROFIL_RECHERCHE", length = 4000)
     private String profilRecherche;
+
+    @Column(name = "LIEU", length = 200)
+    private String lieu;
+
+    @Column(name = "TYPE_CONTRAT", length = 12)
+    @Enumerated(EnumType.STRING)
+    private ContratType typeContrat;
+
+    @Column(name = "TEMPS_TRAVAIL", length = 20)
+    @Enumerated(EnumType.STRING)
+    private OffreTempsTravail tempsTravail;
 
     @Column(name = "DIFFUSION", nullable = false, length = 10)
     @Enumerated(EnumType.STRING)
@@ -102,6 +120,15 @@ public class OffreEmploi {
 
     public String getProfilRecherche() { return profilRecherche; }
     public void setProfilRecherche(String profilRecherche) { this.profilRecherche = profilRecherche; }
+
+    public String getLieu() { return lieu; }
+    public void setLieu(String lieu) { this.lieu = lieu; }
+
+    public ContratType getTypeContrat() { return typeContrat; }
+    public void setTypeContrat(ContratType typeContrat) { this.typeContrat = typeContrat; }
+
+    public OffreTempsTravail getTempsTravail() { return tempsTravail; }
+    public void setTempsTravail(OffreTempsTravail tempsTravail) { this.tempsTravail = tempsTravail; }
 
     public OffreDiffusion getDiffusion() { return diffusion; }
     public void setDiffusion(OffreDiffusion diffusion) { this.diffusion = diffusion; }

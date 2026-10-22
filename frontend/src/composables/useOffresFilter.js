@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 export function useOffresFilter(offres) {
   const recherche = ref('')
   const departement = ref('')
+  const typeContrat = ref('')
 
   const departements = computed(() =>
     [...new Set(offres.value.map((o) => o.departement).filter(Boolean))].sort(),
@@ -14,9 +15,10 @@ export function useOffresFilter(offres) {
     return offres.value.filter(
       (o) =>
         (!departement.value || o.departement === departement.value) &&
+        (!typeContrat.value || o.typeContrat === typeContrat.value) &&
         (!q || `${o.titre ?? ''} ${o.description ?? ''}`.toLowerCase().includes(q)),
     )
   })
 
-  return { recherche, departement, departements, offresFiltrees }
+  return { recherche, departement, typeContrat, departements, offresFiltrees }
 }
