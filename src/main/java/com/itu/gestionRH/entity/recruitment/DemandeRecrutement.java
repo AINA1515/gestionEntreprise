@@ -37,6 +37,11 @@ public class DemandeRecrutement {
 
     public static DemandeRecrutement nouvelle() { return new DemandeRecrutement(); }
 
+    public void initialiserEnBrouillon() {
+        if (id != null || statutValidation != null) throw new IllegalStateException("La demande a déjà été initialisée.");
+        statutValidation = DemandeStatut.BROUILLON;
+    }
+
     @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "demandeRecrutementGen")

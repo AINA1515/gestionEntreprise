@@ -1,111 +1,78 @@
 package com.itu.gestionRH.controller.recruitment;
 
-import java.math.BigDecimal;
+import com.itu.gestionRH.common.PageResponse;
+import com.itu.gestionRH.controller.recruitment.dto.DemandeDtos.*;
+import com.itu.gestionRH.entity.enums.DemandeStatut;
+import com.itu.gestionRH.service.recruitment.DemandeRecrutementService;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
-import com.itu.gestionRH.entity.recruitment.DemandeRecrutement;
-import com.itu.gestionRH.repository.recruitment.DemandeRecrutementRepository;
-import com.itu.gestionRH.workflow.DemandeRecrutementMachine;
-import com.itu.gestionRH.workflow.WorkflowContext;
-import com.itu.gestionRH.security.AccessScope;
-
-/** Espace manager : tableau de bord, mes demandes, nouvelle demande. */
 @RestController
 @RequestMapping("/api/v1/demandes-recrutement")
 public class DemandeRecrutementController {
+    private final DemandeRecrutementService service;
+    public DemandeRecrutementController(DemandeRecrutementService service) { this.service=service; }
 
-    public record DemandeResponse(Long id, Long posteId, String poste, String departement,
-                                  Integer effectif, String motif, BigDecimal budget,
-                                  LocalDate dateSouhaitee, String statut, LocalDateTime dateDemande,
-                                  List<String> actionsDisponibles) {}
-
-    public record DashboardResponse(long nombreDemandes, List<DemandeResponse> recentes) {}
-
-    public record NouvelleDemandeRequest(@NotNull Long posteId, @NotNull Integer effectif, @NotBlank String motif,
-                                         BigDecimal budget, LocalDate dateSouhaitee) {}
-    public record ValidationRequest(@NotBlank String statut, String commentaire) {}
-
-    private final DemandeRecrutementRepository demandeRepository;
-    private final DemandeRecrutementMachine machine;
-    private final AccessScope accessScope;
-
-    public DemandeRecrutementController(DemandeRecrutementRepository demandeRepository, DemandeRecrutementMachine machine, AccessScope accessScope) {
-        this.demandeRepository = demandeRepository;
-        this.machine = machine;
-        this.accessScope = accessScope;
+    @PreAuthorize("hasAuthority('PERM_DEMANDE_CREER')")
+    @PostMapping
+    public ResponseEntity<DemandeResponse> creer(@Valid @RequestBody DemandeCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.creer(request));
     }
 
-    @PreAuthorize("hasAuthority('PERM_DEMANDE_CONSULTER')")
-    @GetMapping("/synthese")
-    @Transactional(readOnly = true)
-    public DashboardResponse dashboard() {
-        List<DemandeResponse> demandes = mesDemandes(null, null, null);
-        return new DashboardResponse(demandes.size(), demandes.stream().limit(5).toList());
+    @PreAuthorize("hasAuthority('PERM_DEMANDE_CREER')")
+    @PutMapping("/{id}")
+    public DemandeResponse modifier(@PathVariable Long id, @Valid @RequestBody DemandeUpdateRequest request) {
+        return service.modifier(id, request);
     }
 
     @PreAuthorize("hasAuthority('PERM_DEMANDE_CONSULTER')")
     @GetMapping
-    @Transactional(readOnly = true)
-    public List<DemandeResponse> mesDemandes(@RequestParam(required = false) String statut,
-                                             @RequestParam(required = false) Long departementId,
-                                             @RequestParam(required = false) Long managerId) {
-        // TODO : filtrer sur le manager connecte (DemandeRecrutement.manager) une fois l'auth en place
-        return accessScope.demandesVisibles().stream()
-                .sorted(Comparator.comparing(DemandeRecrutement::getDateCreation,
-                        Comparator.nullsLast(Comparator.reverseOrder())))
-                .filter(d -> statut == null || statut.equals(d.getStatutValidation().name()))
-                .filter(d -> departementId == null || (d.getPoste() != null && d.getPoste().getDepartement() != null
-                        && departementId.equals(d.getPoste().getDepartement().getId())))
-                .filter(d -> managerId == null || (d.getManager() != null && managerId.equals(d.getManager().getId())))
-                .map(this::toResponse)
-                .toList();
-    }
-
-    @PreAuthorize("hasAuthority('PERM_DEMANDE_CREER')")
-    @PostMapping
-    public DemandeResponse creer(@Valid @RequestBody NouvelleDemandeRequest request) {
-        // TODO : DemandeRecrutementService.creer(request, managerConnecte)
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Creation de demande a implementer");
+    public PageResponse<DemandeResponse> lister(@RequestParam(required=false) DemandeStatut statut,
+            @RequestParam(required=false) Long departementId, @RequestParam(required=false) Long managerId,
+            @RequestParam(required=false) LocalDate dateDebut, @RequestParam(required=false) LocalDate dateFin,
+            @RequestParam(required=false) String texte,
+            @PageableDefault(size=20, sort="dateCreation", direction=Sort.Direction.DESC) Pageable pageable) {
+        return service.lister(statut, departementId, managerId, dateDebut, dateFin, texte, pageable);
     }
 
     @PreAuthorize("hasAuthority('PERM_DEMANDE_CONSULTER')")
     @GetMapping("/{id}")
-    public DemandeResponse detail(@PathVariable Long id) {
-        return toResponse(accessScope.requireDemande(id));
-    }
+    public DemandeDetailResponse detail(@PathVariable Long id) { return service.obtenir(id); }
+
+    @PreAuthorize("hasAuthority('PERM_DEMANDE_CREER')")
+    @PostMapping("/{id}/soumettre")
+    public DemandeResponse soumettre(@PathVariable Long id) { return service.soumettre(id); }
 
     @PreAuthorize("hasAnyAuthority('PERM_DEMANDE_VERIFIER_RH','PERM_DEMANDE_APPROUVER_DIR')")
     @PatchMapping("/{id}/validation")
     public DemandeResponse valider(@PathVariable Long id, @Valid @RequestBody ValidationRequest request) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Validation de demande à implémenter");
+        return service.traiterValidation(id, request);
     }
 
-    private DemandeResponse toResponse(DemandeRecrutement d) {
-        var poste = d.getPoste();
-        return new DemandeResponse(d.getId(),
-                poste != null ? poste.getId() : null,
-                poste != null ? poste.getIntitule() : null,
-                poste != null && poste.getDepartement() != null ? poste.getDepartement().getLibelle() : null,
-                d.getEffectifDemande(), d.getMotif(), d.getBudgetAlloue(), d.getDateSouhaitee(),
-                d.getStatutValidation().name(), d.getDateCreation(), machine.actionsDisponibles(d, WorkflowContext.utilisateurCourant(null)));
+    @PreAuthorize("hasAuthority('PERM_DEMANDE_CREER')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> supprimer(@PathVariable Long id) {
+        service.supprimer(id);
+        return ResponseEntity.noContent().build();
     }
+
+    @PreAuthorize("hasAuthority('PERM_DEMANDE_CONSULTER')")
+    @GetMapping("/synthese")
+    public SyntheseResponse synthese() { return service.synthese(); }
 }

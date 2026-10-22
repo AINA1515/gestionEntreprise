@@ -8,6 +8,7 @@ export const useReferentielStore = defineStore('referentiel', () => {
   const postes = ref([])
   const departementsPage = ref(null)
   const postesPage = ref(null)
+  const departementSelectionne = ref(null)
   const toast = useToast()
 
   async function chargerDepartements() {
@@ -17,6 +18,10 @@ export const useReferentielStore = defineStore('referentiel', () => {
 
   async function chargerPostes(departementId) {
     try { postes.value = await referentielService.postes(departementId) }
+    catch (error) { toast.error(error.message); error.toastShown = true; throw error }
+  }
+  async function chargerDepartement(id) {
+    try { departementSelectionne.value = await referentielService.departement(id); return departementSelectionne.value }
     catch (error) { toast.error(error.message); error.toastShown = true; throw error }
   }
 
@@ -33,7 +38,7 @@ export const useReferentielStore = defineStore('referentiel', () => {
   async function modifierPoste(id, data) { try { const item = await referentielService.modifierPoste(id, data); toast.success('Poste modifié.'); return item } catch (error) { toast.error(error.message); error.toastShown = true; throw error } }
   async function fermerPoste(id) { try { const item = await referentielService.fermerPoste(id); toast.success('Poste fermé.'); return item } catch (error) { toast.error(error.message); error.toastShown = true; throw error } }
 
-  return { departements, postes, departementsPage, postesPage, chargerDepartements, chargerPostes,
+  return { departements, postes, departementsPage, postesPage, departementSelectionne, chargerDepartement, chargerDepartements, chargerPostes,
     chargerDepartementsPage, creerDepartement, modifierDepartement, changerResponsable, desactiverDepartement,
     chargerPostesPage, creerPoste, modifierPoste, fermerPoste }
 })

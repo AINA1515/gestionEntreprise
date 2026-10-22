@@ -5,3 +5,5 @@ body {
 .app-sidebar {
   min-height: 100vh;
 }
+
+.cursor-pointer { cursor: pointer; }

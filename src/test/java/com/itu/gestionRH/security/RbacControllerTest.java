@@ -21,6 +21,7 @@ import com.itu.gestionRH.workflow.DemandeRecrutementMachine;
 import com.itu.gestionRH.workflow.OffreEmploiMachine;
 import com.itu.gestionRH.workflow.OnboardingTacheMachine;
 import com.itu.gestionRH.service.onboarding.OnboardingTacheService;
+import com.itu.gestionRH.service.recruitment.DemandeRecrutementService;
 import com.itu.gestionRH.repository.onboarding.OnboardingTacheRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,7 @@ class RbacControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean JwtService jwtService;
     @MockitoBean DemandeRecrutementMachine demandeMachine;
+    @MockitoBean DemandeRecrutementService demandeService;
     @MockitoBean DemandeRecrutementRepository demandeRepository;
     @MockitoBean OffreEmploiMachine offreMachine;
     @MockitoBean OffreEmploiRepository offreRepository;

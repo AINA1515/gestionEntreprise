@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,6 +23,10 @@ public class GlobalExceptionHandler {
         var details = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> new ApiError.Detail(e.getField(), e.getDefaultMessage())).toList();
         return response(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Les données envoyées sont invalides.", req, details);
+    }
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class})
+    ResponseEntity<ApiError> badRequest(Exception ex, HttpServletRequest req) {
+        return response(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Un ou plusieurs paramètres ou champs sont invalides.", req, List.of());
     }
     @ExceptionHandler(NotFoundException.class)
     ResponseEntity<ApiError> notFound(NotFoundException ex, HttpServletRequest req) {

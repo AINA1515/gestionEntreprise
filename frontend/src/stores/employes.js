@@ -6,6 +6,7 @@ import { useToast } from '@/composables/useToast'
 export const useEmployesStore = defineStore('employes', () => {
   const page = ref(null)
   const employeSelectionne = ref(null)
+  const collaborateurs = ref([])
   const loading = ref(false)
   const toast = useToast()
   async function charger(params = {}) {
@@ -20,5 +21,14 @@ export const useEmployesStore = defineStore('employes', () => {
     catch (error) { toast.error(error.message); error.toastShown = true; throw error }
     finally { loading.value = false }
   }
-  return { page, employeSelectionne, loading, charger, obtenir }
+  async function chargerCollaborateurs(params = {}) {
+    loading.value = true
+    try {
+      page.value = await employeService.collaborateurs(params)
+      collaborateurs.value = page.value.content || []
+      return collaborateurs.value
+    } catch (error) { toast.error(error.message); error.toastShown = true; throw error }
+    finally { loading.value = false }
+  }
+  return { page, employeSelectionne, collaborateurs, loading, charger, obtenir, chargerCollaborateurs }
 })

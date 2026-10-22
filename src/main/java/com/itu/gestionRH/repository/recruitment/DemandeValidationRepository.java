@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DemandeValidationRepository extends JpaRepository<DemandeValidation, Long> {
+    java.util.List<DemandeValidation> findByDemandeIdOrderByDateDecisionAscIdAsc(Long demandeId);
+    long countByDemandeId(Long demandeId);
 }

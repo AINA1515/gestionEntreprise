@@ -10,7 +10,9 @@ defineProps({
   rows: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   emptyMessage: { type: String, default: 'Aucune donnée à afficher.' },
+  rowClickable: { type: Boolean, default: false },
 })
+defineEmits(['row-click'])
 </script>
 
 <template>
@@ -28,7 +30,10 @@ defineProps({
         <tr v-else-if="!rows.length">
           <td :colspan="columns.length" class="text-center text-body-secondary py-4">{{ emptyMessage }}</td>
         </tr>
-        <tr v-for="(row, i) in loading ? [] : rows" :key="row.id ?? i">
+        <tr v-for="(row, i) in loading ? [] : rows" :key="row.id ?? i"
+            :class="{ 'cursor-pointer': rowClickable }" :tabindex="rowClickable ? 0 : undefined"
+            @click="rowClickable && $emit('row-click', row)"
+            @keydown.enter="rowClickable && $emit('row-click', row)">
           <td v-for="col in columns" :key="col.key">
             <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">{{ row[col.key] ?? '—' }}</slot>
           </td>

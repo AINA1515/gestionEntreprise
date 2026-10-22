@@ -9,17 +9,20 @@ import { useToast } from '@/composables/useToast'
 export function useAsyncAction() {
   const loading = ref(false)
   const error = ref(null)
+  const details = ref([])
   const toast = useToast()
 
   async function run(action, options = {}) {
     loading.value = true
     error.value = null
+    details.value = []
     try {
       const result = await action()
       if (options.successMessage) toast.success(options.successMessage)
       return result
     } catch (e) {
       error.value = e.message || 'Une erreur est survenue.'
+      details.value = e.details || []
       if (!e.toastShown) toast.error(error.value)
       return undefined
     } finally {
@@ -27,5 +30,5 @@ export function useAsyncAction() {
     }
   }
 
-  return { loading, error, run }
+  return { loading, error, details, run }
 }

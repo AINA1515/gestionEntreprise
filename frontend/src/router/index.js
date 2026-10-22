@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/auth'
 import ManagerLayout from '@/components/layout/ManagerLayout.vue'
 import RhLayout from '@/components/layout/RhLayout.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
+import DirectionLayout from '@/components/layout/DirectionLayout.vue'
 
 const routes = [
   { path: '/', name: 'home', component: () => import('@/views/HomeRedirectView.vue'), meta: { requiresAuth: true } },
@@ -16,6 +17,8 @@ const routes = [
       { path: 'dashboard', name: 'manager-dashboard', component: () => import('@/views/manager/DashboardView.vue'), meta: { permissions: ['DEMANDE_CONSULTER'] } },
       { path: 'demandes', name: 'manager-demandes', component: () => import('@/views/manager/MesDemandesView.vue'), meta: { permissions: ['DEMANDE_CONSULTER'] } },
       { path: 'demandes/nouvelle', name: 'manager-nouvelle-demande', component: () => import('@/views/manager/NouvelleDemandeView.vue'), meta: { permissions: ['DEMANDE_CREER'] } },
+      { path: 'demandes/:id', name: 'manager-demande-detail', component: () => import('@/views/manager/DemandeDetailView.vue'), meta: { permissions: ['DEMANDE_CONSULTER'] } },
+      { path: 'demandes/:id/modifier', name: 'manager-demande-modifier', component: () => import('@/views/manager/NouvelleDemandeView.vue'), meta: { permissions: ['DEMANDE_CREER'] } },
     ],
   },
   {
@@ -23,6 +26,9 @@ const routes = [
     children: [
       { path: '', redirect: { name: 'rh-accueil' } },
       { path: 'accueil', name: 'rh-accueil', component: () => import('@/views/rh/AccueilView.vue') },
+      { path: 'demandes-a-traiter', name: 'rh-demandes-a-traiter', component: () => import('@/views/rh/DemandesATraiterView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['DEMANDE_VERIFIER_RH'] } },
+      { path: 'demandes/:id/revue', name: 'rh-demande-revue', component: () => import('@/views/rh/DemandeRevueView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['DEMANDE_VERIFIER_RH'] } },
+      { path: 'offres/nouvelle', name: 'rh-offre-nouvelle', component: () => import('@/views/rh/OffreNouvelleView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['OFFRE_PUBLIER'] } },
       { path: 'candidatures', name: 'rh-candidatures', component: () => import('@/views/rh/CandidaturesView.vue'), meta: { roles: ['CHARGE_RECRUTEMENT'], permissions: ['CANDIDATURE_CONSULTER'] } },
       { path: 'departements', name: 'rh-departements', component: () => import('@/views/rh/DepartementsView.vue'), meta: { roles: ['GESTIONNAIRE_RH'], permissions: ['CONTRAT_GERER'] } },
       { path: 'postes', name: 'rh-postes', component: () => import('@/views/rh/PostesView.vue'), meta: { roles: ['GESTIONNAIRE_RH'], permissions: ['CONTRAT_GERER'] } },
@@ -49,7 +55,15 @@ const routes = [
   },
   { path: '/profil/mot-de-passe', name: 'changer-mot-de-passe', component: () => import('@/views/profil/ChangerMotDePasseView.vue'), meta: { requiresAuth: true, espace: 'Mon profil' } },
   { path: '/notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { requiresAuth: true, espace: 'Notifications' } },
-  { path: '/direction/dashboard', name: 'direction-dashboard', component: () => import('@/views/direction/DashboardView.vue'), meta: { requiresAuth: true, roles: ['DIRECTION'], permissions: ['REPORTING_CONSULTER'], espace: 'Direction' } },
+  {
+    path: '/direction', component: DirectionLayout, meta: { requiresAuth: true, roles: ['DIRECTION'], espace: 'Direction' },
+    children: [
+      { path: '', redirect: { name: 'direction-dashboard' } },
+      { path: 'dashboard', name: 'direction-dashboard', component: () => import('@/views/direction/DashboardView.vue'), meta: { permissions: ['REPORTING_CONSULTER'] } },
+      { path: 'arbitrage', name: 'direction-arbitrage', component: () => import('@/views/direction/ArbitrageView.vue'), meta: { permissions: ['DEMANDE_APPROUVER_DIR'] } },
+      { path: 'demandes/:id', name: 'direction-demande-arbitrage', component: () => import('@/views/direction/DemandeArbitrageView.vue'), meta: { permissions: ['DEMANDE_APPROUVER_DIR'] } },
+    ],
+  },
   { path: '/salarie/accueil', name: 'salarie-accueil', component: () => import('@/views/salarie/AccueilView.vue'), meta: { requiresAuth: true, roles: ['SALARIE'], espace: 'Espace salarié' } },
   { path: '/admin/utilisateurs', name: 'admin-utilisateurs', component: () => import('@/views/admin/UtilisateursView.vue'), meta: { requiresAuth: true, roles: ['ADMIN'], espace: 'Administration' } },
   { path: '/taches', name: 'mes-taches', component: () => import('@/views/taches/TachesView.vue'), meta: { requiresAuth: true, roles: ['MANAGER', 'CHARGE_RECRUTEMENT', 'GESTIONNAIRE_RH', 'SALARIE', 'IT', 'MOYENS_GENERAUX'], permissions: ['TACHE_TRAITER'], espace: 'Mes tâches' } },

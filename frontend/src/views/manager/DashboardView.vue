@@ -7,9 +7,18 @@ import StatCard from '@/components/ui/StatCard.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
+import { useRouter } from 'vue-router'
 
 const store = useDemandesStore()
+const router = useRouter()
 const { formatDate } = useFormatters()
+const statuts = [
+  ['BROUILLON', 'Brouillons', 'file-earmark-text'],
+  ['ATTENTE_RH', 'En attente RH', 'people'],
+  ['ATTENTE_DIRECTION', 'En attente Direction', 'building'],
+  ['VALIDEE', 'Validées', 'check-circle'],
+  ['REFUSEE', 'Refusées', 'x-circle'],
+]
 
 const columns = [
   { key: 'poste', label: 'Poste demandé' },
@@ -27,9 +36,9 @@ onMounted(store.chargerDashboard)
 
   <AlertMessage :message="store.error" />
 
-  <div class="row mb-4">
-    <div class="col-md-6 col-xl-4">
-      <StatCard label="Nombre de demandes" :value="store.nombreDemandes" icon="card-list" />
+  <div class="row g-3 mb-4">
+    <div v-for="[code, label, icon] in statuts" :key="code" class="col-sm-6 col-xl">
+      <StatCard :label="label" :value="store.parStatut?.[code] ?? 0" :icon="icon" />
     </div>
   </div>
 
@@ -42,8 +51,9 @@ onMounted(store.chargerDashboard)
         </RouterLink>
       </div>
 
-      <DataTable :columns="columns" :rows="store.recentes" :loading="store.loading"
-                 empty-message="Aucune demande à afficher pour le moment.">
+      <DataTable :columns="columns" :rows="store.recentes" :loading="store.loading" row-clickable
+                 empty-message="Aucune demande à afficher pour le moment."
+                 @row-click="(row) => router.push({ name: 'manager-demande-detail', params: { id: row.id } })">
         <template #cell-dateDemande="{ value }">{{ formatDate(value) }}</template>
         <template #cell-statut="{ value }"><StatusBadge type="demande" :value="value" /></template>
       </DataTable>
