@@ -2,6 +2,7 @@
 import { useAuthStore } from '@/stores/auth'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import NotificationBell from './NotificationBell.vue'
 
 const props = defineProps({
   espace: { type: String, required: true },
@@ -65,9 +66,7 @@ const profileItems = [
         </button>
         <span class="navbar-text fw-semibold text-body">{{ route.meta.espace || espace }}</span>
         <div class="ms-auto d-flex align-items-center gap-2">
-          <button class="btn btn-light position-relative" type="button" aria-label="Notifications">
-            <i class="bi bi-bell" aria-hidden="true"></i><span class="visually-hidden">Aucune nouvelle notification</span>
-          </button>
+          <NotificationBell />
           <div class="dropdown">
             <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown" aria-expanded="false">
               <span class="d-none d-sm-inline text-end"><span class="d-block small fw-semibold">{{ auth.utilisateur?.nomAffichage || auth.utilisateur?.login }}</span><span class="d-block small text-body-secondary">{{ userRole }}</span></span>

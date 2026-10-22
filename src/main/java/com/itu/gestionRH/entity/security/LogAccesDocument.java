@@ -25,6 +25,10 @@ public class LogAccesDocument {
 
     public static LogAccesDocument nouvelle() { return new LogAccesDocument(); }
 
+    public void enregistrer(Document document, String login, LogAccesType type, LocalDateTime date, String ip) {
+        this.document = document; this.login = login; this.typeAcces = type; this.dateAcces = date; this.adresseIp = ip;
+    }
+
     @Column(name = "ID", precision = 15, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "logAccesDocumentGen")

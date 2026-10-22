@@ -1,18 +1,18 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { cvService } from '@/services/cvService'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
+import FileUploader from '@/components/ui/FileUploader.vue'
+import { useDocumentsStore } from '@/stores/documents'
 
 const router = useRouter()
 const { loading, error, run } = useAsyncAction()
 const fichier = ref(null)
-
-const onFichier = (event) => { fichier.value = event.target.files[0] ?? null }
+const documents = useDocumentsStore()
 
 async function envoyer() {
-  const result = await run(() => cvService.importer(fichier.value))
+  const result = await run(() => documents.importerCv(fichier.value))
   if (!error.value && result !== undefined) router.push({ name: 'candidat-cv' })
 }
 </script>
@@ -30,8 +30,8 @@ async function envoyer() {
 
     <form class="card shadow-sm" @submit.prevent="envoyer">
       <div class="card-body p-4">
-        <label for="cv" class="form-label">Mon CV (PDF ou DOCX)</label>
-        <input id="cv" type="file" class="form-control mb-4" accept=".pdf,.docx" required @change="onFichier" />
+        <label class="form-label">Mon CV (PDF ou DOCX)</label>
+        <FileUploader v-model="fichier" :accept="['.pdf', '.docx']" :progress="documents.progress" :disabled="loading" class="mb-4" />
         <button class="btn btn-primary" type="submit" :disabled="loading || !fichier">
           {{ loading ? 'Envoi…' : 'Importer mon CV' }}
         </button>

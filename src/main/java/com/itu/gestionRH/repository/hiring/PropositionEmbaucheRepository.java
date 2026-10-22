@@ -12,4 +12,5 @@ public interface PropositionEmbaucheRepository extends JpaRepository<Proposition
     PropositionEmbauche findByCandidatureId(Long candidatureId);
     Page<PropositionEmbauche> findByStatutProposition(PropositionStatut statut, Pageable pageable);
     Page<PropositionEmbauche> findByCandidatureCandidatId(Long candidatId, Pageable pageable);
+    java.util.List<PropositionEmbauche> findByStatutPropositionAndDateLimiteReponseBefore(com.itu.gestionRH.entity.enums.PropositionStatut statut, java.time.LocalDate date);
 }

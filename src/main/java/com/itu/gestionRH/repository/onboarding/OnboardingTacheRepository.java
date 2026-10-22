@@ -14,4 +14,5 @@ public interface OnboardingTacheRepository extends JpaRepository<OnboardingTache
     Page<OnboardingTache> findByServiceResponsable(ServiceResponsable service, Pageable pageable);
     Page<OnboardingTache> findByAssigneeAId(Long assigneeId, Pageable pageable);
     Page<OnboardingTache> findByAssigneeAIdAndStatutTache(Long assigneeId, TacheStatut statut, Pageable pageable);
+    java.util.List<OnboardingTache> findByDateLimiteBeforeAndStatutTacheIn(java.time.LocalDate date, java.util.Collection<TacheStatut> statuts);
 }

@@ -48,6 +48,7 @@ const routes = [
     ],
   },
   { path: '/profil/mot-de-passe', name: 'changer-mot-de-passe', component: () => import('@/views/profil/ChangerMotDePasseView.vue'), meta: { requiresAuth: true, espace: 'Mon profil' } },
+  { path: '/notifications', name: 'notifications', component: () => import('@/views/NotificationsView.vue'), meta: { requiresAuth: true, espace: 'Notifications' } },
   { path: '/direction/dashboard', name: 'direction-dashboard', component: () => import('@/views/direction/DashboardView.vue'), meta: { requiresAuth: true, roles: ['DIRECTION'], permissions: ['REPORTING_CONSULTER'], espace: 'Direction' } },
   { path: '/salarie/accueil', name: 'salarie-accueil', component: () => import('@/views/salarie/AccueilView.vue'), meta: { requiresAuth: true, roles: ['SALARIE'], espace: 'Espace salarié' } },
   { path: '/admin/utilisateurs', name: 'admin-utilisateurs', component: () => import('@/views/admin/UtilisateursView.vue'), meta: { requiresAuth: true, roles: ['ADMIN'], espace: 'Administration' } },

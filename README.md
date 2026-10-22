@@ -31,3 +31,17 @@ Les tests unitaires des machines s'exécutent avec `mvn test`. Le test de démar
 L'API utilise des jetons JWT HMAC valables 30 minutes par défaut. Avant le démarrage, définir `APP_JWT_SECRET` (au moins 32 octets aléatoires), `DB_USERNAME` et `DB_PASSWORD`; `DB_URL`, `APP_JWT_ACCESS_TOKEN_MINUTES` et `APP_CORS_ALLOWED_ORIGINS` peuvent aussi être configurés. Exemple pour générer un secret : `export APP_JWT_SECRET="$(openssl rand -hex 32)"`.
 
 Les mots de passe sont stockés avec BCrypt. Les nouveaux mots de passe font 12 à 72 caractères UTF-8, avec une minuscule, une majuscule, un chiffre et un caractère spécial. Les anciens hashes qui ne commencent pas par `$2` ne sont pas acceptés : les remplacer par des hashes BCrypt avant migration. Pour créer un compte administrateur initial, activer `BOOTSTRAP_ADMIN_ENABLED=true` et définir `BOOTSTRAP_ADMIN_LOGIN`, `BOOTSTRAP_ADMIN_EMAIL` et `BOOTSTRAP_ADMIN_PASSWORD` (12 caractères minimum). Au démarrage, le compte n'est créé que si aucun utilisateur n'a déjà le rôle `ADMIN`.
+
+## GED des documents
+
+Le stockage local est privé et configurable avec `APP_GED_ROOT` (défaut `./storage/ged`). Les binaires sont rangés par entité et identifiant sous un UUID, sans nom de fichier original dans le chemin. `APP_GED_MAX_SIZE_BYTES` limite le contenu à 5 Mio par défaut et `APP_GED_MAX_FILE_SIZE` configure la limite multipart Spring (défaut `5MB`). Les extensions autorisées sont PDF, DOCX, PNG et JPG ; le type MIME est vérifié à partir de la signature du fichier. `AntivirusScanner` est le point d'extension pour connecter un antivirus.
+
+Les accès HTTP disponibles sont `POST /api/v1/documents`, `GET /api/v1/documents?entite=CANDIDAT&id=…`, `GET /api/v1/documents/{id}/contenu`, `POST /api/v1/documents/{id}/versions` et `DELETE /api/v1/documents/{id}` (archivage logique). L'import candidat `POST /api/v1/candidat/cv/import` crée ou versionne le document CV et met à jour `CANDIDAT.CV_URL`. Les téléchargements et consultations sont inscrits dans `LOG_ACCES_DOCUMENT`. Les versions précédentes sont conservées et archivées.
+
+La migration `database/08_migrations/001_notification_est_lue.sql` ajoute `NOTIFICATION.EST_LUE` pour l'état de lecture in-app ; exécuter ce script avant le démarrage avec `ddl-auto=validate`.
+
+## Notifications et e-mails
+
+L'outbox est alimentée dans la transaction métier par les événements de workflow, puis le planificateur envoie les lignes arrivées à échéance. Le verrou Oracle `FOR UPDATE SKIP LOCKED` empêche deux instances de traiter simultanément la même ligne. Les erreurs SMTP sont rejouées après 1, 2, 4 puis 8 minutes ; après cinq tentatives, le statut passe à `ECHEC`. Par défaut, l'envoi SMTP est désactivé et les courriels sont consignés dans les logs pour le développement. Pour activer SMTP, définir `NOTIFICATIONS_MAIL_ENABLED=true`, `SMTP_HOST`, `SMTP_PORT` et, si nécessaire, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH=true`, `SMTP_STARTTLS=true`, ainsi que `NOTIFICATIONS_MAIL_FROM`. `NOTIFICATIONS_SCHEDULER_ENABLED=false` désactive les traitements planifiés. Le cron quotidien des rappels est configurable par `NOTIFICATIONS_REMINDERS_CRON`.
+
+L'API in-app expose `GET /api/v1/notifications?page=0&size=20`, `GET /api/v1/notifications/non-lues/count`, `PATCH /api/v1/notifications/{id}/lue` et `PATCH /api/v1/notifications/lire-tout`. Chaque requête ne retourne ou ne modifie que les notifications de l'utilisateur authentifié.

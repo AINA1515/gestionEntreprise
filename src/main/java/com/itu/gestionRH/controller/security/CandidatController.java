@@ -12,13 +12,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import com.itu.gestionRH.security.AccessScope;
+import com.itu.gestionRH.service.security.CandidatService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseEntity;
 
 /** Espace candidat : CV (ex-pages /candidat/cv, /candidat/cv/creer). */
 @RestController
 @RequestMapping("/api/v1/candidat/cv")
 public class CandidatController {
     private final AccessScope accessScope;
-    public CandidatController(AccessScope accessScope) { this.accessScope=accessScope; }
+    private final CandidatService candidatService;
+    public CandidatController(AccessScope accessScope, CandidatService candidatService) { this.accessScope=accessScope; this.candidatService=candidatService; }
 
     public record CvRequest(String nom, String prenom, String email, String telephone, String adresse,
                             String profil, String diplome, String etablissement, Integer annee,
@@ -44,9 +48,8 @@ public class CandidatController {
     /** Import d'un CV existant (PDF ou DOCX). */
     @PreAuthorize("hasAuthority('PERM_DOCUMENT_CONSULTER_PERSO')")
     @PostMapping("/import")
-    public void importer(@RequestPart("fichier") MultipartFile fichier) {
-        accessScope.requireCandidatCourant();
-        // TODO : stockage du fichier + Candidat.cvUrl
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Import du CV a implementer");
+    public ResponseEntity<com.itu.gestionRH.service.documents.DocumentService.DocumentDto> importer(
+            @RequestPart("fichier") MultipartFile fichier, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(candidatService.importerCv(fichier, request));
     }
 }

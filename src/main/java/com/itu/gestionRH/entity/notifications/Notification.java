@@ -72,6 +72,9 @@ public class Notification {
     @Column(name = "MESSAGE_ERREUR", length = 1000)
     private String messageErreur;
 
+    @Column(name = "EST_LUE", nullable = false, precision = 1, scale = 0)
+    private Boolean estLue = false;
+
     // Colonnes d'audit gérées par le trigger TBR_NOTIFICATION (script GC-01)
     @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
@@ -127,6 +130,10 @@ public class Notification {
 
     public String getMessageErreur() { return messageErreur; }
     public void setMessageErreur(String messageErreur) { this.messageErreur = messageErreur; }
+
+    public Boolean getEstLue() { return estLue; }
+    public void setEstLue(Boolean estLue) { this.estLue = estLue; }
+    public void marquerLue() { this.estLue = true; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
 

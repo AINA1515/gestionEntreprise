@@ -7,6 +7,8 @@ import com.itu.gestionRH.entity.hiring.PropositionEmbauche;
 import com.itu.gestionRH.entity.onboarding.OnboardingTache;
 import com.itu.gestionRH.entity.documents.Document;
 import com.itu.gestionRH.entity.enums.DocumentEntite;
+import com.itu.gestionRH.entity.enums.DocumentStatut;
+import com.itu.gestionRH.entity.enums.DocumentConfidentialite;
 import com.itu.gestionRH.repository.documents.DocumentRepository;
 import com.itu.gestionRH.repository.hiring.ContratRepository;
 import com.itu.gestionRH.repository.hiring.PropositionEmbaucheRepository;
@@ -118,24 +120,81 @@ public class AccessScope {
 
     public Document requireDocument(Long id) {
         Document d=documents.findById(id).orElseThrow(()->new NotFoundException("Document introuvable."));
+        if (d.getStatutDocument() == DocumentStatut.SUPPRIME) throw new NotFoundException("Document introuvable.");
         if(has("PERM_DOCUMENT_CONSULTER_TOUS") || has("PERM_UTILISATEUR_ADMIN")) return d;
-        Long owner=d.getEntiteId();
+        if (d.getConfidentialite() == DocumentConfidentialite.STRICT) throw new NotFoundException("Document introuvable.");
+        if (has("PERM_DOCUMENT_CONSULTER_PERSO") && estProprietaire(d)) return d;
         try {
             DocumentEntite type=d.getEntiteRattachement();
             switch(type) {
-                case CANDIDAT -> { if(owner.equals(requireCandidatCourant())) return d; }
+                case CANDIDAT -> { if (candidatLieAuManagerOuRecruteur(d.getEntiteId())) return d; }
                 case CANDIDATURE -> { return requireDocumentViaCandidature(d); }
-                case EMPLOYE -> { requireEmploye(owner); return d; }
-                case CONTRAT -> { var c=contrats.findById(owner).orElseThrow(()->new NotFoundException("Document introuvable.")); requireEmploye(c.getEmploye().getId()); return d; }
-                case ONBOARDING_TACHE -> { var t=taches.findById(owner).orElseThrow(()->new NotFoundException("Document introuvable.")); requireTaskOwner(t); return d; }
-                case PROPOSITION_EMBAUCHE -> { var p=propositions.findById(owner).orElseThrow(()->new NotFoundException("Document introuvable.")); requirePropositionOwner(p); return d; }
-                case POSTE -> { }
+                case EMPLOYE -> { requireEmploye(d.getEntiteId()); return d; }
+                case CONTRAT -> { var c=contrats.findById(d.getEntiteId()).orElseThrow(()->new NotFoundException("Document introuvable.")); requireEmploye(c.getEmploye().getId()); return d; }
+                case ONBOARDING_TACHE -> { var t=taches.findById(d.getEntiteId()).orElseThrow(()->new NotFoundException("Document introuvable.")); requireTaskOwner(t); return d; }
+                case PROPOSITION_EMBAUCHE -> { var p=propositions.findById(d.getEntiteId()).orElseThrow(()->new NotFoundException("Document introuvable.")); requirePropositionOwner(p); return d; }
+                case POSTE -> { if (has("PERM_DEMANDE_CREER") || has("PERM_OFFRE_PUBLIER") || has("PERM_CONTRAT_GERER")) return d; }
             }
         } catch(NotFoundException ignored) { throw new NotFoundException("Document introuvable."); }
         throw new NotFoundException("Document introuvable.");
     }
 
+    public void requireDocumentTarget(DocumentEntite entite, Long entiteId) {
+        if (has("PERM_DOCUMENT_CONSULTER_TOUS") || has("PERM_UTILISATEUR_ADMIN")) return;
+        if (entite == null || entiteId == null) throw new NotFoundException("Ressource introuvable.");
+        try {
+            switch (entite) {
+                case CANDIDAT -> {
+                    if (has("PERM_DOCUMENT_CONSULTER_PERSO") && entiteId.equals(requireCandidatCourant())) return;
+                    if (candidatLieAuManagerOuRecruteur(entiteId)) return;
+                }
+                case CANDIDATURE -> { requireCandidature(entiteId); return; }
+                case EMPLOYE -> { requireEmploye(entiteId); return; }
+                case CONTRAT -> {
+                    var c = contrats.findById(entiteId).orElseThrow(() -> new NotFoundException("Ressource introuvable."));
+                    requireEmploye(c.getEmploye().getId()); return;
+                }
+                case ONBOARDING_TACHE -> {
+                    var t = taches.findById(entiteId).orElseThrow(() -> new NotFoundException("Ressource introuvable."));
+                    requireTaskOwner(t); return;
+                }
+                case PROPOSITION_EMBAUCHE -> {
+                    var p = propositions.findById(entiteId).orElseThrow(() -> new NotFoundException("Ressource introuvable."));
+                    requirePropositionOwner(p); return;
+                }
+                case POSTE -> { if (has("PERM_DEMANDE_CREER") || has("PERM_OFFRE_PUBLIER") || has("PERM_CONTRAT_GERER")) return; }
+            }
+        } catch (NotFoundException ignored) { throw new NotFoundException("Ressource introuvable."); }
+        throw new NotFoundException("Ressource introuvable.");
+    }
+
     private Document requireDocumentViaCandidature(Document d) { requireCandidature(d.getEntiteId()); return d; }
+
+    private boolean estProprietaire(Document d) {
+        Utilisateur u = currentUser();
+        if (u == null) return false;
+        return switch (d.getEntiteRattachement()) {
+            case CANDIDAT -> u.getCandidatId() != null && u.getCandidatId().equals(d.getEntiteId());
+            case EMPLOYE -> u.getEmployeId() != null && u.getEmployeId().equals(d.getEntiteId());
+            case CANDIDATURE -> estCandidatDeCandidature(d.getEntiteId(), u);
+            case CONTRAT -> contrats.findById(d.getEntiteId()).map(c -> u.getEmployeId() != null && u.getEmployeId().equals(c.getEmploye().getId())).orElse(false);
+            case ONBOARDING_TACHE -> taches.findById(d.getEntiteId()).map(t -> userId() != null && userId().equals(t.getAssigneeAId())).orElse(false);
+            case PROPOSITION_EMBAUCHE -> propositions.findById(d.getEntiteId()).map(p -> u.getCandidatId() != null && p.getCandidature() != null
+                    && p.getCandidature().getCandidat() != null && u.getCandidatId().equals(p.getCandidature().getCandidat().getId())).orElse(false);
+            case POSTE -> false;
+        };
+    }
+
+    private boolean estCandidatDeCandidature(Long candidatureId, Utilisateur u) {
+        return candidatures.findById(candidatureId).map(c -> u.getCandidatId() != null && c.getCandidat() != null
+                && u.getCandidatId().equals(c.getCandidat().getId())).orElse(false);
+    }
+
+    private boolean candidatLieAuManagerOuRecruteur(Long candidatId) {
+        if (!(has("PERM_DEMANDE_CREER") || has("PERM_CANDIDATURE_PRESELECTIONNER") || has("PERM_EVALUATION_SAISIR"))) return false;
+        return candidatures.findByCandidatId(candidatId, org.springframework.data.domain.Pageable.unpaged()).getContent().stream()
+                .anyMatch(c -> canSeeCandidature(c));
+    }
 
     private Utilisateur currentUser(){Long id=userId();return id==null?null:utilisateurs.findById(id).orElse(null);}
     private Long userId(){Authentication a=auth();return a!=null && a.getPrincipal() instanceof JwtPrincipal p?p.userId():null;}
