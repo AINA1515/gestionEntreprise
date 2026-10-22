@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/poste-departements")
+@RequestMapping("/api/v1/poste-departements")
 public class PosteDepartementController {
 
 }

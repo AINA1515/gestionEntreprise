@@ -13,7 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 /** Espace candidat : CV (ex-pages /candidat/cv, /candidat/cv/creer). */
 @RestController
-@RequestMapping("/api/candidat/cv")
+@RequestMapping("/api/v1/candidat/cv")
 public class CandidatController {
 
     public record CvRequest(String nom, String prenom, String email, String telephone, String adresse,

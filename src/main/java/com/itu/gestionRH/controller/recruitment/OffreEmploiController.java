@@ -2,6 +2,7 @@ package com.itu.gestionRH.controller.recruitment;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.itu.gestionRH.entity.recruitment.OffreEmploi;
@@ -17,17 +23,25 @@ import com.itu.gestionRH.repository.recruitment.OffreEmploiRepository;
 
 /** Offres d'emploi visibles par les candidats (ex-page /candidat/offres). */
 @RestController
-@RequestMapping("/api/offres")
+@RequestMapping("/api/v1/recrutement/offres")
 public class OffreEmploiController {
 
     public record OffreResponse(Long id, String titre, String description, String profilRecherche,
                                 String departement, LocalDate datePublication,
                                 LocalDate dateLimiteCandidature, String statut) {}
+    public record OffreRequest(@NotNull Long demandeId, @NotBlank String titre, String description,
+                               String profilRecherche, LocalDate dateLimiteCandidature) {}
 
     private final OffreEmploiRepository offreRepository;
 
     public OffreEmploiController(OffreEmploiRepository offreRepository) {
         this.offreRepository = offreRepository;
+    }
+
+    @PostMapping
+    public OffreResponse creer(@Valid @RequestBody OffreRequest request) {
+        throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
+                "Création d'offre à implémenter");
     }
 
     /** Par defaut, uniquement les offres PUBLIEE (?statut= pour changer). */

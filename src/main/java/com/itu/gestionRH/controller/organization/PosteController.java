@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.itu.gestionRH.repository.organization.PosteRepository;
 
 @RestController
-@RequestMapping("/api/postes")
+@RequestMapping("/api/v1/postes")
 public class PosteController {
 
     public record PosteResponse(Long id, String codePoste, String intitule,

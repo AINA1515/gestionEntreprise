@@ -8,6 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,7 +20,7 @@ import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
 
 /** Candidatures : depot cote candidat, suivi cote RH. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class CandidatureController {
 
     public record CandidatureResponse(Long id, String candidat, String email, String poste,
@@ -29,6 +32,7 @@ public class CandidatureController {
 
     public record DepotCandidatureRequest(Long offreId, String nom, String prenom, String email,
                                           String telephone, String lettreMotivation) {}
+    public record StatutRequest(String statut, String commentaire) {}
 
     private final CandidatureRepository candidatureRepository;
 
@@ -37,7 +41,7 @@ public class CandidatureController {
     }
 
     /** Ex-page /rh/candidatures. */
-    @GetMapping("/rh/candidatures")
+    @GetMapping("/recrutement/candidatures/synthese")
     @Transactional(readOnly = true)
     public SuiviCandidaturesResponse suivi() {
         List<Candidature> toutes = candidatureRepository.findAll();
@@ -49,10 +53,25 @@ public class CandidatureController {
     }
 
     /** Ex-page /candidat/candidature (depot d'une candidature). */
-    @PostMapping("/candidatures")
+    @PostMapping("/recrutement/candidatures")
     public CandidatureResponse deposer(@RequestBody DepotCandidatureRequest request) {
         // TODO : CandidatureService.deposer(request) (+ import du CV en multipart)
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Depot de candidature a implementer");
+    }
+
+    @GetMapping("/recrutement/candidatures")
+    @Transactional(readOnly = true)
+    public List<CandidatureResponse> lister(@RequestParam(required = false) Long offreId,
+                                            @RequestParam(required = false) String statut) {
+        return candidatureRepository.findAll().stream()
+                .filter(c -> offreId == null || (c.getOffre() != null && offreId.equals(c.getOffre().getId())))
+                .filter(c -> statut == null || statut.equals(c.getStatutCandidature()))
+                .map(CandidatureController::toResponse).toList();
+    }
+
+    @PatchMapping("/recrutement/candidatures/{id}/statut")
+    public CandidatureResponse changerStatut(@PathVariable Long id, @RequestBody StatutRequest request) {
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Modification du statut de candidature à implémenter");
     }
 
     private static CandidatureResponse toResponse(Candidature c) {

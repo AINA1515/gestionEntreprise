@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/tache-assignments")
+@RequestMapping("/api/v1/tache-assignments")
 public class TacheAssignmentController {
 
 }

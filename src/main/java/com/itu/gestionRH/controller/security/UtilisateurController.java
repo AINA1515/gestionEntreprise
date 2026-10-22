@@ -14,7 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
  * dans UtilisateurService : voir TODO.
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 public class UtilisateurController {
 
     public record LoginRequest(String identifiant, String motDePasse) {}

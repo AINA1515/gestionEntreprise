@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.itu.gestionRH.repository.organization.DepartementRepository;
 
 @RestController
-@RequestMapping("/api/departements")
+@RequestMapping("/api/v1/departements")
 public class DepartementController {
 
     public record DepartementResponse(Long id, String code, String libelle) {}

@@ -9,7 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 /** Decision de recrutement du RH (ex-page /rh/decision). */
 @RestController
-@RequestMapping("/api/rh/decisions")
+@RequestMapping("/api/v1/recrutement")
 public class EvaluationCandidatController {
 
     /** decision : FAVORABLE | DEFAVORABLE | RESERVE (contrainte CK_EVAL_DEC). */
@@ -17,8 +17,9 @@ public class EvaluationCandidatController {
 
     public record DecisionResponse(Long id, Long candidatureId, String decision) {}
 
-    @PostMapping
-    public DecisionResponse enregistrer(@RequestBody DecisionRequest request) {
+    @PostMapping("/candidatures/{id}/evaluations")
+    public DecisionResponse enregistrer(@org.springframework.web.bind.annotation.PathVariable Long id,
+                                         @RequestBody DecisionRequest request) {
         // TODO : EvaluationCandidatService.enregistrerDecision(request)
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Enregistrement de la decision a implementer");
     }
