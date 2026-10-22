@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CandidatRepository extends JpaRepository<Candidat, Long> {
     Candidat findByEmail(String email);
+    boolean existsByEmailIgnoreCase(String email);
 }

@@ -15,15 +15,15 @@ public class CandidatureMachine {
     public CandidatureMachine(ApplicationEventPublisher publisher, EmployeRepository employes) {
         var b = StateMachine.<Candidature, CandidatureStatut>builder("Candidature",
                 Candidature::getStatutCandidature, Candidature::appliquerTransitionWorkflow, Candidature::getId, publisher);
-        b.transition(CandidatureStatut.RECUE, "preselectionner", CandidatureStatut.PRESELECTIONNEE, "CHARGE_RECRUTEMENT");
-        b.transition(CandidatureStatut.PRESELECTIONNEE, "planifier_entretien", CandidatureStatut.EN_ENTRETIEN, "CHARGE_RECRUTEMENT");
+        b.transition(CandidatureStatut.RECUE, "preselectionner", CandidatureStatut.PRESELECTIONNEE, "CANDIDATURE_PRESELECTIONNER");
+        b.transition(CandidatureStatut.PRESELECTIONNEE, "planifier_entretien", CandidatureStatut.EN_ENTRETIEN, "ENTRETIEN_PLANIFIER");
         b.transition(CandidatureStatut.EN_ENTRETIEN, "retenir", CandidatureStatut.RETENUE,
-                Set.of("MANAGER", "CHARGE_RECRUTEMENT"), Set.of(), r -> r.entite().getEntretiens().stream()
+                Set.of(), Set.of("EVALUATION_SAISIR"), r -> r.entite().getEntretiens().stream()
                         .anyMatch(e -> e.getEvaluation() != null && e.getEvaluation().getDecision() == EvaluationDecision.FAVORABLE),
                 r -> {}, "EVALUATION_NON_FAVORABLE", "Une évaluation favorable est requise pour retenir la candidature.");
         for (CandidatureStatut source : List.of(CandidatureStatut.RECUE, CandidatureStatut.PRESELECTIONNEE,
                 CandidatureStatut.EN_ENTRETIEN, CandidatureStatut.RETENUE)) {
-            b.transition(source, "rejeter", CandidatureStatut.REJETEE, Set.of("MANAGER", "CHARGE_RECRUTEMENT"), Set.of(),
+            b.transition(source, "rejeter", CandidatureStatut.REJETEE, Set.of(), Set.of("EVALUATION_SAISIR", "CANDIDATURE_PRESELECTIONNER"),
                     r -> WorkflowRules.justificationPresente(r.contexte())
                             && !(source == CandidatureStatut.RETENUE && r.entite().getCandidat() != null
                             && employes.existsByCandidatId(r.entite().getCandidat().getId())),

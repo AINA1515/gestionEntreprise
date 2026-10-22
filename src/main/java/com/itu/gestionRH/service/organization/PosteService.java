@@ -1,7 +1,7 @@
 package com.itu.gestionRH.service.organization;
 
 import com.itu.gestionRH.entity.organization.Poste;
-import com.itu.gestionRH.workflow.workflow.PosteMachine;
+import com.itu.gestionRH.workflow.PosteMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
 import com.itu.gestionRH.workflow.WorkflowTransitionEvent;
 import org.springframework.stereotype.Service;

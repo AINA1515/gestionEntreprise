@@ -14,15 +14,15 @@ public class DemandeRecrutementMachine {
         var b = StateMachine.<DemandeRecrutement, DemandeStatut>builder("DemandeRecrutement",
                 DemandeRecrutement::getStatutValidation, DemandeRecrutement::appliquerTransitionWorkflow,
                 DemandeRecrutement::getId, publisher);
-        b.transition(DemandeStatut.BROUILLON, "soumettre", DemandeStatut.ATTENTE_RH, "MANAGER");
-        b.transition(DemandeStatut.ATTENTE_RH, "transmettre_direction", DemandeStatut.ATTENTE_DIRECTION, "CHARGE_RECRUTEMENT");
+        b.transition(DemandeStatut.BROUILLON, "soumettre", DemandeStatut.ATTENTE_RH, "DEMANDE_CREER");
+        b.transition(DemandeStatut.ATTENTE_RH, "transmettre_direction", DemandeStatut.ATTENTE_DIRECTION, "DEMANDE_VERIFIER_RH");
         b.transition(DemandeStatut.ATTENTE_RH, "refuser", DemandeStatut.REFUSEE,
-                Set.of("CHARGE_RECRUTEMENT"), Set.of(), r -> WorkflowRules.justificationPresente(r.contexte()), r -> {},
+                Set.of(), Set.of("DEMANDE_VERIFIER_RH"), r -> WorkflowRules.justificationPresente(r.contexte()), r -> {},
                 "JUSTIFICATION_OBLIGATOIRE", "Une justification est obligatoire pour refuser la demande.");
-        b.transition(DemandeStatut.ATTENTE_RH, "renvoyer_manager", DemandeStatut.BROUILLON, "CHARGE_RECRUTEMENT");
-        b.transition(DemandeStatut.ATTENTE_DIRECTION, "valider", DemandeStatut.VALIDEE, "DIRECTION");
+        b.transition(DemandeStatut.ATTENTE_RH, "renvoyer_manager", DemandeStatut.BROUILLON, "DEMANDE_VERIFIER_RH");
+        b.transition(DemandeStatut.ATTENTE_DIRECTION, "valider", DemandeStatut.VALIDEE, "DEMANDE_APPROUVER_DIR");
         b.transition(DemandeStatut.ATTENTE_DIRECTION, "refuser", DemandeStatut.REFUSEE,
-                Set.of("DIRECTION"), Set.of(), r -> WorkflowRules.justificationPresente(r.contexte()), r -> {},
+                Set.of(), Set.of("DEMANDE_APPROUVER_DIR"), r -> WorkflowRules.justificationPresente(r.contexte()), r -> {},
                 "JUSTIFICATION_OBLIGATOIRE", "Une justification est obligatoire pour refuser la demande.");
         machine = b.build();
     }

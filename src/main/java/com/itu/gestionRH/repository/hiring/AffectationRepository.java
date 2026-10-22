@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AffectationRepository extends JpaRepository<Affectation, Long> {
+    boolean existsByEmployeIdAndSuperieurIdAndDateFinIsNull(Long employeId, Long superieurId);
 }

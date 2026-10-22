@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +20,7 @@ import com.itu.gestionRH.entity.recruitment.Candidature;
 import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
 import com.itu.gestionRH.workflow.CandidatureMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
+import com.itu.gestionRH.security.AccessScope;
 
 /** Candidatures : depot cote candidat, suivi cote RH. */
 @RestController
@@ -38,17 +40,20 @@ public class CandidatureController {
 
     private final CandidatureRepository candidatureRepository;
     private final CandidatureMachine machine;
+    private final AccessScope accessScope;
 
-    public CandidatureController(CandidatureRepository candidatureRepository, CandidatureMachine machine) {
+    public CandidatureController(CandidatureRepository candidatureRepository, CandidatureMachine machine, AccessScope accessScope) {
         this.candidatureRepository = candidatureRepository;
         this.machine = machine;
+        this.accessScope = accessScope;
     }
 
     /** Ex-page /rh/candidatures. */
+    @PreAuthorize("hasAuthority('PERM_CANDIDATURE_CONSULTER')")
     @GetMapping("/recrutement/candidatures/synthese")
     @Transactional(readOnly = true)
     public SuiviCandidaturesResponse suivi() {
-        List<Candidature> toutes = candidatureRepository.findAll();
+        List<Candidature> toutes = candidatureRepository.findAll().stream().filter(accessScope::canSeeCandidature).toList();
         StatsCandidatures stats = new StatsCandidatures(
                 toutes.size(),
                 toutes.stream().filter(c -> c.getStatutCandidature() == com.itu.gestionRH.entity.enums.CandidatureStatut.PRESELECTIONNEE).count(),
@@ -57,24 +62,29 @@ public class CandidatureController {
     }
 
     /** Ex-page /candidat/candidature (depot d'une candidature). */
+    @PreAuthorize("hasAuthority('PERM_CANDIDATURE_POSTULER')")
     @PostMapping("/recrutement/candidatures")
     public CandidatureResponse deposer(@RequestBody DepotCandidatureRequest request) {
         // TODO : CandidatureService.deposer(request) (+ import du CV en multipart)
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Depot de candidature a implementer");
     }
 
+    @PreAuthorize("hasAuthority('PERM_CANDIDATURE_CONSULTER')")
     @GetMapping("/recrutement/candidatures")
     @Transactional(readOnly = true)
     public List<CandidatureResponse> lister(@RequestParam(required = false) Long offreId,
                                             @RequestParam(required = false) String statut) {
         return candidatureRepository.findAll().stream()
+                .filter(accessScope::canSeeCandidature)
                 .filter(c -> offreId == null || (c.getOffre() != null && offreId.equals(c.getOffre().getId())))
                 .filter(c -> statut == null || statut.equals(c.getStatutCandidature().name()))
                 .map(this::toResponse).toList();
     }
 
+    @PreAuthorize("hasAuthority('PERM_CANDIDATURE_PRESELECTIONNER')")
     @PatchMapping("/recrutement/candidatures/{id}/statut")
     public CandidatureResponse changerStatut(@PathVariable Long id, @RequestBody StatutRequest request) {
+        accessScope.requireCandidature(id);
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Modification du statut de candidature à implémenter");
     }
 

@@ -29,6 +29,10 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiError> business(BusinessRuleException ex, HttpServletRequest req) {
         return response(ex.getStatus(), ex.getCode(), ex.getMessage(), req, List.of());
     }
+    @ExceptionHandler(AuthException.class)
+    ResponseEntity<ApiError> auth(AuthException ex, HttpServletRequest req) {
+        return response(ex.getStatus(), ex.getCode(), ex.getMessage(), req, List.of());
+    }
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<ApiError> forbidden(AccessDeniedException ex, HttpServletRequest req) {
         return response(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "Accès refusé.", req, List.of());

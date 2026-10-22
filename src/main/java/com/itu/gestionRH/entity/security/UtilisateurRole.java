@@ -110,6 +110,8 @@ public class UtilisateurRole {
         this.motif = motif;
     }
 
+    public void terminer(java.time.LocalDate date, String motif) { this.dateFin = date; this.motif = motif; }
+
     public LocalDateTime getDateCreation() {
         return dateCreation;
     }

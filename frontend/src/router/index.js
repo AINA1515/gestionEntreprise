@@ -10,6 +10,7 @@ const AUTH_ENABLED = import.meta.env.VITE_AUTH_ENABLED === 'true'
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', name: 'login', component: () => import('@/views/auth/LoginView.vue') },
+  { path: '/inscription', name: 'inscription', component: () => import('@/views/auth/RegisterView.vue') },
 
   // Espace manager (barre latérale)
   {
@@ -74,12 +75,14 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 })
 
-// Garde : active uniquement quand VITE_AUTH_ENABLED=true (voir .env.example).
-router.beforeEach((to) => {
+// Garde : activée par défaut dans l'environnement d'exemple.
+router.beforeEach(async (to) => {
   if (!AUTH_ENABLED) return true
+  if (to.name === 'login' || to.name === 'inscription') return true
   const auth = useAuthStore()
-  if (to.matched.some((r) => r.meta.requiresAuth) && !auth.isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+  if (to.matched.some((r) => r.meta.requiresAuth)) {
+    if (auth.isAuthenticated) await auth.chargerUtilisateur()
+    if (!auth.isAuthenticated) return { name: 'login', query: { redirect: to.fullPath } }
   }
   return true
 })

@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-public record WorkflowContext(String acteur, Set<String> roles, Set<String> permissions,
+public record WorkflowContext(String acteur, Long utilisateurId, Set<String> roles, Set<String> permissions,
                               String commentaire, Map<String, Object> attributs) {
     public WorkflowContext {
         acteur = acteur == null || acteur.isBlank() ? "SYSTEME" : acteur;
@@ -16,7 +16,12 @@ public record WorkflowContext(String acteur, Set<String> roles, Set<String> perm
     }
 
     public static WorkflowContext of(String acteur, Set<String> roles, Set<String> permissions, String commentaire) {
-        return new WorkflowContext(acteur, roles, permissions, commentaire, Map.of());
+        return new WorkflowContext(acteur, null, roles, permissions, commentaire, Map.of());
+    }
+
+    public static WorkflowContext ofUtilisateur(Long utilisateurId, String acteur, Set<String> roles,
+                                                Set<String> permissions, String commentaire) {
+        return new WorkflowContext(acteur, utilisateurId, roles, permissions, commentaire, Map.of());
     }
 
     public static WorkflowContext utilisateurCourant(String commentaire) {
@@ -27,8 +32,10 @@ public record WorkflowContext(String acteur, Set<String> roles, Set<String> perm
         Set<String> authorities = auth.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toSet());
         Set<String> roles = authorities.stream().filter(a -> a.startsWith("ROLE_"))
                 .map(a -> a.substring("ROLE_".length())).collect(Collectors.toSet());
-        Set<String> permissions = authorities.stream().filter(a -> !a.startsWith("ROLE_")).collect(Collectors.toSet());
-        return of(auth.getName(), roles, permissions, commentaire);
+        Set<String> permissions = authorities.stream().filter(a -> a.startsWith("PERM_"))
+                .map(a -> a.substring("PERM_".length())).collect(Collectors.toSet());
+        Long userId = auth.getPrincipal() instanceof com.itu.gestionRH.security.jwt.JwtAuthenticationFilter.JwtPrincipal p ? p.userId() : null;
+        return new WorkflowContext(auth.getName(), userId, roles, permissions, commentaire, Map.of());
     }
 
     public boolean hasAccess(Set<String> rolesRequis, Set<String> permissionsRequises) {

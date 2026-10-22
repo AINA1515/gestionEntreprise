@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +26,7 @@ import com.itu.gestionRH.entity.recruitment.DemandeRecrutement;
 import com.itu.gestionRH.repository.recruitment.DemandeRecrutementRepository;
 import com.itu.gestionRH.workflow.DemandeRecrutementMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
+import com.itu.gestionRH.security.AccessScope;
 
 /** Espace manager : tableau de bord, mes demandes, nouvelle demande. */
 @RestController
@@ -44,12 +46,15 @@ public class DemandeRecrutementController {
 
     private final DemandeRecrutementRepository demandeRepository;
     private final DemandeRecrutementMachine machine;
+    private final AccessScope accessScope;
 
-    public DemandeRecrutementController(DemandeRecrutementRepository demandeRepository, DemandeRecrutementMachine machine) {
+    public DemandeRecrutementController(DemandeRecrutementRepository demandeRepository, DemandeRecrutementMachine machine, AccessScope accessScope) {
         this.demandeRepository = demandeRepository;
         this.machine = machine;
+        this.accessScope = accessScope;
     }
 
+    @PreAuthorize("hasAuthority('PERM_DEMANDE_CONSULTER')")
     @GetMapping("/synthese")
     @Transactional(readOnly = true)
     public DashboardResponse dashboard() {
@@ -57,13 +62,14 @@ public class DemandeRecrutementController {
         return new DashboardResponse(demandes.size(), demandes.stream().limit(5).toList());
     }
 
+    @PreAuthorize("hasAuthority('PERM_DEMANDE_CONSULTER')")
     @GetMapping
     @Transactional(readOnly = true)
     public List<DemandeResponse> mesDemandes(@RequestParam(required = false) String statut,
                                              @RequestParam(required = false) Long departementId,
                                              @RequestParam(required = false) Long managerId) {
         // TODO : filtrer sur le manager connecte (DemandeRecrutement.manager) une fois l'auth en place
-        return demandeRepository.findAll().stream()
+        return accessScope.demandesVisibles().stream()
                 .sorted(Comparator.comparing(DemandeRecrutement::getDateCreation,
                         Comparator.nullsLast(Comparator.reverseOrder())))
                 .filter(d -> statut == null || statut.equals(d.getStatutValidation().name()))
@@ -74,18 +80,20 @@ public class DemandeRecrutementController {
                 .toList();
     }
 
+    @PreAuthorize("hasAuthority('PERM_DEMANDE_CREER')")
     @PostMapping
     public DemandeResponse creer(@Valid @RequestBody NouvelleDemandeRequest request) {
         // TODO : DemandeRecrutementService.creer(request, managerConnecte)
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Creation de demande a implementer");
     }
 
+    @PreAuthorize("hasAuthority('PERM_DEMANDE_CONSULTER')")
     @GetMapping("/{id}")
     public DemandeResponse detail(@PathVariable Long id) {
-        return demandeRepository.findById(id).map(this::toResponse)
-                .orElseThrow(() -> new com.itu.gestionRH.common.NotFoundException("Demande de recrutement introuvable."));
+        return toResponse(accessScope.requireDemande(id));
     }
 
+    @PreAuthorize("hasAnyAuthority('PERM_DEMANDE_VERIFIER_RH','PERM_DEMANDE_APPROUVER_DIR')")
     @PatchMapping("/{id}/validation")
     public DemandeResponse valider(@PathVariable Long id, @Valid @RequestBody ValidationRequest request) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Validation de demande à implémenter");

@@ -25,3 +25,9 @@ WHERE ID = :id_insere;
 Les changements d'état métier passent par les machines du package `com.itu.gestionRH.workflow`. Chaque transition vérifie l'état source, les rôles/permissions et ses conditions métier, puis publie un `WorkflowTransitionEvent`. Les services exposent les transitions dans leur transaction. Les DTO de détail incluent `actionsDisponibles`, filtrées selon l'état, l'autorisation et les conditions applicables.
 
 Les tests unitaires des machines s'exécutent avec `mvn test`. Le test de démarrage Spring est activé avec `-Doracle.tests.enabled=true` lorsqu'une base Oracle de test est disponible.
+
+## Authentification
+
+L'API utilise des jetons JWT HMAC valables 30 minutes par défaut. Avant le démarrage, définir `APP_JWT_SECRET` (au moins 32 octets aléatoires), `DB_USERNAME` et `DB_PASSWORD`; `DB_URL`, `APP_JWT_ACCESS_TOKEN_MINUTES` et `APP_CORS_ALLOWED_ORIGINS` peuvent aussi être configurés. Exemple pour générer un secret : `export APP_JWT_SECRET="$(openssl rand -hex 32)"`.
+
+Les mots de passe sont stockés avec BCrypt. Les nouveaux mots de passe font 12 à 72 caractères UTF-8, avec une minuscule, une majuscule, un chiffre et un caractère spécial. Les anciens hashes qui ne commencent pas par `$2` ne sont pas acceptés : les remplacer par des hashes BCrypt avant migration. Pour créer un compte administrateur initial, activer `BOOTSTRAP_ADMIN_ENABLED=true` et définir `BOOTSTRAP_ADMIN_LOGIN`, `BOOTSTRAP_ADMIN_EMAIL` et `BOOTSTRAP_ADMIN_PASSWORD` (12 caractères minimum). Au démarrage, le compte n'est créé que si aucun utilisateur n'a déjà le rôle `ADMIN`.

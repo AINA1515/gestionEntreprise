@@ -1,44 +1,75 @@
 package com.itu.gestionRH.controller.security;
 
+import com.itu.gestionRH.security.jwt.JwtAuthenticationFilter.JwtPrincipal;
+import com.itu.gestionRH.service.security.AuthService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
-/**
- * Authentification (API REST). Remplace les anciennes pages "/" et "/login".
- * La logique (verification du mot de passe, session/JWT) reste a brancher
- * dans UtilisateurService : voir TODO.
- */
 @RestController
 @RequestMapping("/api/v1/auth")
 public class UtilisateurController {
+    private final AuthService authService;
+    public UtilisateurController(AuthService authService) { this.authService = authService; }
 
-    public record LoginRequest(String identifiant, String motDePasse) {}
-
-    public record UtilisateurResponse(Long id, String login, String email,
-                                      String nomAffichage, String typeCompte, String role) {}
-
-    public record LoginResponse(String token, UtilisateurResponse utilisateur) {}
+    public record LoginRequest(@NotBlank String identifiant, @NotBlank String motDePasse) {}
+    public record LoginResponse(String token, java.time.Instant expiresAt, AuthService.UserView utilisateur) {}
+    public record InscriptionRequest(@NotBlank @Size(max = 100) String nom,
+                                     @NotBlank @Size(max = 100) String prenom,
+                                     @NotBlank @Email @Size(max = 150) String email,
+                                     @Size(max = 30) String telephone,
+                                     @NotBlank @Size(min = 12, max = 72) String motDePasse,
+                                     @AssertTrue boolean consentementRgpd) {}
+    public record ChangerMotDePasseRequest(@NotBlank String ancienMotDePasse, @NotBlank String nouveauMotDePasse) {}
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
-        // TODO : UtilisateurService.authentifier(identifiant, motDePasse) -> token + utilisateur
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Authentification a implementer");
+    public LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
+        var result = authService.authentifier(request.identifiant(), request.motDePasse(),
+                servletRequest.getRemoteAddr(), servletRequest.getHeader("User-Agent"));
+        return new LoginResponse(result.token(), result.expiresAt(), result.utilisateur());
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
-    public UtilisateurResponse me() {
-        // TODO : utilisateur courant a partir du token / de la session
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Utilisateur courant a implementer");
+    public AuthService.UserView me() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        JwtPrincipal principal = (JwtPrincipal) authentication.getPrincipal();
+        return authService.utilisateurCourant(principal.userId());
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
-    @org.springframework.web.bind.annotation.ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout() {
-        // TODO : invalider le token / la session
+    public ResponseEntity<Void> logout() {
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/inscription-candidat")
+    public ResponseEntity<Void> inscription(@Valid @RequestBody InscriptionRequest request) {
+        authService.inscrireCandidat(new AuthService.Inscription(request.nom(), request.prenom(), request.email(),
+                request.telephone(), request.motDePasse()));
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/changer-mot-de-passe")
+    public ResponseEntity<Void> changerMotDePasse(@Valid @RequestBody ChangerMotDePasseRequest request) {
+        JwtPrincipal principal = (JwtPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        authService.changerMotDePasse(principal.userId(), request.ancienMotDePasse(), request.nouveauMotDePasse());
+        return ResponseEntity.noContent().build();
     }
 }

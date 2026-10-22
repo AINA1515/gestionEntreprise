@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +18,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.itu.gestionRH.entity.recruitment.OffreEmploi;
 import com.itu.gestionRH.repository.recruitment.OffreEmploiRepository;
@@ -42,6 +45,7 @@ public class OffreEmploiController {
         this.machine = machine;
     }
 
+    @PreAuthorize("hasAuthority('PERM_OFFRE_PUBLIER')")
     @PostMapping
     public OffreResponse creer(@Valid @RequestBody OffreRequest request) {
         throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
@@ -52,12 +56,18 @@ public class OffreEmploiController {
     @GetMapping
     @Transactional(readOnly = true)
     public List<OffreResponse> lister(@RequestParam(defaultValue = "PUBLIEE") String statut) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean peutVoirBrouillons = authentication != null && authentication.isAuthenticated()
+                && authentication.getAuthorities().stream().anyMatch(a ->
+                        a.getAuthority().equals("PERM_OFFRE_PUBLIER"));
+        String statutEffectif = peutVoirBrouillons ? statut : "PUBLIEE";
         return offreRepository.findAll().stream()
-                .filter(o -> statut.equalsIgnoreCase(o.getStatutOffre().name()))
+                .filter(o -> statutEffectif.equalsIgnoreCase(o.getStatutOffre().name()))
                 .map(this::toResponse)
                 .toList();
     }
 
+    @PreAuthorize("hasAnyAuthority('PERM_OFFRE_PUBLIER','PERM_CANDIDATURE_POSTULER','PERM_CANDIDATURE_CONSULTER')")
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public OffreResponse detail(@PathVariable Long id) {

@@ -8,4 +8,7 @@ import org.springframework.stereotype.Repository;
 public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> {
     Utilisateur findByLogin(String login);
     Utilisateur findByEmail(String email);
+    java.util.Optional<Utilisateur> findByLoginIgnoreCaseOrEmailIgnoreCase(String login, String email);
+    boolean existsByEmailIgnoreCase(String email);
+    boolean existsByLoginIgnoreCase(String login);
 }

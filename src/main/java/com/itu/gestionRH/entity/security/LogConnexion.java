@@ -24,6 +24,16 @@ public class LogConnexion {
 
     public static LogConnexion nouvelle() { return new LogConnexion(); }
 
+    public void renseigner(Utilisateur utilisateur, String loginSaisi, LogConnexionResultat resultat,
+                           LocalDateTime dateEvenement, String adresseIp, String userAgent) {
+        this.utilisateur = utilisateur;
+        this.loginSaisi = loginSaisi;
+        this.resultat = resultat;
+        this.dateEvenement = dateEvenement;
+        this.adresseIp = adresseIp;
+        this.userAgent = userAgent;
+    }
+
     @Column(name = "ID", precision = 15, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "logConnexionGen")

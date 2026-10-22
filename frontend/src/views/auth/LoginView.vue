@@ -21,7 +21,14 @@ const avantages = [
 
 async function seConnecter() {
   await run(() => auth.login(form.identifiant, form.motDePasse))
-  if (!error.value) router.push(route.query.redirect || auth.homeRoute)
+  if (!error.value) {
+    const redirect = typeof route.query.redirect === 'string'
+      && route.query.redirect.startsWith('/')
+      && !route.query.redirect.startsWith('//')
+      ? route.query.redirect
+      : auth.homeRoute
+    router.push(redirect)
+  }
 }
 </script>
 
@@ -90,6 +97,7 @@ async function seConnecter() {
               <p class="text-center text-body-secondary small mt-4 mb-0">
                 Besoin d’aide ?<br />
                 <span class="text-primary fw-semibold">Contactez votre administrateur.</span>
+                <br /><RouterLink :to="{ name: 'inscription' }">Créer un compte candidat</RouterLink>
               </p>
             </div>
           </section>

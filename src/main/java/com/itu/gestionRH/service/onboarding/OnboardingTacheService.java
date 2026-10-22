@@ -1,7 +1,7 @@
 package com.itu.gestionRH.service.onboarding;
 
 import com.itu.gestionRH.entity.onboarding.OnboardingTache;
-import com.itu.gestionRH.workflow.workflow.OnboardingTacheMachine;
+import com.itu.gestionRH.workflow.OnboardingTacheMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
 import com.itu.gestionRH.workflow.WorkflowTransitionEvent;
 import org.springframework.stereotype.Service;

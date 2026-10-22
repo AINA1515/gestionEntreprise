@@ -5,7 +5,10 @@ import { tokenStorage } from '@/services/tokenStorage'
 
 const HOME_BY_TYPE = {
   MANAGER: '/manager/dashboard',
-  RH: '/rh/candidatures',
+  CHARGE_RECRUTEMENT: '/rh/candidatures',
+  GESTIONNAIRE_RH: '/rh/candidatures',
+  DIRECTION: '/manager/dashboard',
+  ADMIN: '/rh/candidatures',
   CANDIDAT: '/candidat/cv',
 }
 
@@ -15,7 +18,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const homeRoute = computed(
-    () => HOME_BY_TYPE[utilisateur.value?.role] ?? HOME_BY_TYPE[utilisateur.value?.typeCompte] ?? '/candidat/cv',
+    () => utilisateur.value?.roles?.map((role) => HOME_BY_TYPE[role]).find(Boolean)
+      ?? HOME_BY_TYPE[utilisateur.value?.typeCompte]
+      ?? (utilisateur.value?.typeCompte === 'INTERNE' ? '/rh/candidatures' : '/candidat/cv'),
   )
 
   async function login(identifiant, motDePasse) {
@@ -35,6 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function logout() {
+    authService.logout().catch(() => {})
     token.value = null
     utilisateur.value = null
     tokenStorage.clear()

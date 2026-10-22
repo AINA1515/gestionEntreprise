@@ -1,6 +1,5 @@
 package com.itu.gestionRH.workflow;
 
-import com.itu.gestionRH.entity.enums.ServiceResponsable;
 import com.itu.gestionRH.entity.enums.TacheStatut;
 import com.itu.gestionRH.entity.onboarding.OnboardingTache;
 import java.util.List;
@@ -14,27 +13,20 @@ public class OnboardingTacheMachine {
     public OnboardingTacheMachine(ApplicationEventPublisher publisher, OnboardingMachine onboardingMachine) {
         var b = StateMachine.<OnboardingTache, TacheStatut>builder("OnboardingTache", OnboardingTache::getStatutTache,
                 OnboardingTache::appliquerTransitionWorkflow, OnboardingTache::getId, publisher);
-        b.transition(TacheStatut.A_FAIRE, "commencer", TacheStatut.EN_COURS, Set.of("IT", "MANAGER", "MOYENS_GENERAUX", "SALARIE", "GESTIONNAIRE_RH", "CHARGE_RECRUTEMENT"), Set.of(),
-                r -> autoriseService(r.entite().getServiceResponsable(), r.contexte()), r -> {},
+        b.transition(TacheStatut.A_FAIRE, "commencer", TacheStatut.EN_COURS, Set.of(), Set.of("TACHE_TRAITER"),
+                r -> estAssignee(r.entite(), r.contexte()), r -> {},
                 "TACHE_SERVICE_INTERDIT", "Cette tâche est attribuée à un autre service.");
         for (TacheStatut source : List.of(TacheStatut.A_FAIRE, TacheStatut.EN_COURS)) {
             b.transition(source, "valider", TacheStatut.VALIDEE,
-                    Set.of("IT", "MANAGER", "MOYENS_GENERAUX", "SALARIE", "GESTIONNAIRE_RH", "CHARGE_RECRUTEMENT"), Set.of(),
-                    r -> autoriseService(r.entite().getServiceResponsable(), r.contexte()),
+                    Set.of(), Set.of("TACHE_TRAITER"),
+                    r -> estAssignee(r.entite(), r.contexte()),
                     r -> onboardingMachine.recalculer(r.entite().getOnboarding(), r.contexte()),
                     "TACHE_SERVICE_INTERDIT", "Cette tâche est attribuée à un autre service.");
         }
         machine = b.build();
     }
-    private static boolean autoriseService(ServiceResponsable service, WorkflowContext context) {
-        if (service == null) return false;
-        return switch (service) {
-            case RH -> context.roles().contains("GESTIONNAIRE_RH") || context.roles().contains("CHARGE_RECRUTEMENT");
-            case IT -> context.roles().contains("IT");
-            case MANAGER -> context.roles().contains("MANAGER");
-            case MOYENS_GENERAUX -> context.roles().contains("MOYENS_GENERAUX");
-            case SALARIE -> context.roles().contains("SALARIE");
-        };
+    private static boolean estAssignee(OnboardingTache task, WorkflowContext context) {
+        return task.getAssigneeAId()!=null && task.getAssigneeAId().equals(context.utilisateurId());
     }
     public WorkflowTransitionEvent transition(OnboardingTache entity, String action, WorkflowContext context) { return machine.transition(entity, action, context); }
     public List<String> actionsDisponibles(OnboardingTache entity, WorkflowContext user) { return machine.actionsDisponibles(entity, user); }

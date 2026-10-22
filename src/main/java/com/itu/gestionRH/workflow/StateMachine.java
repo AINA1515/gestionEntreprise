@@ -108,7 +108,7 @@ public final class StateMachine<E, S extends Enum<S>> {
             return this;
         }
         public Builder<E, S> transition(S source, String action, S cible, String role) {
-            return transition(source, action, cible, Set.of(role), Set.of(), r -> true, r -> {},
+            return transition(source, action, cible, Set.of(), Set.of(role), r -> true, r -> {},
                     "WORKFLOW_PRECONDITION_REFUSEE", "La condition métier n'est pas satisfaite.");
         }
         public StateMachine<E, S> build() {

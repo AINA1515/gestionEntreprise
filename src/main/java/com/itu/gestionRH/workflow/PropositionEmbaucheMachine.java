@@ -14,14 +14,14 @@ public class PropositionEmbaucheMachine {
         var b = StateMachine.<PropositionEmbauche, PropositionStatut>builder("PropositionEmbauche",
                 PropositionEmbauche::getStatutProposition, PropositionEmbauche::appliquerTransitionWorkflow,
                 PropositionEmbauche::getId, publisher);
-        b.transition(PropositionStatut.BROUILLON, "envoyer", PropositionStatut.ENVOYEE, "GESTIONNAIRE_RH");
-        b.transition(PropositionStatut.ENVOYEE, "accepter", PropositionStatut.ACCEPTEE, "CANDIDAT");
+        b.transition(PropositionStatut.BROUILLON, "envoyer", PropositionStatut.ENVOYEE, "PROPOSITION_EMETTRE");
+        b.transition(PropositionStatut.ENVOYEE, "accepter", PropositionStatut.ACCEPTEE, "PROPOSITION_REPONDRE");
         b.transition(PropositionStatut.ENVOYEE, "refuser", PropositionStatut.REFUSEE,
-                Set.of("CANDIDAT"), Set.of(), r -> WorkflowRules.justificationPresente(r.contexte()), r -> {},
+                Set.of(), Set.of("PROPOSITION_REPONDRE"), r -> WorkflowRules.justificationPresente(r.contexte()), r -> {},
                 "JUSTIFICATION_OBLIGATOIRE", "Un motif de refus est obligatoire.");
-        b.transition(PropositionStatut.ENVOYEE, "expirer", PropositionStatut.EXPIREE, "GESTIONNAIRE_RH");
+        b.transition(PropositionStatut.ENVOYEE, "expirer", PropositionStatut.EXPIREE, "PROPOSITION_EMETTRE");
         for (PropositionStatut source : List.of(PropositionStatut.BROUILLON, PropositionStatut.ENVOYEE))
-            b.transition(source, "annuler", PropositionStatut.ANNULEE, "GESTIONNAIRE_RH");
+            b.transition(source, "annuler", PropositionStatut.ANNULEE, "PROPOSITION_EMETTRE");
         machine = b.build();
     }
     public WorkflowTransitionEvent transition(PropositionEmbauche entity, String action, WorkflowContext context) { return machine.transition(entity, action, context); }

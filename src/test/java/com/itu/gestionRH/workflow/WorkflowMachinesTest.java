@@ -34,8 +34,19 @@ class WorkflowMachinesTest {
                 });
     }
 
-    private WorkflowContext role(String role) { return WorkflowContext.of("test", Set.of(role), Set.of(), null); }
-    private WorkflowContext comment(String role) { return WorkflowContext.of("test", Set.of(role), Set.of(), "motif valable"); }
+    private WorkflowContext role(String role) {
+        Set<String> permissions=switch(role) {
+            case "MANAGER" -> Set.of("DEMANDE_CREER","EVALUATION_SAISIR");
+            case "CHARGE_RECRUTEMENT" -> Set.of("DEMANDE_VERIFIER_RH","OFFRE_PUBLIER","CANDIDATURE_PRESELECTIONNER","ENTRETIEN_PLANIFIER","PROPOSITION_EMETTRE");
+            case "DIRECTION" -> Set.of("DEMANDE_APPROUVER_DIR");
+            case "GESTIONNAIRE_RH" -> Set.of("CONTRAT_GERER","ONBOARDING_ADMIN");
+            case "CANDIDAT" -> Set.of("PROPOSITION_REPONDRE","CANDIDATURE_POSTULER");
+            case "IT","MOYENS_GENERAUX","SALARIE" -> Set.of("TACHE_TRAITER");
+            default -> Set.of();
+        };
+        return WorkflowContext.ofUtilisateur(7L,"test", Set.of(role), permissions, null);
+    }
+    private WorkflowContext comment(String role) { var c=role(role); return WorkflowContext.of("test",c.roles(),c.permissions(),"motif valable"); }
 
     @Test void demandeSoumettrePublieEvenement() {
         var e = DemandeRecrutement.nouvelle(); e.appliquerTransitionWorkflow(DemandeStatut.BROUILLON);
@@ -86,7 +97,7 @@ class WorkflowMachinesTest {
 
     @Test void propositionEnvoyer() {
         var e = PropositionEmbauche.nouvelle(); e.appliquerTransitionWorkflow(PropositionStatut.BROUILLON);
-        new PropositionEmbaucheMachine(publisher).transition(e, "envoyer", role("GESTIONNAIRE_RH"));
+        new PropositionEmbaucheMachine(publisher).transition(e, "envoyer", role("CHARGE_RECRUTEMENT"));
         assertEquals(PropositionStatut.ENVOYEE, e.getStatutProposition());
     }
     @Test void propositionRefusExigeMotif() {
@@ -115,12 +126,12 @@ class WorkflowMachinesTest {
         assertEquals(OnboardingStatut.EN_COURS, OnboardingMachine.derive(e));
     }
     @Test void tacheDemarrePourLeServiceResponsable() {
-        var e = OnboardingTache.nouvelle(); e.appliquerTransitionWorkflow(TacheStatut.A_FAIRE); e.setServiceResponsable(ServiceResponsable.IT);
+        var e = OnboardingTache.nouvelle(); e.appliquerTransitionWorkflow(TacheStatut.A_FAIRE); e.setServiceResponsable(ServiceResponsable.IT); e.setAssigneeAId(7L);
         new OnboardingTacheMachine(publisher, new OnboardingMachine(publisher)).transition(e, "commencer", role("IT"));
         assertEquals(TacheStatut.EN_COURS, e.getStatutTache());
     }
     @Test void tacheRefuseAutreService() {
-        var e = OnboardingTache.nouvelle(); e.appliquerTransitionWorkflow(TacheStatut.A_FAIRE); e.setServiceResponsable(ServiceResponsable.IT);
+        var e = OnboardingTache.nouvelle(); e.appliquerTransitionWorkflow(TacheStatut.A_FAIRE); e.setServiceResponsable(ServiceResponsable.IT); e.setAssigneeAId(8L);
         assertThrows(BusinessRuleException.class, () -> new OnboardingTacheMachine(publisher, new OnboardingMachine(publisher)).transition(e, "commencer", role("MANAGER")));
     }
 }

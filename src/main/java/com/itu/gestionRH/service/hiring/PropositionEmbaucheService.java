@@ -1,7 +1,7 @@
 package com.itu.gestionRH.service.hiring;
 
 import com.itu.gestionRH.entity.hiring.PropositionEmbauche;
-import com.itu.gestionRH.workflow.workflow.PropositionEmbaucheMachine;
+import com.itu.gestionRH.workflow.PropositionEmbaucheMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
 import com.itu.gestionRH.workflow.WorkflowTransitionEvent;
 import org.springframework.stereotype.Service;
