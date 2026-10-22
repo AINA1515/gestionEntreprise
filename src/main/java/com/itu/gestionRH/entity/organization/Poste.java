@@ -34,6 +34,14 @@ public class Poste {
 
     public static Poste nouvelle() { return new Poste(); }
 
+    public void initialiser(String codePoste, String intitule, String description, Departement departement) {
+        this.codePoste = codePoste;
+        this.intitule = intitule;
+        this.description = description;
+        this.departement = departement;
+        this.statutPoste = PosteStatut.CREE;
+    }
+
     @Column(name = "ID", precision = 10, scale = 0)
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "posteGen")

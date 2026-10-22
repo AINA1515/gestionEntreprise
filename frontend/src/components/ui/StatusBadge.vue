@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useLabels } from '@/composables/useLabels'
 
 const props = defineProps({
-  type: { type: String, required: true }, // 'demande' | 'candidature'
+  type: { type: String, required: true }, // demande | candidature | poste | employe
   value: { type: String, default: null },
 })
 

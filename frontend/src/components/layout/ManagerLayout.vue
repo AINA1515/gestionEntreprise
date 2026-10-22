@@ -1,15 +1,15 @@
 <script setup>
-import SidebarLayout from './SidebarLayout.vue'
+import AppLayout from './AppLayout.vue'
 
 const items = [
-  { to: '/manager/dashboard', label: 'Tableau de bord', icon: 'grid' },
-  { to: '/manager/demandes/nouvelle', label: 'Nouvelle demande', icon: 'plus-lg' },
-  { to: '/manager/demandes', label: 'Mes demandes', icon: 'card-list' },
+  { to: '/manager/dashboard', label: 'Tableau de bord', icon: 'grid', roles: ['MANAGER'] },
+  { to: '/manager/demandes/nouvelle', label: 'Nouvelle demande', icon: 'plus-lg', roles: ['MANAGER'], permission: 'DEMANDE_CREER' },
+  { to: '/manager/demandes', label: 'Mes demandes', icon: 'card-list', roles: ['MANAGER'], permission: 'DEMANDE_CONSULTER' },
 ]
 </script>
 
 <template>
-  <SidebarLayout espace="Espace Manager" :items="items">
+  <AppLayout espace="Espace Manager" :items="items">
     <RouterView />
-  </SidebarLayout>
+  </AppLayout>
 </template>

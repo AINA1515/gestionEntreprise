@@ -68,6 +68,7 @@ async function seConnecter() {
               </p>
 
               <AlertMessage :message="error" />
+              <AlertMessage v-if="route.query.message === 'session-expiree'" variant="warning" message="Session expirée. Veuillez vous reconnecter." />
 
               <form @submit.prevent="seConnecter">
                 <div class="mb-3">

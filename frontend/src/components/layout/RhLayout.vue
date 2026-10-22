@@ -1,13 +1,18 @@
 <script setup>
-import SidebarLayout from './SidebarLayout.vue'
+import AppLayout from './AppLayout.vue'
 
 const items = [
-  { to: '/rh/candidatures', label: 'Candidatures', icon: 'people' },
+  { to: '/rh/accueil', label: 'Accueil RH', icon: 'grid', roles: ['CHARGE_RECRUTEMENT', 'GESTIONNAIRE_RH'] },
+  { to: '/rh/candidatures', label: 'Candidatures', icon: 'people', roles: ['CHARGE_RECRUTEMENT'], permission: 'CANDIDATURE_CONSULTER' },
+  { to: '/rh/confirmation', label: 'Propositions', icon: 'envelope-check', roles: ['CHARGE_RECRUTEMENT'], permission: 'PROPOSITION_EMETTRE' },
+  { to: '/rh/departements', label: 'Départements', icon: 'diagram-3', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },
+  { to: '/rh/postes', label: 'Postes', icon: 'briefcase', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },
+  { to: '/rh/employes', label: 'Employés', icon: 'people-fill', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },
 ]
 </script>
 
 <template>
-  <SidebarLayout espace="Espace Ressources humaines" :items="items">
+  <AppLayout espace="Espace Ressources humaines" :items="items">
     <RouterView />
-  </SidebarLayout>
+  </AppLayout>
 </template>

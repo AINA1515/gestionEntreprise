@@ -79,7 +79,8 @@ public class AccessScope {
 
     public void requireEmploye(Long id) {
         Utilisateur u=currentUser();
-        if (has("PERM_CONTRAT_GERER") || has("PERM_EMPLOYE_CONVERTIR") || has("PERM_ONBOARDING_ADMIN") || has("PERM_UTILISATEUR_ADMIN")) return;
+        if (has("PERM_CONTRAT_GERER") || has("PERM_EMPLOYE_CONVERTIR") || has("PERM_ONBOARDING_ADMIN")
+                || has("PERM_UTILISATEUR_ADMIN") || has("PERM_DOCUMENT_CONSULTER_TOUS") || has("PERM_REPORTING_CONSULTER")) return;
         if(u!=null && id.equals(u.getEmployeId())) return;
         if(u!=null && u.getEmployeId()!=null && has("PERM_DEMANDE_CREER")
                 && affectations.existsByEmployeIdAndSuperieurIdAndDateFinIsNull(id,u.getEmployeId())) return;

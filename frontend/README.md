@@ -25,5 +25,5 @@ Démarrer aussi l'API Spring Boot (port 8080).
 Flux : **View → Store → Service → API**.
 
 ## Authentification
-La garde du routeur est désactivée par défaut (`VITE_AUTH_ENABLED=false`) car `/api/auth/login`
-n'est pas encore implémenté côté Spring Boot. À passer à `true` une fois le login branché.
+La garde du routeur est activée par défaut. `VITE_AUTH_ENABLED=true` dans `.env.example` rappelle
+le réglage à conserver pour les environnements locaux et de déploiement.

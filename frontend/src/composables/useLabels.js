@@ -15,6 +15,20 @@ const CANDIDATURE = {
   REJETEE: { label: 'Rejetée', variant: 'danger' },
 }
 
+const POSTE = {
+  CREE: { label: 'Créé', variant: 'secondary' },
+  VACANT: { label: 'Vacant', variant: 'warning' },
+  POURVU: { label: 'Pourvu', variant: 'success' },
+  FERME: { label: 'Fermé', variant: 'dark' },
+}
+
+const EMPLOYE = {
+  EN_ONBOARDING: { label: 'En intégration', variant: 'info' },
+  ACTIF: { label: 'Actif', variant: 'success' },
+  SUSPENDU: { label: 'Suspendu', variant: 'warning' },
+  SORTI: { label: 'Sorti', variant: 'secondary' },
+}
+
 export const DECISIONS = [
   { value: 'FAVORABLE', label: 'Candidat retenu' },
   { value: 'DEFAVORABLE', label: 'Candidat non retenu' },
@@ -28,7 +42,7 @@ export const TYPES_CONTRAT = [
   { value: 'ALTERNANCE', label: 'Alternance' },
 ]
 
-const TABLES = { demande: DEMANDE, candidature: CANDIDATURE }
+const TABLES = { demande: DEMANDE, candidature: CANDIDATURE, poste: POSTE, employe: EMPLOYE }
 
 export function useLabels() {
   function statut(type, value) {

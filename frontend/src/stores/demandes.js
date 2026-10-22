@@ -23,7 +23,7 @@ export const useDemandesStore = defineStore('demandes', () => {
 
   /** Renvoie true si la demande est créée. */
   const creer = async (demande) => {
-    const created = await run(() => demandeService.creer(demande))
+    const created = await run(() => demandeService.creer(demande), { successMessage: 'La demande a été créée.' })
     return !!created
   }
 
