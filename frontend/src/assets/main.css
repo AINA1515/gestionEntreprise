@@ -1,0 +1,7 @@
+body {
+  background-color: var(--bs-tertiary-bg);
+}
+
+.app-sidebar {
+  min-height: 100vh;
+}

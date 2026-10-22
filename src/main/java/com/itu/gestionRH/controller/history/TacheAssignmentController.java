@@ -1,8 +1,10 @@
 package com.itu.gestionRH.controller.history;
 
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
+@RequestMapping("/api/tache-assignments")
 public class TacheAssignmentController {
 
 }
