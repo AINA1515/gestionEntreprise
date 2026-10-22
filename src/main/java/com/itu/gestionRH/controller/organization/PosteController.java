@@ -9,18 +9,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.itu.gestionRH.repository.organization.PosteRepository;
+import com.itu.gestionRH.workflow.PosteMachine;
+import com.itu.gestionRH.workflow.WorkflowContext;
 
 @RestController
 @RequestMapping("/api/v1/postes")
 public class PosteController {
 
     public record PosteResponse(Long id, String codePoste, String intitule,
-                                Long departementId, String departement) {}
+                                Long departementId, String departement, String statut, List<String> actionsDisponibles) {}
 
     private final PosteRepository posteRepository;
+    private final PosteMachine machine;
 
-    public PosteController(PosteRepository posteRepository) {
+    public PosteController(PosteRepository posteRepository, PosteMachine machine) {
         this.posteRepository = posteRepository;
+        this.machine = machine;
     }
 
     /** Liste des postes, filtrable par departement (?departementId=). */
@@ -33,7 +37,8 @@ public class PosteController {
                 .map(p -> new PosteResponse(
                         p.getId(), p.getCodePoste(), p.getIntitule(),
                         p.getDepartement() != null ? p.getDepartement().getId() : null,
-                        p.getDepartement() != null ? p.getDepartement().getLibelle() : null))
+                        p.getDepartement() != null ? p.getDepartement().getLibelle() : null,
+                        p.getStatutPoste().name(), machine.actionsDisponibles(p, WorkflowContext.utilisateurCourant(null))))
                 .toList();
     }
 }

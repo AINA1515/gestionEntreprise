@@ -95,7 +95,7 @@ public class Poste {
     public void setDescription(String description) { this.description = description; }
 
     public PosteStatut getStatutPoste() { return statutPoste; }
-    public void setStatutPoste(PosteStatut statutPoste) { this.statutPoste = statutPoste; }
+    public void appliquerTransitionWorkflow(PosteStatut nouvelEtat) { this.statutPoste = nouvelEtat; }
 
     public Departement getDepartement() { return departement; }
     public void setDepartement(Departement departement) { this.departement = departement; }

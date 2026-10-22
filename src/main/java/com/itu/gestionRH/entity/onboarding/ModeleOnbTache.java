@@ -47,10 +47,10 @@ public class ModeleOnbTache {
     @Column(name = "DELAI_JOURS", precision = 3, scale = 0, nullable = false)
     private Integer delaiJours;
 
-    @Colum, precision = 1, scale = 0n(name = "EST_OBLIGATOIRE")
-    private, precision = 3, scale = 0 Boolean estObligatoire;
+    @Column(name = "EST_OBLIGATOIRE", precision = 1, scale = 0)
+    private Boolean estObligatoire;
 
-    @Col, precision = 1, scale = 0umn(name = "ORDRE")
+    @Column(name = "ORDRE", precision = 3, scale = 0)
     private Integer ordre;
 
     @Column(name = "EST_ACTIF", nullable = false)

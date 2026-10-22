@@ -60,7 +60,7 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     private NotificationStatut statutEnvoi;
 
-    @Co, precision = 3, scale = 0lumn(name = "NB_TENTATIVES")
+    @Column(name = "NB_TENTATIVES", precision = 3, scale = 0)
     private Integer nbTentatives;
 
     @Column(name = "DATE_ENVOI_PREVUE", nullable = false)

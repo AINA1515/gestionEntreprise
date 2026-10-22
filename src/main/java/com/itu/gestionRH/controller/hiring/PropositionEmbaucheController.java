@@ -1,6 +1,7 @@
 package com.itu.gestionRH.controller.hiring;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +21,7 @@ public class PropositionEmbaucheController {
     public record ConfirmationRequest(Long candidatureId, String typeContrat,
                                       LocalDate dateDebut, String message) {}
 
-    public record ConfirmationResponse(Long id, Long candidatureId, String statut) {}
+    public record ConfirmationResponse(Long id, Long candidatureId, String statut, List<String> actionsDisponibles) {}
     public record ReponseRequest(String statut, String commentaire) {}
     public record EmployeConversionResponse(Long employeId, Long candidatId, String matricule, String statut) {}
 

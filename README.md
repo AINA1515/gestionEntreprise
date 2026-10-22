@@ -19,3 +19,9 @@ WHERE ID = :id_insere;
 ```
 
 `CREE_PAR` doit être `audit-test-login`. Répéter l'insertion sans principal applicatif : `CREE_PAR` doit être `SYSTEME` ou `ANONYME`, selon le contexte d'exécution. Cela vérifie aussi que l'identifiant précédent a été effacé avant la réutilisation de la connexion. Le trigger Oracle incrémente `VERSION_LIGNE`; Hibernate relit cette valeur comme version générée et ne l'écrit pas.
+
+## Moteur de workflow
+
+Les changements d'état métier passent par les machines du package `com.itu.gestionRH.workflow`. Chaque transition vérifie l'état source, les rôles/permissions et ses conditions métier, puis publie un `WorkflowTransitionEvent`. Les services exposent les transitions dans leur transaction. Les DTO de détail incluent `actionsDisponibles`, filtrées selon l'état, l'autorisation et les conditions applicables.
+
+Les tests unitaires des machines s'exécutent avec `mvn test`. Le test de démarrage Spring est activé avec `-Doracle.tests.enabled=true` lorsqu'une base Oracle de test est disponible.

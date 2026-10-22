@@ -40,8 +40,8 @@ public class Departement {
     @Column(name = "RESPONSABLE_ID", precision = 10, scale = 0)
     private Long responsableId;
 
-    @Column(nam, precision = 10, scale = 0e = "DEPARTEMENT_PARENT_ID")
-    private Lon, precision = 1, scale = 0g departementParentId;
+    @Column(name = "DEPARTEMENT_PARENT_ID", precision = 10, scale = 0)
+    private Long departementParentId;
 
     @Column(name = "EST_ACTIF", nullable = false)
     private Boolean estActif;

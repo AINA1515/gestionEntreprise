@@ -17,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.itu.gestionRH.entity.recruitment.Candidature;
 import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
+import com.itu.gestionRH.workflow.CandidatureMachine;
+import com.itu.gestionRH.workflow.WorkflowContext;
 
 /** Candidatures : depot cote candidat, suivi cote RH. */
 @RestController
@@ -24,7 +26,7 @@ import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
 public class CandidatureController {
 
     public record CandidatureResponse(Long id, String candidat, String email, String poste,
-                                      LocalDate datePostulation, String statut) {}
+                                      LocalDate datePostulation, String statut, List<String> actionsDisponibles) {}
 
     public record StatsCandidatures(long recues, long entretiensAOrganiser, long retenues) {}
 
@@ -35,9 +37,11 @@ public class CandidatureController {
     public record StatutRequest(String statut, String commentaire) {}
 
     private final CandidatureRepository candidatureRepository;
+    private final CandidatureMachine machine;
 
-    public CandidatureController(CandidatureRepository candidatureRepository) {
+    public CandidatureController(CandidatureRepository candidatureRepository, CandidatureMachine machine) {
         this.candidatureRepository = candidatureRepository;
+        this.machine = machine;
     }
 
     /** Ex-page /rh/candidatures. */
@@ -47,9 +51,9 @@ public class CandidatureController {
         List<Candidature> toutes = candidatureRepository.findAll();
         StatsCandidatures stats = new StatsCandidatures(
                 toutes.size(),
-                toutes.stream().filter(c -> "PRESELECTIONNEE".equals(c.getStatutCandidature())).count(),
-                toutes.stream().filter(c -> "RETENUE".equals(c.getStatutCandidature())).count());
-        return new SuiviCandidaturesResponse(stats, toutes.stream().map(CandidatureController::toResponse).toList());
+                toutes.stream().filter(c -> c.getStatutCandidature() == com.itu.gestionRH.entity.enums.CandidatureStatut.PRESELECTIONNEE).count(),
+                toutes.stream().filter(c -> c.getStatutCandidature() == com.itu.gestionRH.entity.enums.CandidatureStatut.RETENUE).count());
+        return new SuiviCandidaturesResponse(stats, toutes.stream().map(this::toResponse).toList());
     }
 
     /** Ex-page /candidat/candidature (depot d'une candidature). */
@@ -66,7 +70,7 @@ public class CandidatureController {
         return candidatureRepository.findAll().stream()
                 .filter(c -> offreId == null || (c.getOffre() != null && offreId.equals(c.getOffre().getId())))
                 .filter(c -> statut == null || statut.equals(c.getStatutCandidature().name()))
-                .map(CandidatureController::toResponse).toList();
+                .map(this::toResponse).toList();
     }
 
     @PatchMapping("/recrutement/candidatures/{id}/statut")
@@ -74,12 +78,13 @@ public class CandidatureController {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Modification du statut de candidature à implémenter");
     }
 
-    private static CandidatureResponse toResponse(Candidature c) {
+    private CandidatureResponse toResponse(Candidature c) {
         var cand = c.getCandidat();
         String nom = cand == null ? null : ((cand.getPrenom() == null ? "" : cand.getPrenom() + " ")
                 + (cand.getNom() == null ? "" : cand.getNom())).trim();
         return new CandidatureResponse(c.getId(), nom, cand != null ? cand.getEmail() : null,
                 c.getOffre() != null ? c.getOffre().getTitre() : null,
-                c.getDatePostulation(), c.getStatutCandidature().name());
+                c.getDatePostulation(), c.getStatutCandidature().name(),
+                machine.actionsDisponibles(c, WorkflowContext.utilisateurCourant(null)));
     }
 }

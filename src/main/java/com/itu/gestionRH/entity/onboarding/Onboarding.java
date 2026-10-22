@@ -91,7 +91,7 @@ public class Onboarding {
     public void setDateFinReelle(LocalDate dateFinReelle) { this.dateFinReelle = dateFinReelle; }
 
     public OnboardingStatut getStatutGlobal() { return statutGlobal; }
-    public void setStatutGlobal(OnboardingStatut statutGlobal) { this.statutGlobal = statutGlobal; }
+    public void appliquerTransitionWorkflow(OnboardingStatut nouvelEtat) { this.statutGlobal = nouvelEtat; }
 
     public List<OnboardingTache> getOnboardingTaches() { return onboardingTaches; }
     public void setOnboardingTaches(List<OnboardingTache> onboardingTaches) { this.onboardingTaches = onboardingTaches; }

@@ -20,6 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.itu.gestionRH.entity.recruitment.OffreEmploi;
 import com.itu.gestionRH.repository.recruitment.OffreEmploiRepository;
+import com.itu.gestionRH.workflow.OffreEmploiMachine;
+import com.itu.gestionRH.workflow.WorkflowContext;
 
 /** Offres d'emploi visibles par les candidats (ex-page /candidat/offres). */
 @RestController
@@ -28,14 +30,16 @@ public class OffreEmploiController {
 
     public record OffreResponse(Long id, String titre, String description, String profilRecherche,
                                 String departement, LocalDate datePublication,
-                                LocalDate dateLimiteCandidature, String statut) {}
+                                LocalDate dateLimiteCandidature, String statut, List<String> actionsDisponibles) {}
     public record OffreRequest(@NotNull Long demandeId, @NotBlank String titre, String description,
                                String profilRecherche, LocalDate dateLimiteCandidature) {}
 
     private final OffreEmploiRepository offreRepository;
+    private final OffreEmploiMachine machine;
 
-    public OffreEmploiController(OffreEmploiRepository offreRepository) {
+    public OffreEmploiController(OffreEmploiRepository offreRepository, OffreEmploiMachine machine) {
         this.offreRepository = offreRepository;
+        this.machine = machine;
     }
 
     @PostMapping
@@ -50,7 +54,7 @@ public class OffreEmploiController {
     public List<OffreResponse> lister(@RequestParam(defaultValue = "PUBLIEE") String statut) {
         return offreRepository.findAll().stream()
                 .filter(o -> statut.equalsIgnoreCase(o.getStatutOffre().name()))
-                .map(OffreEmploiController::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -58,17 +62,18 @@ public class OffreEmploiController {
     @Transactional(readOnly = true)
     public OffreResponse detail(@PathVariable Long id) {
         return offreRepository.findById(id)
-                .map(OffreEmploiController::toResponse)
+                .map(this::toResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offre introuvable"));
     }
 
-    private static OffreResponse toResponse(OffreEmploi o) {
+    private OffreResponse toResponse(OffreEmploi o) {
         String departement = null;
         if (o.getDemande() != null && o.getDemande().getPoste() != null
                 && o.getDemande().getPoste().getDepartement() != null) {
             departement = o.getDemande().getPoste().getDepartement().getLibelle();
         }
         return new OffreResponse(o.getId(), o.getTitre(), o.getDescriptionPoste(), o.getProfilRecherche(),
-                departement, o.getDatePublication(), o.getDateLimiteCandidature(), o.getStatutOffre().name());
+                departement, o.getDatePublication(), o.getDateLimiteCandidature(), o.getStatutOffre().name(),
+                machine.actionsDisponibles(o, WorkflowContext.utilisateurCourant(null)));
     }
 }

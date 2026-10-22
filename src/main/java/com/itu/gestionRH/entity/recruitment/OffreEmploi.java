@@ -116,7 +116,7 @@ public class OffreEmploi {
     public void setDateCloture(LocalDate dateCloture) { this.dateCloture = dateCloture; }
 
     public OffreStatut getStatutOffre() { return statutOffre; }
-    public void setStatutOffre(OffreStatut statutOffre) { this.statutOffre = statutOffre; }
+    public void appliquerTransitionWorkflow(OffreStatut nouvelEtat) { this.statutOffre = nouvelEtat; }
 
     public List<Candidature> getCandidatures() { return candidatures; }
     public void setCandidatures(List<Candidature> candidatures) { this.candidatures = candidatures; }

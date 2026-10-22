@@ -13,7 +13,8 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/v1/onboarding/taches")
 public class OnboardingTacheController {
-    public record TacheResponse(Long id, String intitule, String statut, String serviceResponsable) {}
+    public record TacheResponse(Long id, String intitule, String statut, String serviceResponsable,
+                                List<String> actionsDisponibles) {}
     public record MiseAJourTacheRequest(String statut, String commentaire) {}
     @GetMapping("/mes-taches")
     public List<TacheResponse> mesTaches() {

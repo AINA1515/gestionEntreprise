@@ -23,6 +23,8 @@ import jakarta.validation.constraints.NotNull;
 
 import com.itu.gestionRH.entity.recruitment.DemandeRecrutement;
 import com.itu.gestionRH.repository.recruitment.DemandeRecrutementRepository;
+import com.itu.gestionRH.workflow.DemandeRecrutementMachine;
+import com.itu.gestionRH.workflow.WorkflowContext;
 
 /** Espace manager : tableau de bord, mes demandes, nouvelle demande. */
 @RestController
@@ -31,7 +33,8 @@ public class DemandeRecrutementController {
 
     public record DemandeResponse(Long id, Long posteId, String poste, String departement,
                                   Integer effectif, String motif, BigDecimal budget,
-                                  LocalDate dateSouhaitee, String statut, LocalDateTime dateDemande) {}
+                                  LocalDate dateSouhaitee, String statut, LocalDateTime dateDemande,
+                                  List<String> actionsDisponibles) {}
 
     public record DashboardResponse(long nombreDemandes, List<DemandeResponse> recentes) {}
 
@@ -40,9 +43,11 @@ public class DemandeRecrutementController {
     public record ValidationRequest(@NotBlank String statut, String commentaire) {}
 
     private final DemandeRecrutementRepository demandeRepository;
+    private final DemandeRecrutementMachine machine;
 
-    public DemandeRecrutementController(DemandeRecrutementRepository demandeRepository) {
+    public DemandeRecrutementController(DemandeRecrutementRepository demandeRepository, DemandeRecrutementMachine machine) {
         this.demandeRepository = demandeRepository;
+        this.machine = machine;
     }
 
     @GetMapping("/synthese")
@@ -61,11 +66,11 @@ public class DemandeRecrutementController {
         return demandeRepository.findAll().stream()
                 .sorted(Comparator.comparing(DemandeRecrutement::getDateCreation,
                         Comparator.nullsLast(Comparator.reverseOrder())))
-                .filter(d -> statut == null || statut.equals(d.getStatutValidation()))
+                .filter(d -> statut == null || statut.equals(d.getStatutValidation().name()))
                 .filter(d -> departementId == null || (d.getPoste() != null && d.getPoste().getDepartement() != null
                         && departementId.equals(d.getPoste().getDepartement().getId())))
                 .filter(d -> managerId == null || (d.getManager() != null && managerId.equals(d.getManager().getId())))
-                .map(DemandeRecrutementController::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -77,7 +82,7 @@ public class DemandeRecrutementController {
 
     @GetMapping("/{id}")
     public DemandeResponse detail(@PathVariable Long id) {
-        return demandeRepository.findById(id).map(DemandeRecrutementController::toResponse)
+        return demandeRepository.findById(id).map(this::toResponse)
                 .orElseThrow(() -> new com.itu.gestionRH.common.NotFoundException("Demande de recrutement introuvable."));
     }
 
@@ -86,13 +91,13 @@ public class DemandeRecrutementController {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Validation de demande à implémenter");
     }
 
-    private static DemandeResponse toResponse(DemandeRecrutement d) {
+    private DemandeResponse toResponse(DemandeRecrutement d) {
         var poste = d.getPoste();
         return new DemandeResponse(d.getId(),
                 poste != null ? poste.getId() : null,
                 poste != null ? poste.getIntitule() : null,
                 poste != null && poste.getDepartement() != null ? poste.getDepartement().getLibelle() : null,
                 d.getEffectifDemande(), d.getMotif(), d.getBudgetAlloue(), d.getDateSouhaitee(),
-                d.getStatutValidation().name(), d.getDateCreation());
+                d.getStatutValidation().name(), d.getDateCreation(), machine.actionsDisponibles(d, WorkflowContext.utilisateurCourant(null)));
     }
 }

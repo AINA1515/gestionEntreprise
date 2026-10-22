@@ -13,4 +13,5 @@ public interface EmployeRepository extends JpaRepository<Employe, Long> {
     Employe findByNomAndPrenom(String nom, String prenom);
     Page<Employe> findByStatutActivite(EmployeStatut statut, Pageable pageable);
     Page<Employe> findByCandidatId(Long candidatId, Pageable pageable);
+    boolean existsByCandidatId(Long candidatId);
 }

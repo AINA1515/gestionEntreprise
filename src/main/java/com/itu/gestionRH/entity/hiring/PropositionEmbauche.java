@@ -131,7 +131,7 @@ public class PropositionEmbauche {
     public void setEmploye(Employe employe) { this.employe = employe; }
 
     public PropositionStatut getStatutProposition() { return statutProposition; }
-    public void setStatutProposition(PropositionStatut statutProposition) { this.statutProposition = statutProposition; }
+    public void appliquerTransitionWorkflow(PropositionStatut nouvelEtat) { this.statutProposition = nouvelEtat; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
 

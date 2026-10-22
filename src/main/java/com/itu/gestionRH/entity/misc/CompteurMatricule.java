@@ -37,7 +37,7 @@ public class CompteurMatricule {
 
         private static final long serialVersionUID = 1L;
 
-    , precision = 4, scale = 0    @Column(name = "ANNEE", nullable = false)
+        @Column(name = "ANNEE", nullable = false, precision = 4, scale = 0)
         private Integer annee;
 
         protected CompteurMatriculeId() {}

@@ -61,7 +61,7 @@ public class OnboardingTache {
     @Column(name = "ASSIGNEE_A_ID", precision = 10, scale = 0)
     private Long assigneeAId;
 
-    @Colu, precision = 1, scale = 0mn(name = "EST_OBLIGATOIRE")
+    @Column(name = "EST_OBLIGATOIRE", precision = 1, scale = 0)
     private Boolean estObligatoire;
 
     @Column(name = "STATUT_TACHE", nullable = false, length = 10)
@@ -122,7 +122,7 @@ public class OnboardingTache {
     public void setEstObligatoire(Boolean estObligatoire) { this.estObligatoire = estObligatoire; }
 
     public TacheStatut getStatutTache() { return statutTache; }
-    public void setStatutTache(TacheStatut statutTache) { this.statutTache = statutTache; }
+    public void appliquerTransitionWorkflow(TacheStatut nouvelEtat) { this.statutTache = nouvelEtat; }
 
     public LocalDate getDateLimite() { return dateLimite; }
     public void setDateLimite(LocalDate dateLimite) { this.dateLimite = dateLimite; }

@@ -61,7 +61,7 @@ public class DemandeRecrutement {
     @Column(name = "MOTIF", nullable = false, length = 1000)
     private String motif;
 
-    @Colum, precision = 3, scale = 0n(name = "EFFECTIF_DEMANDE")
+    @Column(name = "EFFECTIF_DEMANDE", precision = 3, scale = 0)
     private Integer effectifDemande;
 
     @Column(name = "BUDGET_ALLOUE", precision = 15, scale = 2)
@@ -124,7 +124,7 @@ public class DemandeRecrutement {
     public void setDateSouhaitee(LocalDate dateSouhaitee) { this.dateSouhaitee = dateSouhaitee; }
 
     public DemandeStatut getStatutValidation() { return statutValidation; }
-    public void setStatutValidation(DemandeStatut statutValidation) { this.statutValidation = statutValidation; }
+    public void appliquerTransitionWorkflow(DemandeStatut nouvelEtat) { this.statutValidation = nouvelEtat; }
 
     public List<OffreEmploi> getOffresEmplois() { return offresEmplois; }
     public void setOffresEmplois(List<OffreEmploi> offresEmplois) { this.offresEmplois = offresEmplois; }

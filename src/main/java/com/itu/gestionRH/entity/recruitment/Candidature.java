@@ -103,7 +103,7 @@ public class Candidature {
     public void setRecruteur(Utilisateur recruteur) { this.recruteur = recruteur; }
 
     public CandidatureStatut getStatutCandidature() { return statutCandidature; }
-    public void setStatutCandidature(CandidatureStatut statutCandidature) { this.statutCandidature = statutCandidature; }
+    public void appliquerTransitionWorkflow(CandidatureStatut nouvelEtat) { this.statutCandidature = nouvelEtat; }
 
     public String getMotifRejet() { return motifRejet; }
     public void setMotifRejet(String motifRejet) { this.motifRejet = motifRejet; }

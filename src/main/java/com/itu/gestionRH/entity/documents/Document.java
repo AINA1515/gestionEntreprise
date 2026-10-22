@@ -57,11 +57,11 @@ public class Document {
     @Column(name = "TYPE_MIME", length = 100)
     private String typeMime;
 
-    @Co, precision = 12, scale = 0lumn(name = "TAILLE_OCTETS")
+    @Column(name = "TAILLE_OCTETS", precision = 12, scale = 0)
     private Long tailleOctets;
 
     @Column(name = "EMPREINTE_SHA256", length = 64)
-    private String, precision = 5, scale = 0 empreinteSha256;
+    private String empreinteSha256;
 
     @Column(name = "NUMERO_VERSION", nullable = false)
     private Integer numeroVersion;
