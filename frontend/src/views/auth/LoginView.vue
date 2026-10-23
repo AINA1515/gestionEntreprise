@@ -85,7 +85,7 @@ async function seConnecter() {
                   <div class="input-group input-group-lg">
                     <span class="input-group-text"><i class="bi bi-lock" aria-hidden="true"></i></span>
                     <input id="motDePasse" v-model="form.motDePasse" type="password" class="form-control"
-                           placeholder="Saisissez votre mot de passe" autocomplete="current-password" required />
+                           placeholder="Saisissez votre mot de passe" autocomplete="current-password" required va />
                   </div>
                 </div>
 
