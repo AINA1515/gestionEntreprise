@@ -23,13 +23,13 @@ public final class DemandeDtos {
             @NotNull TypeDemande typeDemande, @Positive Long employeRemplaceId,
             @NotNull @Positive @Max(999) Integer effectif, @NotBlank @Size(max=1000) String motif,
             @DecimalMin("0.00") @Digits(integer=13, fraction=2) BigDecimal budget,
-            @NotNull LocalDate dateSouhaitee, Boolean soumettreDirectement) {}
+            @NotNull LocalDate dateSouhaitee, String niveauFormation, Boolean soumettreDirectement) {}
 
     public record DemandeUpdateRequest(@NotNull @Positive Long posteId,
             @NotNull TypeDemande typeDemande, @Positive Long employeRemplaceId,
             @NotNull @Positive @Max(999) Integer effectif, @NotBlank @Size(max=1000) String motif,
             @DecimalMin("0.00") @Digits(integer=13, fraction=2) BigDecimal budget,
-            @NotNull LocalDate dateSouhaitee) {}
+            @NotNull LocalDate dateSouhaitee, String niveauFormation) {}
 
     public record ValidationRequest(@NotBlank @Pattern(regexp="TRANSMETTRE_DIRECTION|VALIDER|REFUSER|RENVOYER_MANAGER") String action,
             @Size(max=1000) String justification) {}
@@ -37,7 +37,8 @@ public final class DemandeDtos {
     public record DemandeResponse(Long id, Long posteId, String poste, Long departementId, String departement,
             Long managerId, String manager, TypeDemande typeDemande, Long employeRemplaceId,
             Integer effectif, String motif, BigDecimal budget, LocalDate dateSouhaitee,
-            DemandeStatut statut, LocalDateTime dateDemande, List<String> actionsDisponibles) {}
+            DemandeStatut statut, LocalDateTime dateDemande, String niveauFormation, String niveauFormationLibelle,
+            List<String> actionsDisponibles) {}
 
     public record ValidationDto(Long id, String etape, String decision, Long valideurId, String valideur,
             LocalDateTime dateDecision, String justification) {}

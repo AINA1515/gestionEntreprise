@@ -50,6 +50,9 @@ public class Candidature {
     @Column(name = "DATE_POSTULATION", nullable = false)
     private LocalDate datePostulation;
 
+    @Column(name = "SALAIRE_PROPOSE", precision = 15, scale = 2)
+    private java.math.BigDecimal salairePropose;
+
     @Column(name = "LETTRE_MOTIVATION", length = 4000)
     private String lettreMotivation;
 
@@ -95,6 +98,9 @@ public class Candidature {
 
     public LocalDate getDatePostulation() { return datePostulation; }
     public void setDatePostulation(LocalDate datePostulation) { this.datePostulation = datePostulation; }
+
+    public java.math.BigDecimal getSalairePropose() { return salairePropose; }
+    public void setSalairePropose(java.math.BigDecimal salairePropose) { this.salairePropose = salairePropose; }
 
     public String getLettreMotivation() { return lettreMotivation; }
     public void setLettreMotivation(String lettreMotivation) { this.lettreMotivation = lettreMotivation; }

@@ -1,21 +1,29 @@
 <script setup>
-import { computed, onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useOffresStore } from '@/stores/offres'
 import { useAuthStore } from '@/stores/auth'
+import { candidatureService } from '@/services/candidatureService'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
+import { useFormatters } from '@/composables/useFormatters'
 
 const store = useOffresStore()
 const { offres, page, loading, error } = storeToRefs(store)
 const router = useRouter()
 const auth = useAuthStore()
+const { formatMontant } = useFormatters()
+const candidatures = ref([])
+const candidaturesChargees = ref(false)
 const filters = reactive({ texte: '', departementId: '', typeContrat: '' })
 const departements = computed(() => {
   const map = new Map()
   for (const offer of offres.value) if (offer.departementId && offer.departement) map.set(offer.departementId, offer.departement)
   return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], 'fr'))
 })
+function candidatureActive(offreId) {
+  return candidatures.value.some((c) => c.offreId === offreId && c.statut !== 'ANNULEE')
+}
 let searchTimer
 
 async function charger(pageNum = 0) {
@@ -31,7 +39,16 @@ watch(() => [filters.texte, filters.departementId, filters.typeContrat], () => {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(() => charger(0), 250)
 })
-onMounted(() => charger(0))
+onMounted(async () => {
+  await charger(0)
+  if (auth.isAuthenticated) {
+    await auth.chargerUtilisateur()
+    if (auth.hasRole('CANDIDAT')) {
+      try { candidatures.value = await candidatureService.candidaturesDuCandidat() } catch { /* l’affichage des offres reste disponible */ }
+    }
+  }
+  candidaturesChargees.value = true
+})
 </script>
 
 <template>
@@ -73,10 +90,13 @@ onMounted(() => charger(0))
         <ul class="list-unstyled small text-body-secondary mt-auto mb-3">
           <li v-if="offre.lieu"><i class="bi bi-geo-alt me-1" aria-hidden="true" />{{ offre.lieu }}</li>
           <li v-if="offre.typeContrat"><i class="bi bi-briefcase me-1" aria-hidden="true" />{{ offre.typeContrat }}</li>
+          <li v-if="offre.salaireReference != null"><i class="bi bi-cash me-1" aria-hidden="true" />Salaire de référence : {{ formatMontant(offre.salaireReference) }} MGA</li>
           <li v-if="offre.dateLimiteCandidature"><i class="bi bi-calendar-event me-1" aria-hidden="true" />Candidatures jusqu’au {{ offre.dateLimiteCandidature }}</li>
         </ul>
         <div class="d-flex gap-2"><RouterLink class="btn btn-outline-primary" :to="{ name: 'offre-detail', params: { id: offre.id } }">Voir l’offre</RouterLink>
-          <button class="btn btn-primary" type="button" @click="postuler(offre)">Postuler</button></div>
+          <button v-if="candidaturesChargees && candidatureActive(offre.id)" class="btn btn-outline-secondary" type="button" disabled>Déjà postulé</button>
+          <button v-else-if="!auth.hasRole('CANDIDAT') || (candidaturesChargees && !candidatureActive(offre.id))" class="btn btn-primary" type="button" @click="postuler(offre)">Postuler</button>
+          <button v-else class="btn btn-outline-secondary" type="button" disabled>Vérification…</button></div>
       </div></article>
     </div>
   </div>

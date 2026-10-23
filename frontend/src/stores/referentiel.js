@@ -6,6 +6,7 @@ import { useToast } from '@/composables/useToast'
 export const useReferentielStore = defineStore('referentiel', () => {
   const departements = ref([])
   const postes = ref([])
+  const niveauxFormation = ref([])
   const departementsPage = ref(null)
   const postesPage = ref(null)
   const departementSelectionne = ref(null)
@@ -13,6 +14,11 @@ export const useReferentielStore = defineStore('referentiel', () => {
 
   async function chargerDepartements() {
     try { if (!departements.value.length) departements.value = await referentielService.departements() }
+    catch (error) { toast.error(error.message); error.toastShown = true; throw error }
+  }
+
+  async function chargerNiveauxFormation() {
+    try { if (!niveauxFormation.value.length) niveauxFormation.value = await referentielService.niveauxFormation() }
     catch (error) { toast.error(error.message); error.toastShown = true; throw error }
   }
 
@@ -38,7 +44,7 @@ export const useReferentielStore = defineStore('referentiel', () => {
   async function modifierPoste(id, data) { try { const item = await referentielService.modifierPoste(id, data); toast.success('Poste modifié.'); return item } catch (error) { toast.error(error.message); error.toastShown = true; throw error } }
   async function fermerPoste(id) { try { const item = await referentielService.fermerPoste(id); toast.success('Poste fermé.'); return item } catch (error) { toast.error(error.message); error.toastShown = true; throw error } }
 
-  return { departements, postes, departementsPage, postesPage, departementSelectionne, chargerDepartement, chargerDepartements, chargerPostes,
+  return { departements, postes, niveauxFormation, departementsPage, postesPage, departementSelectionne, chargerDepartement, chargerDepartements, chargerPostes, chargerNiveauxFormation,
     chargerDepartementsPage, creerDepartement, modifierDepartement, changerResponsable, desactiverDepartement,
     chargerPostesPage, creerPoste, modifierPoste, fermerPoste }
 })

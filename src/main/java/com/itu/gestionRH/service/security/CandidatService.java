@@ -6,6 +6,8 @@ import com.itu.gestionRH.entity.enums.TypeDocument;
 import com.itu.gestionRH.entity.security.Candidat;
 import com.itu.gestionRH.repository.documents.DocumentRepository;
 import com.itu.gestionRH.repository.security.CandidatRepository;
+import com.itu.gestionRH.repository.security.NiveauFormationRepository;
+import com.itu.gestionRH.repository.security.TypeEmploiRepository;
 import com.itu.gestionRH.repository.security.UtilisateurRepository;
 import com.itu.gestionRH.security.AccessScope;
 import com.itu.gestionRH.service.documents.DocumentService;
@@ -18,24 +20,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itu.gestionRH.common.BusinessRuleException;
 import com.itu.gestionRH.common.NotFoundException;
 import java.util.Locale;
+import java.util.List;
 
 @Service
 public class CandidatService {
+    public record FormationDto(String diplome, String etablissement, Integer annee, String niveau) {}
+    public record ExperienceDto(String poste, String entreprise, String periode, String missions, String niveau, String typeEmploi) {}
+    public record CvOptionDto(String code, String libelle) {}
     public record CvDto(String nom, String prenom, String email, String telephone, String adresse,
                         String profil, String diplome, String etablissement, Integer annee,
                         String poste, String entreprise, String periode, String missions,
-                        String competences, String langues) {}
+                        String competences, String langues, List<FormationDto> formations, List<ExperienceDto> experiences) {}
 
     private final CandidatRepository candidats;
+    private final NiveauFormationRepository niveauxFormation;
+    private final TypeEmploiRepository typesEmploi;
     private final DocumentRepository documents;
     private final DocumentService documentService;
     private final AccessScope accessScope;
     private final UtilisateurRepository utilisateurs;
     private final ObjectMapper objectMapper;
 
-    public CandidatService(CandidatRepository candidats, DocumentRepository documents, DocumentService documentService,
+    public CandidatService(CandidatRepository candidats, NiveauFormationRepository niveauxFormation, TypeEmploiRepository typesEmploi,
+            DocumentRepository documents, DocumentService documentService,
             AccessScope accessScope, UtilisateurRepository utilisateurs, ObjectMapper objectMapper) {
-        this.candidats = candidats; this.documents = documents; this.documentService = documentService; this.accessScope = accessScope;
+        this.candidats = candidats; this.niveauxFormation = niveauxFormation; this.typesEmploi = typesEmploi; this.documents = documents;
+        this.documentService = documentService; this.accessScope = accessScope;
         this.utilisateurs = utilisateurs; this.objectMapper = objectMapper;
     }
 
@@ -44,10 +54,31 @@ public class CandidatService {
         return versDto(candidatCourant());
     }
 
+    @Transactional(readOnly = true)
+    public boolean possedeCv() {
+        Candidat candidat = candidatCourant();
+        return (candidat.getCvUrl() != null && !candidat.getCvUrl().isBlank())
+                || (candidat.getCvContenu() != null && !candidat.getCvContenu().isBlank());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CvOptionDto> niveauxFormation() {
+        return niveauxFormation.findByEstActifTrueOrderByOrdreAsc().stream()
+                .map(niveau -> new CvOptionDto(niveau.getCode(), niveau.getLibelle())).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CvOptionDto> typesEmploi() {
+        return typesEmploi.findByEstActifTrueOrderByOrdreAsc().stream()
+                .map(type -> new CvOptionDto(type.getCode(), type.getLibelle())).toList();
+    }
+
     @Transactional
     public CvDto enregistrerCv(CvDto demande) {
         if (demande == null) throw new BusinessRuleException("CV_REQUIS", "Les informations du CV sont obligatoires.");
         verifierObligatoires(demande);
+        verifierNiveauxFormation(demande.formations());
+        verifierExperiences(demande.experiences());
         Candidat candidat = candidatCourant();
         String email = demande.email().trim().toLowerCase(Locale.ROOT);
         utilisateurs.findByCandidatId(candidat.getId()).ifPresent(utilisateur -> {
@@ -88,7 +119,7 @@ public class CandidatService {
             catch (JsonProcessingException ignored) { /* les informations de contact restent recuperables */ }
         }
         return new CvDto(candidat.getNom(), candidat.getPrenom(), candidat.getEmail(), candidat.getTelephone(), candidat.getAdresse(),
-                "", "", "", null, "", "", "", "", "", "");
+                "", "", "", null, "", "", "", "", "", "", List.of(), List.of());
     }
     private void verifierObligatoires(CvDto cv) {
         if (vide(cv.nom()) || vide(cv.prenom()) || vide(cv.email()) || vide(cv.telephone()))
@@ -96,6 +127,29 @@ public class CandidatService {
         if (cv.nom().trim().length() > 100 || cv.prenom().trim().length() > 100 || cv.email().trim().length() > 150
                 || cv.telephone().trim().length() > 30 || (cv.adresse() != null && cv.adresse().trim().length() > 300))
             throw new BusinessRuleException("CV_CHAMP_TROP_LONG", "Un des champs du CV dépasse sa longueur maximale.");
+    }
+    private void verifierNiveauxFormation(List<FormationDto> formations) {
+        if (formations == null) return;
+        for (FormationDto formation : formations) {
+            if (formation != null && formation.niveau() != null && !formation.niveau().isBlank()
+                    && !niveauxFormation.existsByCodeAndEstActifTrue(formation.niveau())) {
+                throw new BusinessRuleException("NIVEAU_FORMATION_INVALIDE", "Un niveau de formation sélectionné n'existe pas dans le référentiel.");
+            }
+        }
+    }
+    private void verifierExperiences(List<ExperienceDto> experiences) {
+        if (experiences == null) return;
+        for (ExperienceDto experience : experiences) {
+            if (experience == null) continue;
+            if (experience.niveau() != null && !experience.niveau().isBlank()
+                    && !niveauxFormation.existsByCodeAndEstActifTrue(experience.niveau())) {
+                throw new BusinessRuleException("NIVEAU_EXPERIENCE_INVALIDE", "Un niveau d'expérience sélectionné n'existe pas dans le référentiel.");
+            }
+            if (experience.typeEmploi() != null && !experience.typeEmploi().isBlank()
+                    && !typesEmploi.existsByCodeAndEstActifTrue(experience.typeEmploi())) {
+                throw new BusinessRuleException("TYPE_EMPLOI_INVALIDE", "Un type d'emploi sélectionné n'existe pas dans le référentiel.");
+            }
+        }
     }
     private boolean vide(String valeur) { return valeur == null || valeur.isBlank(); }
     private String texte(String valeur) { return valeur == null ? null : valeur.trim(); }

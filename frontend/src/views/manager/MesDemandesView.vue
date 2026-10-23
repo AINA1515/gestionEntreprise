@@ -10,10 +10,11 @@ import AlertMessage from '@/components/ui/AlertMessage.vue'
 
 const store = useDemandesStore()
 const router = useRouter()
-const { formatDate } = useFormatters()
+const { formatDate, formatMontant } = useFormatters()
 const filters = reactive({ statut: '', dateDebut: '', dateFin: '', texte: '', sort: 'dateCreation,desc' })
 const columns = [
   { key: 'poste', label: 'Poste demandé' },
+  { key: 'niveauFormationLibelle', label: 'Niveau de formation' },
   { key: 'dateDemande', label: 'Créée le' },
   { key: 'dateSouhaitee', label: 'Date souhaitée' },
   { key: 'effectif', label: 'Effectif' },

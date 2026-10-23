@@ -8,12 +8,13 @@ import StatusBadge from '@/components/ui/StatusBadge.vue'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
 
 const store = useCandidaturesStore()
-const { formatDate } = useFormatters()
+const { formatDate, formatMontant } = useFormatters()
 
 const columns = [
   { key: 'candidat', label: 'Candidat' },
   { key: 'poste', label: 'Poste demandé' },
   { key: 'datePostulation', label: 'Date de réception' },
+  { key: 'salairePropose', label: 'Salaire souhaité' },
   { key: 'statut', label: 'Statut' },
   { key: 'actions', label: 'Action' },
 ]
@@ -48,6 +49,7 @@ onMounted(store.charger)
       <DataTable :columns="columns" :rows="store.candidatures" :loading="store.loading"
                  empty-message="Aucune candidature enregistrée pour le moment.">
         <template #cell-datePostulation="{ value }">{{ formatDate(value) }}</template>
+        <template #cell-salairePropose="{ row }">{{ formatMontant(row.salairePropose ?? row.salaireReference) }}<span v-if="row.salairePropose == null && row.salaireReference != null" class="d-block small text-body-secondary">Salaire de référence accepté</span></template>
         <template #cell-statut="{ value }"><StatusBadge type="candidature" :value="value" /></template>
         <template #cell-actions="{ row }">
           <div class="d-flex gap-2">

@@ -70,6 +70,7 @@ async function chargerDemandesEligibles() {
     <template #cell-statut="{ row }"><StatusBadge type="offre" :value="row.statut" /></template>
     <template #cell-nombreCandidatures="{ value }"><span class="badge text-bg-light border">{{ value ?? 0 }}</span></template>
     <template #cell-actions="{ row }"><div class="d-flex flex-wrap gap-1">
+      <RouterLink class="btn btn-sm btn-outline-secondary" :to="{ name: 'rh-offre-candidatures', params: { id: row.id } }">Candidats ({{ row.nombreCandidatures ?? 0 }})</RouterLink>
       <button v-if="actions(row).includes('modifier')" class="btn btn-sm btn-outline-primary" @click="router.push({ name: 'rh-offre-modifier', params: { id: row.id } })">Modifier</button>
       <button v-if="actions(row).includes('publier')" class="btn btn-sm btn-success" @click="ouvrir('publier', row)">Publier</button>
       <button v-if="actions(row).includes('cloturer')" class="btn btn-sm btn-outline-danger" @click="ouvrir('cloturer', row)">Clôturer</button>

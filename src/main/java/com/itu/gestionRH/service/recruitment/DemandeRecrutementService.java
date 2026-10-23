@@ -12,11 +12,13 @@ import com.itu.gestionRH.entity.enums.TypeDemande;
 import com.itu.gestionRH.entity.recruitment.DemandeRecrutement;
 import com.itu.gestionRH.entity.recruitment.DemandeValidation;
 import com.itu.gestionRH.entity.security.Utilisateur;
+import com.itu.gestionRH.entity.security.NiveauFormation;
 import com.itu.gestionRH.repository.organization.EmployeRepository;
 import com.itu.gestionRH.repository.organization.PosteRepository;
 import com.itu.gestionRH.repository.recruitment.DemandeRecrutementRepository;
 import com.itu.gestionRH.repository.recruitment.DemandeValidationRepository;
 import com.itu.gestionRH.repository.security.UtilisateurRepository;
+import com.itu.gestionRH.repository.security.NiveauFormationRepository;
 import com.itu.gestionRH.security.AccessScope;
 import com.itu.gestionRH.workflow.DemandeRecrutementMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
@@ -42,12 +44,13 @@ public class DemandeRecrutementService {
     private final UtilisateurRepository utilisateurs;
     private final DemandeRecrutementMachine machine;
     private final AccessScope accessScope;
+    private final NiveauFormationRepository niveauxFormation;
 
     public DemandeRecrutementService(DemandeRecrutementRepository demandes, DemandeValidationRepository validations,
             PosteRepository postes, EmployeRepository employes, UtilisateurRepository utilisateurs,
-            DemandeRecrutementMachine machine, AccessScope accessScope) {
+            DemandeRecrutementMachine machine, AccessScope accessScope, NiveauFormationRepository niveauxFormation) {
         this.demandes=demandes; this.validations=validations; this.postes=postes; this.employes=employes;
-        this.utilisateurs=utilisateurs; this.machine=machine; this.accessScope=accessScope;
+        this.utilisateurs=utilisateurs; this.machine=machine; this.accessScope=accessScope; this.niveauxFormation=niveauxFormation;
     }
 
     @Transactional
@@ -58,7 +61,7 @@ public class DemandeRecrutementService {
         validerMetier(request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.budget());
         Utilisateur manager=utilisateurs.findById(contexte.utilisateurId()).orElseThrow(() -> new NotFoundException("Utilisateur introuvable."));
         DemandeRecrutement demande=DemandeRecrutement.nouvelle();
-        appliquer(demande, request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.motif(), request.budget(), request.dateSouhaitee());
+        appliquer(demande, request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.motif(), request.budget(), request.dateSouhaitee(), request.niveauFormation());
         demande.setPoste(poste); demande.setManager(manager); demande.initialiserEnBrouillon();
         demande=demandes.saveAndFlush(demande);
         if (Boolean.TRUE.equals(request.soumettreDirectement())) {
@@ -77,7 +80,7 @@ public class DemandeRecrutementService {
         if (demande.getStatutValidation() != DemandeStatut.BROUILLON) throw erreur("DEMANDE_NON_MODIFIABLE", "Seule une demande en brouillon peut être modifiée.", HttpStatus.CONFLICT);
         var poste=posteActif(request.posteId());
         validerMetier(request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.budget());
-        appliquer(demande, request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.motif(), request.budget(), request.dateSouhaitee());
+        appliquer(demande, request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.motif(), request.budget(), request.dateSouhaitee(), request.niveauFormation());
         demande.setPoste(poste);
         return reponse(demandes.save(demande), contexte);
     }
@@ -191,9 +194,20 @@ public class DemandeRecrutementService {
     }
 
     private void appliquer(DemandeRecrutement demande, TypeDemande type, Long employeId,
-            Integer effectif, String motif, java.math.BigDecimal budget, java.time.LocalDate date) {
+            Integer effectif, String motif, java.math.BigDecimal budget, java.time.LocalDate date, String niveauCode) {
         demande.setTypeDemande(type); demande.setEmployeRemplaceId(employeId); demande.setEffectifDemande(effectif);
         demande.setMotif(motif.trim()); demande.setBudgetAlloue(budget); demande.setDateSouhaitee(date);
+        demande.setNiveauFormation(chargerNiveauFormation(niveauCode));
+    }
+
+    private NiveauFormation chargerNiveauFormation(String code) {
+        String normalise=normaliser(code);
+        if (normalise == null) return null;
+        NiveauFormation niveau=niveauxFormation.findById(normalise)
+                .orElseThrow(() -> erreur("NIVEAU_FORMATION_INVALIDE", "Le niveau de formation sélectionné n'existe pas.", HttpStatus.BAD_REQUEST));
+        if (!Boolean.TRUE.equals(niveau.getEstActif()))
+            throw erreur("NIVEAU_FORMATION_INACTIF", "Le niveau de formation sélectionné n'est plus actif.", HttpStatus.BAD_REQUEST);
+        return niveau;
     }
 
     private DemandeValidation validation(DemandeRecrutement demande, EtapeValidation etape,
@@ -242,7 +256,9 @@ public class DemandeRecrutementService {
                 departement == null ? null : departement.getId(), departement == null ? null : departement.getLibelle(),
                 d.getManager() == null ? null : d.getManager().getId(), d.getManager() == null ? null : d.getManager().getNomAffichage(),
                 d.getTypeDemande(), d.getEmployeRemplaceId(), d.getEffectifDemande(), d.getMotif(), d.getBudgetAlloue(),
-                d.getDateSouhaitee(), d.getStatutValidation(), d.getDateCreation(), machine.actionsDisponibles(d, context));
+                d.getDateSouhaitee(), d.getStatutValidation(), d.getDateCreation(),
+                d.getNiveauFormation() == null ? null : d.getNiveauFormation().getCode(),
+                d.getNiveauFormation() == null ? null : d.getNiveauFormation().getLibelle(), machine.actionsDisponibles(d, context));
     }
     private static String normaliser(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private static BusinessRuleException erreur(String code, String message, HttpStatus status) { return new BusinessRuleException(code, message, status); }

@@ -13,14 +13,31 @@ const cv = reactive({
   nom: '', prenom: '', email: '', telephone: '', adresse: '',
   profil: '',
   diplome: '', etablissement: '', annee: null,
+  formations: [{ diplome: '', etablissement: '', annee: null, niveau: '' }],
   poste: '', entreprise: '', periode: '', missions: '',
   competences: '', langues: '',
 })
 
 // Pré-remplit avec le CV existant s'il y en a un (l'erreur « non disponible » est ignorée).
 onMounted(async () => {
-  try { Object.assign(cv, await cvService.consulter()) } catch { /* pas de CV enregistré */ }
+  try {
+    const existant = await cvService.consulter()
+    Object.assign(cv, existant)
+    if (existant.formations?.length) cv.formations = existant.formations.map((formation) => ({ ...formation }))
+    else if (existant.diplome || existant.etablissement || existant.annee) {
+      cv.formations = [{ diplome: existant.diplome || '', etablissement: existant.etablissement || '', annee: existant.annee || null, niveau: '' }]
+    } else cv.formations = [{ diplome: '', etablissement: '', annee: null, niveau: '' }]
+  } catch { /* pas de CV enregistré */ }
 })
+
+function ajouterFormation() {
+  cv.formations.push({ diplome: '', etablissement: '', annee: null, niveau: '' })
+}
+
+function supprimerFormation(index) {
+  cv.formations.splice(index, 1)
+  if (!cv.formations.length) ajouterFormation()
+}
 
 async function enregistrer() {
   const result = await run(() => cvService.enregistrer({ ...cv }))
@@ -69,11 +86,23 @@ async function enregistrer() {
       <section class="card shadow-sm mb-4">
         <div class="card-header fw-semibold">3. Formation et diplômes</div>
         <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-6"><FormField id="diplome" label="Diplôme ou formation"><input id="diplome" v-model="cv.diplome" class="form-control" placeholder="Ex. : Licence en informatique" /></FormField></div>
-            <div class="col-md-6"><FormField id="etablissement" label="Établissement"><input id="etablissement" v-model="cv.etablissement" class="form-control" /></FormField></div>
-            <div class="col-md-6"><FormField id="annee" label="Année d'obtention"><input id="annee" v-model.number="cv.annee" type="number" min="1950" max="2100" class="form-control" /></FormField></div>
+          <div v-for="(formation, index) in cv.formations" :key="index" class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h3 class="h6 mb-0">Formation {{ index + 1 }}</h3>
+              <button class="btn btn-sm btn-outline-danger" type="button" :aria-label="`Supprimer la formation ${index + 1}`" @click="supprimerFormation(index)">
+                <i class="bi bi-trash" aria-hidden="true"></i><span class="ms-1">Supprimer</span>
+              </button>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6"><FormField :id="`diplome-${index}`" label="Diplôme ou formation"><input :id="`diplome-${index}`" v-model="formation.diplome" class="form-control" placeholder="Ex. : Licence en informatique" /></FormField></div>
+              <div class="col-md-6"><FormField :id="`etablissement-${index}`" label="Établissement"><input :id="`etablissement-${index}`" v-model="formation.etablissement" class="form-control" /></FormField></div>
+              <div class="col-md-6"><FormField :id="`annee-${index}`" label="Année d'obtention"><input :id="`annee-${index}`" v-model.number="formation.annee" type="number" min="1950" max="2100" class="form-control" /></FormField></div>
+              <div class="col-md-6"><FormField :id="`niveau-${index}`" label="Niveau"><select :id="`niveau-${index}`" v-model="formation.niveau" class="form-select">
+                <option value="">Sélectionner un niveau</option><option value="DEBUTANT">Débutant</option><option value="INTERMEDIAIRE">Intermédiaire</option><option value="AVANCE">Avancé</option><option value="EXPERT">Expert</option><option value="MAITRISE">Maîtrise</option>
+              </select></FormField></div>
+            </div>
           </div>
+          <button class="btn btn-outline-primary" type="button" @click="ajouterFormation"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Ajouter une formation</button>
         </div>
       </section>
 

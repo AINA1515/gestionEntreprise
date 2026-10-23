@@ -20,6 +20,7 @@ import com.itu.gestionRH.repository.organization.PosteRepository;
 import com.itu.gestionRH.repository.recruitment.DemandeRecrutementRepository;
 import com.itu.gestionRH.repository.recruitment.DemandeValidationRepository;
 import com.itu.gestionRH.repository.security.UtilisateurRepository;
+import com.itu.gestionRH.repository.security.NiveauFormationRepository;
 import com.itu.gestionRH.security.AccessScope;
 import com.itu.gestionRH.security.jwt.JwtAuthenticationFilter.JwtPrincipal;
 import com.itu.gestionRH.workflow.DemandeRecrutementMachine;
@@ -54,7 +55,7 @@ class DemandeRecrutementServiceTest {
         postes=mock(PosteRepository.class); employes=mock(EmployeRepository.class); utilisateurs=mock(UtilisateurRepository.class);
         accessScope=mock(AccessScope.class);
         var machine=new DemandeRecrutementMachine(mock(ApplicationEventPublisher.class));
-        service=new DemandeRecrutementService(demandes, validations, postes, employes, utilisateurs, machine, accessScope);
+        service=new DemandeRecrutementService(demandes, validations, postes, employes, utilisateurs, machine, accessScope, mock(NiveauFormationRepository.class));
 
         manager=utilisateur(10L, "Manager");
         Departement departement=Departement.nouvelle(); departement.setLibelle("Informatique"); departement.setEstActif(true);
@@ -80,7 +81,7 @@ class DemandeRecrutementServiceTest {
     void cycleCompletAjouteTroisLignesDHistorique() {
         authentifier(10L, "MANAGER", "DEMANDE_CREER", "DEMANDE_CONSULTER");
         var created=service.creer(new DemandeCreateRequest(7L, TypeDemande.CREATION, null, 2, "Renfort équipe",
-                BigDecimal.valueOf(50000), LocalDate.now().plusMonths(2), false));
+                BigDecimal.valueOf(50000), LocalDate.now().plusMonths(2), null, false));
         assertEquals(DemandeStatut.BROUILLON, created.statut());
         service.soumettre(55L);
         assertEquals(DemandeStatut.ATTENTE_RH, demande.getStatutValidation());

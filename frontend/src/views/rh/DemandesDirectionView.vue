@@ -46,15 +46,15 @@ async function chargerDemandesSansOffre() {
 
   <section class="card shadow-sm"><div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-      <thead class="table-light"><tr><th>Poste / département</th><th>Manager</th><th>Effectif</th><th>Budget</th><th>Date souhaitée</th><th>Statut</th><th></th></tr></thead>
+      <thead class="table-light"><tr><th>Poste / département</th><th>Manager</th><th>Effectif</th><th>Niveau de formation</th><th>Budget · salaire de référence</th><th>Date souhaitée</th><th>Statut</th><th></th></tr></thead>
       <tbody>
-        <tr v-if="store.loading"><td colspan="7" class="text-center py-4">Chargement…</td></tr>
-        <tr v-else-if="!store.demandes.length"><td colspan="7" class="text-center text-body-secondary py-4">Aucune demande dans cette liste.</td></tr>
+        <tr v-if="store.loading"><td colspan="8" class="text-center py-4">Chargement…</td></tr>
+        <tr v-else-if="!store.demandes.length"><td colspan="8" class="text-center text-body-secondary py-4">Aucune demande dans cette liste.</td></tr>
         <tr v-for="demande in store.demandes" :key="demande.id" role="button" tabindex="0"
           @click="router.push({ name: 'rh-demande-revue', params: { id: demande.id } })"
           @keydown.enter="router.push({ name: 'rh-demande-revue', params: { id: demande.id } })">
           <td><strong>{{ demande.poste }}</strong><span class="d-block small text-body-secondary">{{ demande.departement }} · #{{ demande.id }}</span></td>
-          <td>{{ demande.manager }}</td><td>{{ demande.effectif }}</td><td>{{ formatMontant(demande.budget) }}</td>
+          <td>{{ demande.manager }}</td><td>{{ demande.effectif }}</td><td>{{ demande.niveauFormationLibelle || 'Non précisé' }}</td><td>{{ formatMontant(demande.budget) }}</td>
           <td>{{ formatDate(demande.dateSouhaitee) }}</td><td><StatusBadge type="demande" :value="demande.statut" /></td>
           <td><RouterLink v-if="demande.statut !== 'VALIDEE' || peutCreerOffre(demande.id)" class="btn btn-sm btn-outline-primary" :to="{ name: 'rh-demande-revue', params: { id: demande.id } }" @click.stop>
             {{ demande.statut === 'VALIDEE' ? 'Créer l’offre' : 'Voir le motif' }}

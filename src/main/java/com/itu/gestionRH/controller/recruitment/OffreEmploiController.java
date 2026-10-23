@@ -99,7 +99,8 @@ public class OffreEmploiController {
         return new OffrePubliqueResponse(offre.getId(), offre.getTitre(), offre.getDescriptionPoste(),
                 offre.getProfilRecherche(), departementId(offre), departement(offre), offre.getDatePublication(),
                 offre.getDateLimiteCandidature(), offre.getStatutOffre(), offre.getLieu(),
-                offre.getTypeContrat(), offre.getTempsTravail());
+                offre.getTypeContrat(), offre.getTempsTravail(),
+                offre.getDemande() == null ? null : offre.getDemande().getBudgetAlloue());
     }
 
     private OffreInterneResponse interne(OffreEmploi offre) {

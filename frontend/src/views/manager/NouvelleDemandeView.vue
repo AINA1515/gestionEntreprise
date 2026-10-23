@@ -22,12 +22,13 @@ const fieldErrors = computed(() => fromApiError({ details: demandes.errorDetails
 
 const form = reactive({
   departementId: '', posteId: '', typeDemande: 'CREATION', employeRemplaceId: null,
-  effectif: 1, motif: '', budget: 0, dateSouhaitee: '',
+  effectif: 1, motif: '', budget: 0, dateSouhaitee: '', niveauFormation: '',
 })
 
 onMounted(async () => {
   await Promise.all([
     chargement.run(() => referentiel.chargerDepartements()),
+    chargement.run(() => referentiel.chargerNiveauxFormation()),
     employes.chargerCollaborateurs({ size: 100 }).catch(() => {}),
   ])
   if (modification.value) {
@@ -43,6 +44,7 @@ onMounted(async () => {
       typeDemande: demande.typeDemande, employeRemplaceId: demande.employeRemplaceId,
       effectif: demande.effectif, motif: demande.motif, budget: demande.budget ?? 0,
       dateSouhaitee: demande.dateSouhaitee,
+      niveauFormation: demande.niveauFormation ?? '',
     })
   }
 })
@@ -61,6 +63,7 @@ async function enregistrer(soumettre = false) {
     employeRemplaceId: form.employeRemplaceId ? Number(form.employeRemplaceId) : null,
     effectif: form.effectif, motif: form.motif, budget: form.budget,
     dateSouhaitee: form.dateSouhaitee,
+    niveauFormation: form.niveauFormation || null,
   }
   if (modification.value) {
     if (!await demandes.modifier(route.params.id, payload)) return
@@ -99,6 +102,13 @@ async function enregistrer(soumettre = false) {
           </select>
         </FormField>
 
+        <FormField id="niveauFormation" label="Niveau de formation requis" :error="fieldErrors.niveauFormation">
+          <select id="niveauFormation" v-model="form.niveauFormation" class="form-select" :class="{ 'is-invalid': fieldErrors.niveauFormation }">
+            <option value="">-- Non précisé --</option>
+            <option v-for="niveau in referentiel.niveauxFormation" :key="niveau.code" :value="niveau.code">{{ niveau.libelle }}</option>
+          </select>
+        </FormField>
+
         <FormField id="typeDemande" label="Type de demande" :error="fieldErrors.typeDemande">
           <select id="typeDemande" v-model="form.typeDemande" class="form-select" required>
             <option value="CREATION">Création</option>
@@ -119,8 +129,9 @@ async function enregistrer(soumettre = false) {
         <FormField id="motif" label="Motif de la demande" :error="fieldErrors.motif">
           <textarea id="motif" v-model="form.motif" rows="4" class="form-control" :class="{ 'is-invalid': fieldErrors.motif }" required></textarea>
         </FormField>
-        <FormField id="budget" label="Budget estimé" :error="fieldErrors.budget">
+        <FormField id="budget" label="Budget estimé · salaire de référence" :error="fieldErrors.budget">
           <input id="budget" v-model.number="form.budget" type="number" min="0" step="0.01" class="form-control" :class="{ 'is-invalid': fieldErrors.budget }" />
+          <div class="form-text">Ce montant sera proposé comme référence aux candidats de l’offre.</div>
         </FormField>
         <FormField id="dateSouhaitee" label="Date souhaitée" :error="fieldErrors.dateSouhaitee">
           <input id="dateSouhaitee" v-model="form.dateSouhaitee" type="date" class="form-control" :class="{ 'is-invalid': fieldErrors.dateSouhaitee }" required />

@@ -122,7 +122,8 @@ public class OffreEmploiService {
     }
 
     public long nombreCandidatures(Long offreId) {
-        return candidatures.countByOffreId(offreId);
+        return candidatures.countByOffreIdAndStatutCandidatureNot(offreId,
+                com.itu.gestionRH.entity.enums.CandidatureStatut.ANNULEE);
     }
 
     public List<DemandeEligible> demandesEligibles() {

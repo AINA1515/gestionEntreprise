@@ -13,6 +13,7 @@ const CANDIDATURE = {
   EN_ENTRETIEN: { label: 'En entretien', variant: 'primary' },
   RETENUE: { label: 'Retenue', variant: 'success' },
   REJETEE: { label: 'Rejetée', variant: 'danger' },
+  ANNULEE: { label: 'Annulée', variant: 'dark' },
 }
 
 const POSTE = {

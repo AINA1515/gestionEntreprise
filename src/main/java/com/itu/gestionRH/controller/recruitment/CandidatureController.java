@@ -12,12 +12,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import java.math.BigDecimal;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.itu.gestionRH.entity.recruitment.Candidature;
+import com.itu.gestionRH.entity.enums.CandidatureStatut;
+import com.itu.gestionRH.entity.enums.OffreStatut;
+import com.itu.gestionRH.repository.recruitment.OffreEmploiRepository;
 import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
+import com.itu.gestionRH.repository.security.CandidatRepository;
 import com.itu.gestionRH.workflow.CandidatureMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
 import com.itu.gestionRH.security.AccessScope;
@@ -28,24 +36,30 @@ import com.itu.gestionRH.security.AccessScope;
 public class CandidatureController {
 
     public record CandidatureResponse(Long id, String candidat, String email, String poste,
-                                      LocalDate datePostulation, String statut, List<String> actionsDisponibles) {}
+                                      LocalDate datePostulation, String statut, BigDecimal salairePropose,
+                                      BigDecimal salaireReference, List<String> actionsDisponibles) {}
 
     public record StatsCandidatures(long recues, long entretiensAOrganiser, long retenues) {}
 
     public record SuiviCandidaturesResponse(StatsCandidatures stats, List<CandidatureResponse> candidatures) {}
 
-    public record DepotCandidatureRequest(Long offreId, String nom, String prenom, String email,
-                                          String telephone, String lettreMotivation) {}
+    public record DepotCandidatureRequest(Long offreId,
+            @DecimalMin("0.00") @Digits(integer=13, fraction=2) BigDecimal salairePropose) {}
     public record StatutRequest(String statut, String commentaire) {}
 
     private final CandidatureRepository candidatureRepository;
     private final CandidatureMachine machine;
     private final AccessScope accessScope;
+    private final OffreEmploiRepository offreRepository;
+    private final CandidatRepository candidatRepository;
 
-    public CandidatureController(CandidatureRepository candidatureRepository, CandidatureMachine machine, AccessScope accessScope) {
+    public CandidatureController(CandidatureRepository candidatureRepository, CandidatureMachine machine, AccessScope accessScope,
+                                 OffreEmploiRepository offreRepository, CandidatRepository candidatRepository) {
         this.candidatureRepository = candidatureRepository;
         this.machine = machine;
         this.accessScope = accessScope;
+        this.offreRepository = offreRepository;
+        this.candidatRepository = candidatRepository;
     }
 
     /** Ex-page /rh/candidatures. */
@@ -54,19 +68,50 @@ public class CandidatureController {
     @Transactional(readOnly = true)
     public SuiviCandidaturesResponse suivi() {
         List<Candidature> toutes = candidatureRepository.findAll().stream().filter(accessScope::canSeeCandidature).toList();
+        List<Candidature> actives = toutes.stream()
+                .filter(c -> c.getStatutCandidature() != CandidatureStatut.ANNULEE).toList();
         StatsCandidatures stats = new StatsCandidatures(
-                toutes.size(),
-                toutes.stream().filter(c -> c.getStatutCandidature() == com.itu.gestionRH.entity.enums.CandidatureStatut.PRESELECTIONNEE).count(),
-                toutes.stream().filter(c -> c.getStatutCandidature() == com.itu.gestionRH.entity.enums.CandidatureStatut.RETENUE).count());
+                actives.size(),
+                actives.stream().filter(c -> c.getStatutCandidature() == CandidatureStatut.PRESELECTIONNEE).count(),
+                actives.stream().filter(c -> c.getStatutCandidature() == CandidatureStatut.RETENUE).count());
         return new SuiviCandidaturesResponse(stats, toutes.stream().map(this::toResponse).toList());
     }
 
     /** Ex-page /candidat/candidature (depot d'une candidature). */
     @PreAuthorize("hasAuthority('PERM_CANDIDATURE_POSTULER')")
     @PostMapping("/recrutement/candidatures")
-    public CandidatureResponse deposer(@RequestBody DepotCandidatureRequest request) {
-        // TODO : CandidatureService.deposer(request) (+ import du CV en multipart)
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Depot de candidature a implementer");
+    @Transactional
+    public CandidatureResponse deposer(@Valid @RequestBody DepotCandidatureRequest request) {
+        Long candidatId = accessScope.requireCandidatCourant();
+        if (request == null || request.offreId() == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L’offre à laquelle postuler est obligatoire.");
+        var candidat = candidatRepository.findById(candidatId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Candidat introuvable."));
+        if ((candidat.getCvUrl() == null || candidat.getCvUrl().isBlank())
+                && (candidat.getCvContenu() == null || candidat.getCvContenu().isBlank()))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Créez ou importez un CV avant de postuler.");
+        var offre = offreRepository.findById(request.offreId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offre introuvable."));
+        if (offre.getStatutOffre() != OffreStatut.PUBLIEE || offre.getDateCloture() != null
+                || (offre.getDateLimiteCandidature() != null && offre.getDateLimiteCandidature().isBefore(LocalDate.now())))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette offre n’accepte plus de candidatures.");
+        Candidature existante = candidatureRepository.findByOffreIdAndCandidatId(offre.getId(), candidatId);
+        if (existante != null) {
+            if (existante.getStatutCandidature() != CandidatureStatut.ANNULEE)
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Vous avez déjà postulé à cette offre.");
+            existante.setDatePostulation(LocalDate.now());
+            existante.setSalairePropose(request.salairePropose());
+            existante.setMotifRejet(null);
+            existante.appliquerTransitionWorkflow(CandidatureStatut.RECUE);
+            return toResponse(candidatureRepository.save(existante));
+        }
+        Candidature candidature = Candidature.nouvelle();
+        candidature.setOffre(offre);
+        candidature.setCandidat(candidat);
+        candidature.setDatePostulation(LocalDate.now());
+        candidature.setSalairePropose(request.salairePropose());
+        candidature.appliquerTransitionWorkflow(CandidatureStatut.RECUE);
+        return toResponse(candidatureRepository.save(candidature));
     }
 
     @PreAuthorize("hasAuthority('PERM_CANDIDATURE_CONSULTER')")
@@ -94,7 +139,8 @@ public class CandidatureController {
                 + (cand.getNom() == null ? "" : cand.getNom())).trim();
         return new CandidatureResponse(c.getId(), nom, cand != null ? cand.getEmail() : null,
                 c.getOffre() != null ? c.getOffre().getTitre() : null,
-                c.getDatePostulation(), c.getStatutCandidature().name(),
+                c.getDatePostulation(), c.getStatutCandidature().name(), c.getSalairePropose(),
+                c.getOffre() == null || c.getOffre().getDemande() == null ? null : c.getOffre().getDemande().getBudgetAlloue(),
                 machine.actionsDisponibles(c, WorkflowContext.utilisateurCourant(null)));
     }
 }

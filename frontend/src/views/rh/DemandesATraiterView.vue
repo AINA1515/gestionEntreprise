@@ -12,12 +12,13 @@ import AlertMessage from '@/components/ui/AlertMessage.vue'
 const store = useDemandesStore()
 const referentiel = useReferentielStore()
 const router = useRouter()
-const { formatDate } = useFormatters()
+const { formatDate, formatMontant } = useFormatters()
 const filters = reactive({ departementId: '', dateDebut: '', dateFin: '', managerId: '' })
 const columns = [
   { key: 'poste', label: 'Poste' }, { key: 'departement', label: 'Département' },
   { key: 'manager', label: 'Manager' }, { key: 'dateSouhaitee', label: 'Date souhaitée' },
-  { key: 'effectif', label: 'Effectif' }, { key: 'statut', label: 'Statut' },
+  { key: 'niveauFormationLibelle', label: 'Niveau de formation' }, { key: 'effectif', label: 'Effectif' },
+  { key: 'budget', label: 'Budget · salaire de référence' }, { key: 'statut', label: 'Statut' },
 ]
 
 async function charger(page = 0) {
@@ -46,6 +47,7 @@ onMounted(async () => { await referentiel.chargerDepartements(); await charger()
         empty-message="Aucune demande en attente de vérification RH."
         @row-click="(row) => router.push({ name: 'rh-demande-revue', params: { id: row.id } })">
         <template #cell-dateSouhaitee="{ value }">{{ formatDate(value) }}</template>
+        <template #cell-budget="{ value }">{{ formatMontant(value) }}</template>
         <template #cell-statut="{ value }"><StatusBadge type="demande" :value="value" /></template>
       </DataTable>
       <div class="d-flex justify-content-between align-items-center mt-3">

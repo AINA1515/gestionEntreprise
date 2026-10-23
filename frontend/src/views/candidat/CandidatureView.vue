@@ -1,89 +1,109 @@
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useOffresStore } from '@/stores/offres'
 import { candidatureService } from '@/services/candidatureService'
+import { cvService } from '@/services/cvService'
+import { offreService } from '@/services/offreService'
 import { useAsyncAction } from '@/composables/useAsyncAction'
-import FormField from '@/components/ui/FormField.vue'
+import { useFormatters } from '@/composables/useFormatters'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
+import StatusBadge from '@/components/ui/StatusBadge.vue'
 
 const route = useRoute()
 const router = useRouter()
-const offres = useOffresStore()
 const { loading, error, run } = useAsyncAction()
+const { formatDate, formatMontant } = useFormatters()
+const candidatures = ref([])
+const offreChoisie = ref(null)
+const saisirSalaire = ref(false)
+const salairePropose = ref('')
+const offreId = computed(() => route.query.offreId ? Number(route.query.offreId) : null)
 
-const form = reactive({
-  nom: '', prenom: '', email: '', telephone: '',
-  offreId: route.query.offreId ?? '',
-  lettreMotivation: '',
-})
-
-onMounted(() => { if (!offres.offres.length) offres.charger() })
-
-async function envoyer() {
-  const result = await run(() => candidatureService.deposer({ ...form }))
-  if (!error.value && result !== undefined) router.push({ name: 'candidat-offres' })
+async function charger() {
+  candidatures.value = await run(() => candidatureService.candidaturesDuCandidat()) || []
 }
+
+async function annuler(candidature) {
+  if (!window.confirm(`Annuler votre candidature à « ${candidature.poste} » ?`)) return
+  const result = await run(() => candidatureService.annulerCandidature(candidature.id))
+  if (result !== undefined) await charger()
+}
+
+function peutAnnuler(candidature) {
+  return !['ANNULEE', 'REJETEE', 'RETENUE'].includes(candidature.statut)
+}
+
+async function postuler(id) {
+  if (!id) return
+  const status = await run(() => cvService.statut())
+  if (!status?.existe) {
+    await router.push({ name: 'candidat-cv', query: { offreId: String(id) } })
+    return
+  }
+  offreChoisie.value = await run(() => offreService.detail(id))
+  if (offreChoisie.value) saisirSalaire.value = true
+}
+
+async function confirmerPostulation() {
+  const result = await run(() => candidatureService.deposer(offreId.value,
+    salairePropose.value === '' ? null : Number(salairePropose.value)))
+  if (result) {
+    saisirSalaire.value = false
+    await router.replace({ name: 'candidat-candidature' })
+    await charger()
+  }
+}
+
+watch(offreId, (id) => { if (id) postuler(id) }, { immediate: true })
+onMounted(() => { if (!offreId.value) charger() })
 </script>
 
 <template>
-  <div class="col-lg-8 mx-auto">
-    <RouterLink class="btn btn-link px-0 mb-3" :to="{ name: 'candidat-offres' }">
-      <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Retour aux offres d'emploi
-    </RouterLink>
-
-    <h1 class="h2">Déposer ma candidature</h1>
-    <p class="text-body-secondary mb-4">Complétez les informations nécessaires pour postuler.</p>
-
-    <AlertMessage :message="error" />
-    <AlertMessage :message="offres.error" />
-
-    <form @submit.prevent="envoyer">
-      <section class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">1. Informations du candidat</div>
-        <div class="card-body">
-          <FormField id="nom" label="Nom *"><input id="nom" v-model="form.nom" class="form-control" required /></FormField>
-          <FormField id="prenom" label="Prénom *"><input id="prenom" v-model="form.prenom" class="form-control" required /></FormField>
-          <FormField id="email" label="Adresse e-mail *"><input id="email" v-model="form.email" type="email" class="form-control" required /></FormField>
-          <FormField id="telephone" label="Téléphone *"><input id="telephone" v-model="form.telephone" type="tel" class="form-control" required /></FormField>
-        </div>
-      </section>
-
-      <section class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">2. Offre choisie</div>
-        <div class="card-body">
-          <FormField id="offre" label="Poste souhaité *">
-            <select id="offre" v-model="form.offreId" class="form-select" required>
-              <option value="" disabled>-- Choisir une offre --</option>
-              <option v-for="o in offres.offres" :key="o.id" :value="String(o.id)">{{ o.titre }}</option>
-            </select>
-          </FormField>
-        </div>
-      </section>
-
-      <section class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">3. Mon CV</div>
-        <div class="card-body">
-          <p class="mb-0">
-            Votre CV est géré depuis votre espace candidat :
-            <RouterLink :to="{ name: 'candidat-cv' }">créer ou importer mon CV</RouterLink>.
-          </p>
-        </div>
-      </section>
-
-      <section class="card shadow-sm mb-4">
-        <div class="card-header fw-semibold">4. Message de motivation</div>
-        <div class="card-body">
-          <FormField id="motivation" label="Pourquoi souhaitez-vous rejoindre notre entreprise ?">
-            <textarea id="motivation" v-model="form.lettreMotivation" rows="5" class="form-control"
-                      placeholder="Présentez brièvement votre motivation..."></textarea>
-          </FormField>
-        </div>
-      </section>
-
-      <button class="btn btn-primary mb-4" type="submit" :disabled="loading">
-        {{ loading ? 'Envoi…' : 'Envoyer ma candidature' }}
-      </button>
-    </form>
+  <PageHeader title="Mes candidatures" :breadcrumb="['Espace candidat', 'Mes candidatures']"
+    subtitle="Retrouvez les offres auxquelles vous avez postulé et le suivi de vos candidatures." />
+  <AlertMessage :message="error" />
+  <div v-if="offreId && !saisirSalaire" class="text-center py-5" role="status">
+    <span class="spinner-border spinner-border-sm me-2" />{{ loading ? 'Vérification de votre CV…' : 'Préparation de votre candidature…' }}
   </div>
+  <section v-else-if="offreId && saisirSalaire" class="card shadow-sm">
+    <div class="card-body p-4">
+      <h2 class="h4">Postuler à {{ offreChoisie?.titre }}</h2>
+      <p v-if="offreChoisie?.salaireReference != null" class="text-body-secondary">
+        Budget estimé, utilisé comme salaire de référence par le manager : <strong>{{ formatMontant(offreChoisie.salaireReference) }}</strong>.
+        Laissez le champ vide pour accepter ce montant.
+      </p>
+      <p v-else class="text-body-secondary">Vous pouvez indiquer le salaire qui vous convient. Laissez le champ vide si vous n’avez pas de préférence salariale.</p>
+      <AlertMessage :message="error" />
+      <form @submit.prevent="confirmerPostulation">
+        <label for="salaire-propose" class="form-label">Votre salaire souhaité (facultatif)</label>
+        <div class="input-group mb-3"><input id="salaire-propose" v-model="salairePropose" type="number" min="0" step="0.01" class="form-control" placeholder="Laisser vide pour accepter le salaire de référence" /><span class="input-group-text">MGA</span></div>
+        <div class="d-flex gap-2"><button class="btn btn-primary" type="submit" :disabled="loading">{{ loading ? 'Envoi…' : 'Confirmer ma candidature' }}</button>
+          <RouterLink class="btn btn-outline-secondary" :to="{ name: 'offres-publiques' }">Annuler</RouterLink></div>
+      </form>
+    </div>
+  </section>
+  <section v-else class="card shadow-sm">
+    <div v-if="loading" class="text-center py-5" role="status"><span class="spinner-border spinner-border-sm me-2" />Chargement…</div>
+    <div v-else-if="!candidatures.length" class="card-body text-center py-5">
+      <i class="bi bi-briefcase display-5 text-body-secondary" aria-hidden="true" />
+      <h2 class="h5 mt-3">Vous n’avez pas encore postulé</h2>
+      <p class="text-body-secondary">Consultez les offres disponibles et postulez en un clic.</p>
+      <RouterLink class="btn btn-primary" :to="{ name: 'offres-publiques' }">Voir les offres d’emploi</RouterLink>
+    </div>
+    <div v-else class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr><th>Offre d’emploi</th><th>Date de candidature</th><th>Salaire souhaité</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr v-for="candidature in candidatures" :key="candidature.id">
+            <td>{{ candidature.poste }}</td><td>{{ formatDate(candidature.datePostulation) }}</td>
+            <td>{{ formatMontant(candidature.salairePropose ?? candidature.salaireReference) }}<span v-if="candidature.salairePropose == null && candidature.salaireReference != null" class="d-block small text-body-secondary">Salaire de référence accepté</span></td>
+            <td><StatusBadge type="candidature" :value="candidature.statut" /></td>
+            <td class="d-flex gap-2"><RouterLink v-if="candidature.offreId" class="btn btn-sm btn-outline-primary" :to="{ name: 'offre-detail', params: { id: candidature.offreId } }">Voir l’offre</RouterLink>
+              <button v-if="peutAnnuler(candidature)" class="btn btn-sm btn-outline-danger" :disabled="loading" @click="annuler(candidature)">Annuler</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </template>

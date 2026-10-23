@@ -1,19 +1,23 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
 import FileUploader from '@/components/ui/FileUploader.vue'
 import { useDocumentsStore } from '@/stores/documents'
 
 const router = useRouter()
+const route = useRoute()
 const { loading, error, run } = useAsyncAction()
 const fichier = ref(null)
 const documents = useDocumentsStore()
 
 async function envoyer() {
   const result = await run(() => documents.importerCv(fichier.value))
-  if (!error.value && result !== undefined) router.push({ name: 'candidat-cv' })
+  if (!error.value && result !== undefined) {
+    if (route.query.offreId) router.push({ name: 'candidat-candidature', query: { offreId: route.query.offreId } })
+    else router.push({ name: 'candidat-cv' })
+  }
 }
 </script>
 

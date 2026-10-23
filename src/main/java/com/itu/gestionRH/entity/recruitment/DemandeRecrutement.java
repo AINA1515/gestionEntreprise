@@ -22,6 +22,7 @@ import jakarta.persistence.Table;
 import com.itu.gestionRH.entity.organization.Employe;
 import com.itu.gestionRH.entity.organization.Poste;
 import com.itu.gestionRH.entity.security.Utilisateur;
+import com.itu.gestionRH.entity.security.NiveauFormation;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -72,8 +73,13 @@ public class DemandeRecrutement {
     @Column(name = "BUDGET_ALLOUE", precision = 15, scale = 2)
     private BigDecimal budgetAlloue;
 
+
     @Column(name = "DATE_SOUHAITEE", nullable = false)
     private LocalDate dateSouhaitee;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "NIVEAU_FORMATION_CODE")
+    private NiveauFormation niveauFormation;
 
     @Column(name = "STATUT_VALIDATION", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
@@ -125,8 +131,12 @@ public class DemandeRecrutement {
     public BigDecimal getBudgetAlloue() { return budgetAlloue; }
     public void setBudgetAlloue(BigDecimal budgetAlloue) { this.budgetAlloue = budgetAlloue; }
 
+
     public LocalDate getDateSouhaitee() { return dateSouhaitee; }
     public void setDateSouhaitee(LocalDate dateSouhaitee) { this.dateSouhaitee = dateSouhaitee; }
+
+    public NiveauFormation getNiveauFormation() { return niveauFormation; }
+    public void setNiveauFormation(NiveauFormation niveauFormation) { this.niveauFormation = niveauFormation; }
 
     public DemandeStatut getStatutValidation() { return statutValidation; }
     public void appliquerTransitionWorkflow(DemandeStatut nouvelEtat) { this.statutValidation = nouvelEtat; }

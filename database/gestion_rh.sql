@@ -91,6 +91,12 @@
 
 -- 08. Migrations
 @@08_migrations/004_fusion_roles_rh.sql
+@@08_migrations/005_niveaux_formation.sql
+@@08_migrations/006_types_emploi.sql
+@@08_migrations/007_demande_niveau_formation.sql
+@@08_migrations/008_candidature_annulee.sql
+@@08_migrations/009_salaires_candidature.sql
+@@08_migrations/010_retrait_salaire_demande.sql
 
 UPDATE ROLE_RH
    SET EST_ACTIF = 0,

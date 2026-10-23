@@ -50,15 +50,15 @@ onMounted(async () => { await referentiel.chargerDepartements(); await charger()
       <div class="text-end"><div class="small text-body-secondary">Budget de la sélection ({{ selectedIds.length }})</div><strong class="fs-5">{{ formatMontant(selectedBudget) }}</strong></div>
     </div>
     <div class="table-responsive"><table class="table table-hover align-middle">
-      <thead class="table-light"><tr><th><input type="checkbox" class="form-check-input" aria-label="Sélectionner la page" :checked="allSelected" @change="basculerTout" /></th><th>Poste / département</th><th>Manager</th><th>Effectif</th><th>Budget</th><th>Date souhaitée</th><th>Statut</th></tr></thead>
+      <thead class="table-light"><tr><th><input type="checkbox" class="form-check-input" aria-label="Sélectionner la page" :checked="allSelected" @change="basculerTout" /></th><th>Poste / département</th><th>Manager</th><th>Effectif</th><th>Niveau de formation</th><th>Budget · salaire de référence</th><th>Date souhaitée</th><th>Statut</th></tr></thead>
       <tbody>
-        <tr v-if="store.loading"><td colspan="7" class="text-center py-4">Chargement…</td></tr>
-        <tr v-else-if="!store.demandes.length"><td colspan="7" class="text-center text-body-secondary py-4">Aucune demande à arbitrer.</td></tr>
+        <tr v-if="store.loading"><td colspan="8" class="text-center py-4">Chargement…</td></tr>
+        <tr v-else-if="!store.demandes.length"><td colspan="8" class="text-center text-body-secondary py-4">Aucune demande à arbitrer.</td></tr>
         <template v-else>
           <tr v-for="demande in store.demandes" :key="demande.id" class="cursor-pointer" tabindex="0" @click="router.push({ name: 'direction-demande-arbitrage', params: { id: demande.id } })" @keydown.enter="router.push({ name: 'direction-demande-arbitrage', params: { id: demande.id } })">
             <td @click.stop><input class="form-check-input" type="checkbox" :aria-label="`Sélectionner la demande ${demande.id}`" :checked="selectedIds.includes(demande.id)" @change="basculer(demande.id)" /></td>
             <td><strong>{{ demande.poste }}</strong><span class="d-block small text-body-secondary">{{ demande.departement }}</span></td>
-            <td>{{ demande.manager }}</td><td class="fw-semibold">{{ demande.effectif }}</td><td class="fw-semibold">{{ formatMontant(demande.budget) }}</td><td>{{ formatDate(demande.dateSouhaitee) }}</td><td><StatusBadge type="demande" :value="demande.statut" /></td>
+            <td>{{ demande.manager }}</td><td class="fw-semibold">{{ demande.effectif }}</td><td>{{ demande.niveauFormationLibelle || 'Non précisé' }}</td><td class="fw-semibold">{{ formatMontant(demande.budget) }}</td><td>{{ formatDate(demande.dateSouhaitee) }}</td><td><StatusBadge type="demande" :value="demande.statut" /></td>
           </tr>
         </template>
       </tbody>

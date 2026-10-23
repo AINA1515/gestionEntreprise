@@ -1,3 +1,9 @@
+<script setup>
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const suite = route.query.offreId ? { query: { offreId: String(route.query.offreId) } } : {}
+</script>
+
 <template>
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -18,7 +24,7 @@
           <p class="card-text text-body-secondary">
             Complétez vos informations personnelles, vos formations, vos expériences et vos compétences.
           </p>
-          <RouterLink class="btn btn-primary mt-auto align-self-start" :to="{ name: 'candidat-cv-creer' }">
+          <RouterLink class="btn btn-primary mt-auto align-self-start" :to="{ name: 'candidat-cv-creer', ...suite }">
             Compléter mon CV
           </RouterLink>
         </div>
@@ -33,7 +39,7 @@
           <p class="card-text text-body-secondary">
             Sélectionnez un fichier CV sur votre ordinateur au format PDF ou DOCX.
           </p>
-          <RouterLink class="btn btn-dark mt-auto align-self-start" :to="{ name: 'candidat-cv-importer' }">
+          <RouterLink class="btn btn-dark mt-auto align-self-start" :to="{ name: 'candidat-cv-importer', ...suite }">
             Choisir mon fichier
           </RouterLink>
         </div>

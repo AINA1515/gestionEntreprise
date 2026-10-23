@@ -25,11 +25,12 @@ public final class OffreDtos {
             OffreDiffusion diffusion, LocalDate dateLimiteCandidature,
             @Size(max = 200) String lieu, ContratType typeContrat, OffreTempsTravail tempsTravail) {}
 
-    /** Champs diffusables publiquement : aucune donnée RH ou budgétaire. */
+    /** Champs diffusables publiquement, dont le salaire de référence du poste. */
     public record OffrePubliqueResponse(Long id, String titre, String description, String profilRecherche,
             Long departementId,
             String departement, LocalDate datePublication, LocalDate dateLimiteCandidature,
-            OffreStatut statut, String lieu, ContratType typeContrat, OffreTempsTravail tempsTravail) {}
+            OffreStatut statut, String lieu, ContratType typeContrat, OffreTempsTravail tempsTravail,
+            BigDecimal salaireReference) {}
 
     /** Vue interne réservée au personnel habilité. */
     public record OffreInterneResponse(Long id, Long demandeId, String titre, String description,

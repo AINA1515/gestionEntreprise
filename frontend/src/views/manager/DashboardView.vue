@@ -11,7 +11,7 @@ import { useRouter } from 'vue-router'
 
 const store = useDemandesStore()
 const router = useRouter()
-const { formatDate } = useFormatters()
+const { formatDate, formatMontant } = useFormatters()
 const statuts = [
   ['BROUILLON', 'Brouillons', 'file-earmark-text'],
   ['ATTENTE_RH', 'En attente RH', 'people'],
@@ -22,6 +22,7 @@ const statuts = [
 
 const columns = [
   { key: 'poste', label: 'Poste demandé' },
+  { key: 'niveauFormationLibelle', label: 'Niveau de formation' },
   { key: 'dateDemande', label: 'Date de la demande' },
   { key: 'effectif', label: 'Effectif' },
   { key: 'statut', label: 'Statut' },

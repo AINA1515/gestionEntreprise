@@ -63,6 +63,7 @@ onMounted(charger)
           <div class="col-md-6"><span class="small text-body-secondary">Manager demandeur</span><div>{{ demande.manager }}</div></div>
           <div class="col-md-6"><span class="small text-body-secondary">Type</span><div>{{ demande.typeDemande }}</div></div>
           <div class="col-md-6"><span class="small text-body-secondary">Effectif demandé</span><div>{{ demande.effectif }}</div></div>
+          <div class="col-md-6"><span class="small text-body-secondary">Niveau de formation requis</span><div>{{ demande.niveauFormationLibelle || 'Non précisé' }}</div></div>
           <div class="col-md-6"><span class="small text-body-secondary">Budget alloué</span><div>{{ formatMontant(demande.budget) }}</div></div>
           <div class="col-md-6"><span class="small text-body-secondary">Date souhaitée</span><div>{{ formatDate(demande.dateSouhaitee) }}</div></div>
           <div class="col-12"><span class="small text-body-secondary">Motif</span><p class="mb-0">{{ demande.motif }}</p></div>
