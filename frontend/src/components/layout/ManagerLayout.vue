@@ -5,6 +5,7 @@ const items = [
   { to: '/manager/dashboard', label: 'Tableau de bord', icon: 'grid', roles: ['MANAGER'] },
   { to: '/manager/demandes/nouvelle', label: 'Nouvelle demande', icon: 'plus-lg', roles: ['MANAGER'], permission: 'DEMANDE_CREER' },
   { to: '/manager/demandes', label: 'Mes demandes', icon: 'card-list', roles: ['MANAGER'], permission: 'DEMANDE_CONSULTER' },
+  { to: '/manager/entretiens', label: 'Mes entretiens', icon: 'calendar-event', roles: ['MANAGER'], permission: 'EVALUATION_SAISIR' },
   { to: '/offres', label: 'Offres d’emploi', icon: 'search' },
 ]
 </script>

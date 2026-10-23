@@ -8,6 +8,7 @@ const candidatItems = [
   { to: '/candidat/cv', label: 'Mon CV', icon: 'file-person', roles: ['CANDIDAT'], permission: 'DOCUMENT_CONSULTER_PERSO' },
   { to: '/offres', label: 'Offres', icon: 'search', roles: ['CANDIDAT'] },
   { to: '/candidat/candidature', label: 'Mes candidatures', icon: 'briefcase', roles: ['CANDIDAT'], permission: 'CANDIDATURE_POSTULER' },
+  { to: '/candidat/propositions', label: 'Mes propositions', icon: 'envelope-check', roles: ['CANDIDAT'], permission: 'PROPOSITION_REPONDRE' },
 ]
 const rhItems = [
   { to: '/rh/accueil', label: 'Accueil RH', icon: 'grid', roles: ['GESTIONNAIRE_RH'] },

@@ -13,11 +13,22 @@ const { loading, error, run } = useAsyncAction()
 const { formatDate, formatMontant } = useFormatters()
 const candidatures = ref([])
 const preselectionnees = ref([])
+const selection = ref([])
 
 function partagerReponse(liste) {
   candidatures.value = liste || []
   preselectionnees.value = candidatures.value.filter((candidature) => candidature.preselectionnee)
+  selection.value = preselectionnees.value.filter(c => c.statut === 'RECUE').map(c => c.id)
 }
+
+async function transmettre() {
+  const result = await run(() => candidatureService.transmettreAuManager(route.params.id, selection.value))
+  if (result) {
+    candidatures.value = await run(() => candidatureService.candidaturesParOffre(route.params.id)) || candidatures.value
+    partagerReponse(candidatures.value)
+  }
+}
+
 
 onMounted(async () => {
   partagerReponse(await run(() => candidatureService.candidaturesParOffre(route.params.id)))
@@ -33,12 +44,16 @@ onMounted(async () => {
     <div class="card-header bg-success-subtle">
       <h2 class="h5 mb-1">Candidats présélectionnés ({{ preselectionnees.length }})</h2>
       <p class="small mb-0">Niveau de formation au moins égal au niveau demandé et salaire souhaité inférieur ou égal au budget majoré de 10 %.</p>
+      <div class="d-flex flex-wrap gap-2 mt-3" v-if="preselectionnees.some(c => c.statut === 'RECUE')">
+        <button class="btn btn-success btn-sm" type="button" :disabled="loading || !selection.length" @click="transmettre">Transmettre la sélection au manager ({{ selection.length }})</button>
+      </div>
     </div>
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
-        <thead class="table-light"><tr><th>Candidat</th><th>Niveau obtenu</th><th>Niveau requis</th><th>Salaire souhaité</th><th>Plafond (+10 %)</th><th></th></tr></thead>
+        <thead class="table-light"><tr><th v-if="candidatures.some(c => c.statut === 'RECUE')"></th><th>Candidat</th><th>Niveau obtenu</th><th>Niveau requis</th><th>Salaire souhaité</th><th>Plafond (+10 %)</th><th></th></tr></thead>
         <tbody>
           <tr v-for="candidature in preselectionnees" :key="candidature.id">
+            <td v-if="candidatures.some(c => c.statut === 'RECUE')"><input v-if="candidature.statut === 'RECUE'" v-model="selection" class="form-check-input" type="checkbox" :value="candidature.id" :aria-label="`Sélectionner ${candidature.candidat}`" /></td>
             <td>{{ candidature.candidat }}<span class="d-block small text-body-secondary">{{ candidature.email }}</span></td>
             <td>{{ candidature.niveauFormationCandidat || 'Non renseigné' }}</td>
             <td>{{ candidature.niveauFormationRequis || 'Aucun niveau imposé' }}</td>

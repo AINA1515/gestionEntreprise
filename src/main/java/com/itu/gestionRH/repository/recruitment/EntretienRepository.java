@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EntretienRepository extends JpaRepository<Entretien, Long> {
+    java.util.List<Entretien> findByIntervenantIdOrderByDateEntretienAsc(Long intervenantId);
+    java.util.List<Entretien> findByCandidatureOffreDemandeManagerIdOrderByDateEntretienAsc(Long managerId);
 }

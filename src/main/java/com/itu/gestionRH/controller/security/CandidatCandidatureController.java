@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.itu.gestionRH.security.AccessScope;
 import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
 import com.itu.gestionRH.entity.recruitment.Candidature;
+import com.itu.gestionRH.repository.hiring.PropositionEmbaucheRepository;
+import com.itu.gestionRH.entity.hiring.PropositionEmbauche;
 import java.time.LocalDate;
 import java.math.BigDecimal;
 
@@ -21,9 +23,23 @@ import java.math.BigDecimal;
 public class CandidatCandidatureController {
     private final AccessScope accessScope;
     private final CandidatureRepository candidatures;
-    public CandidatCandidatureController(AccessScope accessScope, CandidatureRepository candidatures) { this.accessScope=accessScope; this.candidatures=candidatures; }
+    private final PropositionEmbaucheRepository propositions;
+    public CandidatCandidatureController(AccessScope accessScope, CandidatureRepository candidatures, PropositionEmbaucheRepository propositions) { this.accessScope=accessScope; this.candidatures=candidatures; this.propositions=propositions; }
     public record CandidatureResponse(Long id, Long offreId, String poste, String statut, String datePostulation,
                                       BigDecimal salairePropose, BigDecimal salaireReference) {}
+    public record PropositionResponse(Long id, Long candidatureId, String poste, String typeContrat,
+            BigDecimal salaireBrut, LocalDate dateDebut, LocalDate dateEnvoi, LocalDate dateLimiteReponse, String statut) {}
+
+    @PreAuthorize("hasAuthority('PERM_PROPOSITION_REPONDRE')")
+    @GetMapping("/propositions")
+    @Transactional(readOnly = true)
+    public List<PropositionResponse> mesPropositions() {
+        Long candidatId = accessScope.requireCandidatCourant();
+        return propositions.findByCandidatureCandidatId(candidatId, org.springframework.data.domain.Pageable.unpaged()).getContent()
+                .stream().map(p -> new PropositionResponse(p.getId(), p.getCandidature().getId(), p.getCandidature().getOffre().getTitre(),
+                        p.getTypeContratPropose().name(), p.getSalaireBrutPropose(), p.getDateDebutSouhaitee(), p.getDateEnvoi(),
+                        p.getDateLimiteReponse(), p.getStatutProposition().name())).toList();
+    }
     @PreAuthorize("hasAnyAuthority('PERM_CANDIDATURE_POSTULER','PERM_CANDIDATURE_CONSULTER')")
     @GetMapping
     @Transactional(readOnly = true)

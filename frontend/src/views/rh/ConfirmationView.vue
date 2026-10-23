@@ -16,8 +16,9 @@ const { loading, error, run } = useAsyncAction()
 const form = reactive({
   candidatureId: route.query.candidatureId ?? '',
   typeContrat: '',
+  salaireBrut: '',
   dateDebut: '',
-  message: '',
+  dateLimiteReponse: '',
 })
 
 const retenues = computed(() => candidatures.candidatures.filter((c) => c.statut === 'RETENUE'))
@@ -67,13 +68,16 @@ async function confirmer() {
             </select>
           </FormField>
 
-          <FormField id="debut" label="Date de début du travail">
-            <input id="debut" v-model="form.dateDebut" type="date" class="form-control" required />
+          <FormField id="salaireBrut" label="Salaire brut proposé (facultatif)">
+            <input id="salaireBrut" v-model="form.salaireBrut" type="number" min="0" step="0.01" class="form-control" />
           </FormField>
 
-          <FormField id="message" label="Message de confirmation">
-            <textarea id="message" v-model="form.message" rows="4" class="form-control"
-                      placeholder="Informations complémentaires destinées au candidat..."></textarea>
+          <FormField id="debut" label="Date de début du travail">
+            <input id="debut" v-model="form.dateDebut" type="date" class="form-control" />
+          </FormField>
+
+          <FormField id="dateLimiteReponse" label="Date limite de réponse du candidat">
+            <input id="dateLimiteReponse" v-model="form.dateLimiteReponse" type="date" class="form-control" :min="new Date().toISOString().slice(0, 10)" required />
           </FormField>
 
           <div class="d-flex flex-wrap gap-2">

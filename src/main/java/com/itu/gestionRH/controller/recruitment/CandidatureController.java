@@ -27,6 +27,8 @@ import jakarta.validation.constraints.Digits;
 import java.math.BigDecimal;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.itu.gestionRH.entity.recruitment.Candidature;
@@ -58,6 +60,7 @@ public class CandidatureController {
     public record DepotCandidatureRequest(Long offreId,
             @DecimalMin("0.00") @Digits(integer=13, fraction=2) BigDecimal salairePropose) {}
     public record StatutRequest(String statut, String commentaire) {}
+    public record TransmissionRequest(@NotEmpty List<Long> candidatureIds) {}
 
     private final CandidatureRepository candidatureRepository;
     private final CandidatureMachine machine;
@@ -144,6 +147,30 @@ public class CandidatureController {
         Map<String, NiveauFormation> niveaux = offreId == null ? Map.of() : niveauFormationRepository.findAll().stream()
                 .collect(Collectors.toMap(NiveauFormation::getCode, Function.identity()));
         return resultat.stream().map(c -> offreId == null ? toResponse(c) : toResponse(c, evaluerPreselection(c, niveaux))).toList();
+    }
+
+    @PreAuthorize("hasAuthority('PERM_CANDIDATURE_PRESELECTIONNER')")
+    @PostMapping("/recrutement/offres/{offreId}/transmettre-manager")
+    @Transactional
+    public List<CandidatureResponse> transmettreAuManager(@PathVariable Long offreId, @Valid @RequestBody TransmissionRequest request) {
+        var offre = offreRepository.findById(offreId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offre introuvable."));
+        var niveaux = niveauFormationRepository.findAll().stream()
+                .collect(Collectors.toMap(NiveauFormation::getCode, Function.identity()));
+        List<Candidature> selectionnees = candidatureRepository.findByIdIn(request.candidatureIds());
+        if (selectionnees.size() != request.candidatureIds().stream().distinct().count())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Une candidature sélectionnée est introuvable.");
+        for (Candidature c : selectionnees) {
+            if (c.getOffre() == null || !offreId.equals(c.getOffre().getId()))
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Toutes les candidatures doivent concerner cette offre.");
+            if (!Boolean.TRUE.equals(evaluerPreselection(c, niveaux).retenue()))
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Seules les candidatures correspondant aux critères peuvent être transmises.");
+            if (c.getStatutCandidature() == CandidatureStatut.RECUE)
+                machine.transition(c, "preselectionner", WorkflowContext.utilisateurCourant("Présélection transmise au manager"));
+            else if (c.getStatutCandidature() != CandidatureStatut.PRESELECTIONNEE)
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Une candidature sélectionnée n’est plus en attente de présélection.");
+        }
+        return selectionnees.stream().map(this::toResponse).toList();
     }
 
     @PreAuthorize("hasAuthority('PERM_CANDIDATURE_PRESELECTIONNER')")

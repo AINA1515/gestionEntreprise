@@ -101,6 +101,8 @@ public class AccessScope {
         return id;
     }
 
+    public boolean hasPermission(String permission) { return has("PERM_" + permission); }
+
     public PropositionEmbauche requirePropositionOwner(PropositionEmbauche proposition) {
         if(proposition==null) throw new NotFoundException("Proposition introuvable.");
         if(has("PERM_UTILISATEUR_ADMIN") || has("PERM_PROPOSITION_EMETTRE")) return proposition;

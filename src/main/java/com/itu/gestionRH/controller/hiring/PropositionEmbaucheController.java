@@ -16,6 +16,21 @@ import com.itu.gestionRH.common.NotFoundException;
 import com.itu.gestionRH.repository.hiring.PropositionEmbaucheRepository;
 import com.itu.gestionRH.security.AccessScope;
 import org.springframework.transaction.annotation.Transactional;
+import com.itu.gestionRH.entity.enums.ContratType;
+import com.itu.gestionRH.entity.enums.CandidatureStatut;
+import com.itu.gestionRH.entity.enums.PropositionStatut;
+import com.itu.gestionRH.entity.hiring.PropositionEmbauche;
+import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
+import com.itu.gestionRH.workflow.PropositionEmbaucheMachine;
+import com.itu.gestionRH.workflow.WorkflowContext;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.itu.gestionRH.repository.security.UtilisateurRepository;
+import com.itu.gestionRH.security.jwt.JwtAuthenticationFilter.JwtPrincipal;
 
 /** Confirmation de recrutement (ex-page /rh/confirmation). */
 @RestController
@@ -23,32 +38,94 @@ import org.springframework.transaction.annotation.Transactional;
 public class PropositionEmbaucheController {
     private final PropositionEmbaucheRepository propositions;
     private final AccessScope accessScope;
-    public PropositionEmbaucheController(PropositionEmbaucheRepository propositions, AccessScope accessScope) {
-        this.propositions=propositions; this.accessScope=accessScope;
+    private final CandidatureRepository candidatures;
+    private final PropositionEmbaucheMachine machine;
+    private final UtilisateurRepository utilisateurs;
+    public PropositionEmbaucheController(PropositionEmbaucheRepository propositions, AccessScope accessScope,
+            CandidatureRepository candidatures, PropositionEmbaucheMachine machine, UtilisateurRepository utilisateurs) {
+        this.propositions=propositions; this.accessScope=accessScope; this.candidatures=candidatures; this.machine=machine; this.utilisateurs=utilisateurs;
     }
 
     /** typeContrat : CDD | CDI | STAGE | ALTERNANCE (contrainte CK_PROP_TYPE). */
     public record ConfirmationRequest(Long candidatureId, String typeContrat,
                                       LocalDate dateDebut, String message) {}
 
-    public record ConfirmationResponse(Long id, Long candidatureId, String statut, List<String> actionsDisponibles) {}
+    public record PropositionRequest(@NotNull Long candidatureId, @NotNull ContratType typeContrat,
+            @DecimalMin("0.00") java.math.BigDecimal salaireBrut, LocalDate dateDebut,
+            @NotNull LocalDate dateLimiteReponse) {}
+
+    public record ConfirmationResponse(Long id, Long candidatureId, String poste, String typeContrat,
+            java.math.BigDecimal salaireBrut, LocalDate dateDebut, LocalDate dateEnvoi,
+            LocalDate dateLimiteReponse, String statut, List<String> actionsDisponibles) {}
     public record ReponseRequest(String statut, String commentaire) {}
     public record EmployeConversionResponse(Long employeId, Long candidatId, String matricule, String statut) {}
 
     @PreAuthorize("hasAuthority('PERM_PROPOSITION_EMETTRE')")
     @PostMapping("/propositions")
-    public ConfirmationResponse confirmer(@RequestBody ConfirmationRequest request) {
-        // TODO : PropositionEmbaucheService.confirmer(request) (+ envoi d'e-mail)
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Confirmation de recrutement a implementer");
+    @Transactional
+    public ConfirmationResponse confirmer(@Valid @RequestBody PropositionRequest request) {
+        var candidature = accessScope.requireCandidature(request.candidatureId());
+        if (candidature.getStatutCandidature() != CandidatureStatut.RETENUE)
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La candidature doit être retenue avant l’envoi d’une proposition.");
+        if (request.dateLimiteReponse().isBefore(LocalDate.now()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La date limite de réponse doit être aujourd’hui ou ultérieure.");
+        var existante = propositions.findByCandidatureId(candidature.getId());
+        if (existante != null && existante.getStatutProposition() != PropositionStatut.ANNULEE
+                && existante.getStatutProposition() != PropositionStatut.REFUSEE
+                && existante.getStatutProposition() != PropositionStatut.EXPIREE)
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Une proposition active existe déjà pour cette candidature.");
+        PropositionEmbauche proposition = PropositionEmbauche.nouvelle();
+        proposition.setCandidature(candidature);
+        Long userId = ((JwtPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).userId();
+        proposition.setRedacteur(utilisateurs.findById(userId).orElseThrow(() -> new NotFoundException("Utilisateur introuvable.")));
+        proposition.setTypeContratPropose(request.typeContrat());
+        proposition.setSalaireBrutPropose(request.salaireBrut());
+        proposition.setDateDebutSouhaitee(request.dateDebut());
+        proposition.setDateEnvoi(LocalDate.now());
+        proposition.setDateLimiteReponse(request.dateLimiteReponse());
+        proposition.appliquerTransitionWorkflow(PropositionStatut.BROUILLON);
+        propositions.save(proposition);
+        machine.transition(proposition, "envoyer", WorkflowContext.utilisateurCourant("Proposition d’embauche envoyée"));
+        return versReponse(proposition);
     }
 
     @PreAuthorize("hasAuthority('PERM_PROPOSITION_REPONDRE')")
     @PatchMapping("/propositions/{id}/reponse")
-    @Transactional(readOnly = true)
+    @Transactional
     public ConfirmationResponse repondre(@PathVariable Long id, @RequestBody ReponseRequest request) {
         var proposition=propositions.findById(id).orElseThrow(()->new NotFoundException("Proposition introuvable."));
         accessScope.requirePropositionOwner(proposition);
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Réponse à la proposition à implémenter");
+        if (proposition.getStatutProposition() != PropositionStatut.ENVOYEE || proposition.getDateLimiteReponse().isBefore(LocalDate.now()))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette proposition n’accepte plus de réponse.");
+        String action = "ACCEPTER".equalsIgnoreCase(request.statut()) || "ACCEPTEE".equalsIgnoreCase(request.statut()) ? "accepter" : "REFUSER".equalsIgnoreCase(request.statut()) || "REFUSEE".equalsIgnoreCase(request.statut()) ? "refuser" : null;
+        if (action == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La réponse doit être accepter ou refuser.");
+        if (action.equals("refuser") && (request.commentaire() == null || request.commentaire().isBlank()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un motif de refus est obligatoire.");
+        proposition.setMotifRefus(action.equals("refuser") ? request.commentaire().trim() : null);
+        proposition.setDateReponse(LocalDate.now());
+        machine.transition(proposition, action, WorkflowContext.utilisateurCourant(request.commentaire()));
+        return versReponse(proposition);
+    }
+
+    @PreAuthorize("hasAuthority('PERM_PROPOSITION_EMETTRE')")
+    @GetMapping("/propositions")
+    @Transactional(readOnly = true)
+    public List<ConfirmationResponse> lister() { return propositions.findAll().stream().map(this::versReponse).toList(); }
+
+    @PreAuthorize("hasAnyAuthority('PERM_PROPOSITION_EMETTRE','PERM_PROPOSITION_REPONDRE')")
+    @GetMapping("/propositions/mes")
+    @Transactional(readOnly = true)
+    public List<ConfirmationResponse> mesPropositions(@RequestParam(required = false) Long candidatId) {
+        Long id = accessScope.hasPermission("PROPOSITION_EMETTRE") ? candidatId : accessScope.requireCandidatCourant();
+        if (id == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le candidat est requis.");
+        return propositions.findByCandidatureCandidatId(id, org.springframework.data.domain.Pageable.unpaged()).getContent()
+                .stream().map(this::versReponse).toList();
+    }
+
+    private ConfirmationResponse versReponse(PropositionEmbauche p) {
+        return new ConfirmationResponse(p.getId(), p.getCandidature().getId(), p.getCandidature().getOffre().getTitre(),
+                p.getTypeContratPropose().name(), p.getSalaireBrutPropose(), p.getDateDebutSouhaitee(), p.getDateEnvoi(),
+                p.getDateLimiteReponse(), p.getStatutProposition().name(), machine.actionsDisponibles(p, WorkflowContext.utilisateurCourant(null)));
     }
 
     @PreAuthorize("hasAuthority('PERM_EMPLOYE_CONVERTIR')")

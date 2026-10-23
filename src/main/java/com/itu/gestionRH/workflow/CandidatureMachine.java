@@ -16,7 +16,10 @@ public class CandidatureMachine {
         var b = StateMachine.<Candidature, CandidatureStatut>builder("Candidature",
                 Candidature::getStatutCandidature, Candidature::appliquerTransitionWorkflow, Candidature::getId, publisher);
         b.transition(CandidatureStatut.RECUE, "preselectionner", CandidatureStatut.PRESELECTIONNEE, "CANDIDATURE_PRESELECTIONNER");
-        b.transition(CandidatureStatut.PRESELECTIONNEE, "planifier_entretien", CandidatureStatut.EN_ENTRETIEN, "ENTRETIEN_PLANIFIER");
+        b.transition(CandidatureStatut.RECUE, "transmettre_au_manager", CandidatureStatut.PRESELECTIONNEE, "CANDIDATURE_PRESELECTIONNER");
+        b.transition(CandidatureStatut.PRESELECTIONNEE, "planifier_entretien", CandidatureStatut.EN_ENTRETIEN,
+                Set.of("MANAGER"), Set.of("ENTRETIEN_PLANIFIER"), r -> true, r -> {},
+                "WORKFLOW_PRECONDITION_REFUSEE", "La planification n’est pas autorisée.");
         b.transition(CandidatureStatut.EN_ENTRETIEN, "retenir", CandidatureStatut.RETENUE,
                 Set.of(), Set.of("EVALUATION_SAISIR"), r -> r.entite().getEntretiens().stream()
                         .anyMatch(e -> e.getEvaluation() != null && e.getEvaluation().getDecision() == EvaluationDecision.FAVORABLE),

@@ -27,6 +27,7 @@ const routes = [
       { path: 'demandes/nouvelle', name: 'manager-nouvelle-demande', component: () => import('@/views/manager/NouvelleDemandeView.vue'), meta: { permissions: ['DEMANDE_CREER'] } },
       { path: 'demandes/:id', name: 'manager-demande-detail', component: () => import('@/views/manager/DemandeDetailView.vue'), meta: { permissions: ['DEMANDE_CONSULTER'] } },
       { path: 'demandes/:id/modifier', name: 'manager-demande-modifier', component: () => import('@/views/manager/NouvelleDemandeView.vue'), meta: { permissions: ['DEMANDE_CREER'] } },
+      { path: 'entretiens', name: 'manager-entretiens', component: () => import('@/views/manager/MesEntretiensView.vue'), meta: { permissions: ['EVALUATION_SAISIR'] } },
     ],
   },
   {
@@ -63,6 +64,7 @@ const routes = [
       { path: 'cv/importer', name: 'candidat-cv-importer', component: () => import('@/views/candidat/CvImporterView.vue'), meta: { permissions: ['DOCUMENT_CONSULTER_PERSO'] } },
       { path: 'offres', name: 'candidat-offres', redirect: { name: 'offres-publiques' } },
       { path: 'candidature', name: 'candidat-candidature', component: () => import('@/views/candidat/CandidatureView.vue'), meta: { permissions: ['CANDIDATURE_POSTULER'] } },
+      { path: 'propositions', name: 'candidat-propositions', component: () => import('@/views/candidat/PropositionsView.vue'), meta: { permissions: ['PROPOSITION_REPONDRE'] } },
     ],
   },
   { path: '/profil/mot-de-passe', name: 'changer-mot-de-passe', component: () => import('@/views/profil/ChangerMotDePasseView.vue'), meta: { requiresAuth: true, espace: 'Mon profil' } },
