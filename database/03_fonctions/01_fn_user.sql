@@ -1,4 +1,4 @@
-PROMPT === 8. Fonctions ===
+-- PROMPT === 8. Fonctions ===
 
 -- Utilisateur applicatif (CLIENT_IDENTIFIER) ou, a defaut, utilisateur Oracle
 CREATE OR REPLACE FUNCTION FN_USER RETURN VARCHAR2 IS

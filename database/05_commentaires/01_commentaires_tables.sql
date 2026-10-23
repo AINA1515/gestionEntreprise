@@ -1,7 +1,7 @@
 /* =============================================================================
    11. COMMENTAIRES (documentation du dictionnaire de donnees)
    ============================================================================= */
-PROMPT === 11. Commentaires ===
+-- PROMPT === 11. Commentaires ===
 
 COMMENT ON TABLE CANDIDAT IS 'Personne externe qui postule. Conserve son historique de candidatures meme apres embauche (CANDIDAT different de EMPLOYE). Contient le consentement RGPD.';
 COMMENT ON TABLE EMPLOYE IS 'Dossier salarie cree a la conversion d''un candidat accepte. Porte le matricule unique et immuable (EMP-AAAA-NNNN).';

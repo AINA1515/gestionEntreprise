@@ -15,7 +15,7 @@ BEGIN
     EXCEPTION
       WHEN DUP_VAL_ON_INDEX THEN   -- cree en parallele par une autre session
         UPDATE COMPTEUR_MATRICULE
-           SET DERNIER_NUMERO = DERNIER_NUMERO + 1
+           SET DERNIER_NUMERO = DERNIER_NUMERO + 1-- PROMPT === 8. Fonctions ===
          WHERE ANNEE = v_annee
         RETURNING DERNIER_NUMERO INTO v_n;
     END;

@@ -1,7 +1,7 @@
 /* =============================================================================
    13. VERIFICATION
    ============================================================================= */
-PROMPT === 13. Verification ===
+-- PROMPT === 13. Verification ===
 
 SELECT OBJECT_TYPE, COUNT(*) AS NB
   FROM USER_OBJECTS

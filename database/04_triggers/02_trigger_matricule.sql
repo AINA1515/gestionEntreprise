@@ -1,7 +1,7 @@
 /* =============================================================================
    10. REGLES METIER PORTEES PAR LA BASE
    ============================================================================= */
-PROMPT === 10. Regles metier ===
+-- PROMPT === 10. Regles metier ===
 
 -- Matricule : genere automatiquement s'il est vide, puis immuable.
 CREATE OR REPLACE TRIGGER TBR_EMPLOYE_MATRICULE
