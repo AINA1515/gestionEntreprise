@@ -85,7 +85,7 @@ class DemandeRecrutementServiceTest {
         service.soumettre(55L);
         assertEquals(DemandeStatut.ATTENTE_RH, demande.getStatutValidation());
 
-        authentifier(20L, "CHARGE_RECRUTEMENT", "DEMANDE_VERIFIER_RH", "DEMANDE_CONSULTER");
+        authentifier(20L, "GESTIONNAIRE_RH", "DEMANDE_VERIFIER_RH", "DEMANDE_CONSULTER");
         service.traiterValidation(55L, new ValidationRequest("TRANSMETTRE_DIRECTION", null));
         assertEquals(DemandeStatut.ATTENTE_DIRECTION, demande.getStatutValidation());
 

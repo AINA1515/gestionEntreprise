@@ -79,7 +79,7 @@ class RbacControllerTest {
                 .thenReturn(org.springframework.data.domain.Page.empty());
         List<RoleCase> cases=List.of(
             new RoleCase("MANAGER","DEMANDE_CREER",post("/api/v1/demandes-recrutement","{\"posteId\":1,\"effectif\":1,\"motif\":\"Renfort\"}"),get("/api/v1/admin/utilisateurs")),
-            new RoleCase("CHARGE_RECRUTEMENT","OFFRE_PUBLIER",post("/api/v1/recrutement/offres","{\"demandeId\":1,\"titre\":\"Poste\"}"),get("/api/v1/admin/utilisateurs")),
+            new RoleCase("GESTIONNAIRE_RH","OFFRE_PUBLIER",post("/api/v1/recrutement/offres","{\"demandeId\":1,\"titre\":\"Poste\"}"),get("/api/v1/admin/utilisateurs")),
             new RoleCase("DIRECTION","DEMANDE_APPROUVER_DIR",patch("/api/v1/demandes-recrutement/1/validation","{\"statut\":\"VALIDEE\"}"),get("/api/v1/admin/utilisateurs")),
             new RoleCase("GESTIONNAIRE_RH","CONTRAT_GERER",post("/api/v1/onboarding/contrats","{}"),get("/api/v1/admin/utilisateurs")),
             new RoleCase("CANDIDAT","CANDIDATURE_POSTULER",get("/api/v1/candidat/candidatures"),get("/api/v1/admin/utilisateurs")),

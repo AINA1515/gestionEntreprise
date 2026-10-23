@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.itu.gestionRH.entity.enums.DemandeStatut;
 import java.time.LocalDate;
+import java.util.List;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Query;
 
@@ -19,6 +20,11 @@ public interface DemandeRecrutementRepository extends JpaRepository<DemandeRecru
     Page<DemandeRecrutement> findByStatutValidationAndPosteDepartementId(DemandeStatut statut, Long departementId, Pageable pageable);
     long countByManagerIdAndStatutValidation(Long managerId, DemandeStatut statut);
     long countByStatutValidation(DemandeStatut statut);
+
+    @Query("select d from DemandeRecrutement d where d.statutValidation = com.itu.gestionRH.entity.enums.DemandeStatut.VALIDEE "
+            + "and not exists (select o.id from OffreEmploi o where o.demande = d) "
+            + "order by d.dateCreation desc")
+    List<DemandeRecrutement> findValideesSansOffre();
 
     @Query("select d from DemandeRecrutement d where (:statut is null or d.statutValidation = :statut) "
             + "and (:departementId is null or d.poste.departement.id = :departementId) "

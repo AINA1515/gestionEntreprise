@@ -20,6 +20,9 @@ const commentaire = ref('')
 const detail = computed(() => demandes.demandeSelectionnee)
 const demande = computed(() => detail.value?.demande)
 const actions = computed(() => detail.value?.actionsDisponibles || [])
+const offreExistante = computed(() => detail.value?.offresLiees?.[0] || null)
+const derniereRefus = computed(() => [...(detail.value?.historiqueValidations || [])].reverse()
+  .find((validation) => validation.decision === 'REFUSEE'))
 const poste = computed(() => referentiel.postes.find((item) => item.id === demande.value?.posteId))
 const departement = computed(() => referentiel.departementSelectionne)
 const conformite = computed(() => [
@@ -39,7 +42,7 @@ async function charger() {
   ])
 }
 async function traiter(action) {
-  if (!actions.value.includes(action)) return
+  if (!actions.value.includes(action.toLowerCase())) return
   if (['REFUSER', 'RENVOYER_MANAGER'].includes(action) && !commentaire.value.trim()) return
   const result = await demandes.valider(route.params.id, { action, justification: commentaire.value.trim() || null })
   if (result) { commentaire.value = ''; await charger() }
@@ -88,8 +91,16 @@ onMounted(charger)
       </div>
     </div></section>
     <section v-else-if="demande.statut === 'VALIDEE'" class="card border-success shadow-sm"><div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
-      <div><h2 class="h5 mb-1">Demande validée</h2><p class="mb-0 text-body-secondary">Vous pouvez maintenant ouvrir le recrutement.</p></div>
-      <RouterLink v-if="auth.hasPermission('OFFRE_PUBLIER')" class="btn btn-success" :to="{ name: 'rh-offre-nouvelle', query: { demandeId: demande.id } }">Créer l’offre d’emploi</RouterLink>
+      <div><h2 class="h5 mb-1">Demande validée par la Direction</h2><p class="mb-0 text-body-secondary">
+        {{ offreExistante ? `Une offre « ${offreExistante.titre} » est déjà associée à cette demande (${offreExistante.statut.toLowerCase()}).` : 'La demande est revenue à l’équipe RH. Vous pouvez créer puis publier l’offre.' }}
+      </p></div>
+      <RouterLink v-if="auth.hasPermission('OFFRE_PUBLIER') && !offreExistante" class="btn btn-success" :to="{ name: 'rh-offre-nouvelle', query: { demandeId: demande.id } }">Créer l’offre d’emploi</RouterLink>
+      <RouterLink v-else-if="offreExistante" class="btn btn-outline-primary" to="/rh/offres">Voir les offres</RouterLink>
+    </div></section>
+    <section v-else-if="demande.statut === 'REFUSEE' && derniereRefus" class="card border-danger shadow-sm"><div class="card-body">
+      <h2 class="h5 text-danger">Demande refusée à l’étape {{ derniereRefus.etape === 'DIRECTION' ? 'Direction' : 'RH' }}</h2>
+      <p class="mb-1">La demande a été refusée. Elle ne peut pas donner lieu à la publication d’une offre.</p>
+      <p v-if="derniereRefus.justification" class="mb-0"><strong>Motif :</strong> {{ derniereRefus.justification }}</p>
     </div></section>
     <RouterLink class="btn btn-link px-0 mt-3" :to="{ name: 'rh-demandes-a-traiter' }">Retour à la file RH</RouterLink>
   </template>

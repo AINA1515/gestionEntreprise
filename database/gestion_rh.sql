@@ -48,6 +48,7 @@
      04_triggers       audit / sequences generes, puis regles metier et historisation
      05_commentaires   dictionnaire de donnees
      06_data           donnees de reference (roles, permissions, modeles de taches)
+     08_migrations     migrations de roles / evolutions apres installation
      07_verification   controles post-installation
    ============================================================================= */
 
@@ -87,6 +88,16 @@
 @@06_data/04_modele_onboarding.sql
 @@06_data/05_utilisateurs_demo.sql
 @@06_data/06_offres_demo.sql
+
+-- 08. Migrations
+@@08_migrations/004_fusion_roles_rh.sql
+
+UPDATE ROLE_RH
+   SET EST_ACTIF = 0,
+       LIBELLE = 'Ancien rôle recrutement (désactivé)',
+       DESCRIPTION = 'Role fusionne dans GESTIONNAIRE_RH'
+ WHERE CODE = 'CHARGE_RECRUTEMENT';
+COMMIT;
 
 -- 07. Verification
 @@07_verification/01_verification.sql

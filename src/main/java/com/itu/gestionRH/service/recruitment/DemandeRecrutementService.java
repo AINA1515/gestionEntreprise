@@ -122,8 +122,8 @@ public class DemandeRecrutementService {
         DemandeRecrutement demande=visible(id, contexte);
         if (contexte.utilisateurId() != null && contexte.utilisateurId().equals(demande.getManager().getId()))
             throw erreur("DEMANDE_AUTO_VALIDATION_INTERDITE", "Un manager ne peut pas valider sa propre demande.", HttpStatus.FORBIDDEN);
-        if (demande.getStatutValidation() == DemandeStatut.ATTENTE_RH && !contexte.roles().contains("CHARGE_RECRUTEMENT"))
-            throw erreur("ROLE_CHARGE_RECRUTEMENT_REQUIS", "Cette étape est réservée aux chargés de recrutement.", HttpStatus.FORBIDDEN);
+        if (demande.getStatutValidation() == DemandeStatut.ATTENTE_RH && !contexte.roles().contains("GESTIONNAIRE_RH"))
+            throw erreur("ROLE_RH_REQUIS", "Cette étape est réservée aux ressources humaines.", HttpStatus.FORBIDDEN);
         if (demande.getStatutValidation() == DemandeStatut.ATTENTE_DIRECTION && !contexte.roles().contains("DIRECTION"))
             throw erreur("ROLE_DIRECTION_REQUIS", "Cette étape est réservée à la Direction.", HttpStatus.FORBIDDEN);
         String action=actionMachine(request.action());

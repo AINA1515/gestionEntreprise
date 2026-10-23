@@ -21,7 +21,9 @@ const justification = ref('')
 const refusing = computed(() => modalAction.value === 'REFUSER')
 
 function ouvrir(action) {
-  if (!actions.value.includes(action.toLowerCase())) return
+  const actionDisponible = actions.value.includes(action.toLowerCase())
+    || (action === 'REFUSER' && demande.value?.statut === 'ATTENTE_DIRECTION')
+  if (!actionDisponible) return
   modalAction.value = action
   justification.value = ''
   modalOpen.value = true
@@ -55,9 +57,9 @@ onMounted(() => store.obtenir(route.params.id))
         <div class="col-md-6"><div class="small text-body-secondary">Type de demande</div><div>{{ demande.typeDemande }}<span v-if="demande.employeRemplaceId"> · salarié #{{ demande.employeRemplaceId }}</span></div></div>
         <div class="col-12"><div class="small text-body-secondary">Motif</div><p class="mb-0">{{ demande.motif }}</p></div>
       </div>
-      <div v-if="actions.includes('valider') || actions.includes('refuser')" class="d-flex flex-wrap gap-2 mt-4">
+      <div v-if="actions.includes('valider') || demande.statut === 'ATTENTE_DIRECTION'" class="d-flex flex-wrap gap-2 mt-4">
         <button v-if="actions.includes('valider')" class="btn btn-success" :disabled="store.loading" @click="ouvrir('VALIDER')">Valider la demande</button>
-        <button v-if="actions.includes('refuser')" class="btn btn-outline-danger" :disabled="store.loading" @click="ouvrir('REFUSER')">Refuser</button>
+        <button v-if="demande.statut === 'ATTENTE_DIRECTION'" class="btn btn-outline-danger" :disabled="store.loading" @click="ouvrir('REFUSER')">Refuser</button>
       </div>
       <p v-else class="small text-body-secondary mt-4 mb-0">Aucune action de Direction n’est disponible pour cet état.</p>
     </div></section>
@@ -78,7 +80,7 @@ onMounted(() => store.obtenir(route.params.id))
 
   <ConfirmModal v-model="modalOpen" v-model:justification="justification"
     :title="refusing ? 'Refuser cette demande ?' : 'Valider cette demande ?'"
-    :message="refusing ? 'La justification sera conservée dans l’historique de validation.' : 'La demande passera au statut Validée.'"
+    :message="refusing ? 'La justification sera conservée dans l’historique de validation.' : 'La demande sera renvoyée aux RH pour créer et publier l’offre d’emploi.'"
     :confirm-text="refusing ? 'Confirmer le refus' : 'Confirmer la validation'"
     :variant="refusing ? 'danger' : 'success'" :requires-justification="refusing"
     @confirm="confirmer" />

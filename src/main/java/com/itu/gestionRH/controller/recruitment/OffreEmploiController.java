@@ -40,6 +40,12 @@ public class OffreEmploiController {
     }
 
     @PreAuthorize("hasAuthority('PERM_OFFRE_PUBLIER')")
+    @GetMapping("/demandes-eligibles")
+    public List<OffreEmploiService.DemandeEligible> demandesEligibles() {
+        return service.demandesEligibles();
+    }
+
+    @PreAuthorize("hasAuthority('PERM_OFFRE_PUBLIER')")
     @PostMapping
     public ResponseEntity<OffreInterneResponse> creer(@Valid @RequestBody OffreCreateRequest request) {
         OffreEmploi offre = service.creer(request);

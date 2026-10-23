@@ -3,7 +3,7 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useOffresStore } from '@/stores/offres'
-import { useDemandesStore } from '@/stores/demandes'
+import { offreService } from '@/services/offreService'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import DataTable from '@/components/ui/DataTable.vue'
@@ -12,10 +12,11 @@ import AlertMessage from '@/components/ui/AlertMessage.vue'
 
 const router = useRouter()
 const store = useOffresStore()
-const demandes = useDemandesStore()
 const { offres, page, loading, error } = storeToRefs(store)
 const filters = reactive({ statut: '' })
 const demandeId = ref('')
+const demandesEligibles = ref([])
+const chargementDemandes = ref(false)
 const columns = [{ key: 'titre', label: 'Offre' }, { key: 'departement', label: 'Département' }, { key: 'statut', label: 'Statut' },
   { key: 'nombreCandidatures', label: 'Candidatures' }, { key: 'dateLimiteCandidature', label: 'Date limite' }, { key: 'actions', label: 'Actions' }]
 const modal = reactive({ show: false, action: '', offre: null })
@@ -35,11 +36,13 @@ function creerOffre() {
 }
 watch(() => filters.statut, () => charger(0))
 onMounted(async () => {
-  await Promise.all([
-    charger(),
-    demandes.charger({ statut: 'VALIDEE', page: 0, size: 100, sort: 'dateCreation,desc' }),
-  ])
+  await Promise.all([charger(), chargerDemandesEligibles()])
 })
+async function chargerDemandesEligibles() {
+  chargementDemandes.value = true
+  try { demandesEligibles.value = await offreService.demandesEligibles() }
+  finally { chargementDemandes.value = false }
+}
 </script>
 
 <template>
@@ -51,15 +54,15 @@ onMounted(async () => {
     <div class="ms-auto">
       <label for="demande-validee" class="form-label">Créer une offre à partir d’une demande validée</label>
       <div class="input-group">
-        <select id="demande-validee" v-model="demandeId" class="form-select" :disabled="demandes.loading">
+        <select id="demande-validee" v-model="demandeId" class="form-select" :disabled="chargementDemandes">
           <option value="">-- Choisir une demande --</option>
-          <option v-for="demande in demandes.demandes" :key="demande.id" :value="demande.id">
+          <option v-for="demande in demandesEligibles" :key="demande.id" :value="demande.id">
             #{{ demande.id }} · {{ demande.poste }} · {{ demande.departement }}
           </option>
         </select>
         <button class="btn btn-primary" type="button" :disabled="!demandeId" @click="creerOffre">Créer l’offre</button>
       </div>
-      <div v-if="!demandes.loading && !demandes.demandes.length" class="form-text">Aucune demande validée par la Direction n’est disponible.</div>
+      <div v-if="!chargementDemandes && !demandesEligibles.length" class="form-text">Aucune demande validée sans offre existante n’est disponible.</div>
     </div>
   </div></div>
   <section class="card shadow-sm"><DataTable :columns="columns" :rows="offres" :loading="loading" empty-message="Aucune offre pour ces critères.">

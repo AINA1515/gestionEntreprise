@@ -37,9 +37,8 @@ class WorkflowMachinesTest {
     private WorkflowContext role(String role) {
         Set<String> permissions=switch(role) {
             case "MANAGER" -> Set.of("DEMANDE_CREER","EVALUATION_SAISIR");
-            case "CHARGE_RECRUTEMENT" -> Set.of("DEMANDE_VERIFIER_RH","OFFRE_PUBLIER","CANDIDATURE_PRESELECTIONNER","ENTRETIEN_PLANIFIER","PROPOSITION_EMETTRE");
             case "DIRECTION" -> Set.of("DEMANDE_APPROUVER_DIR");
-            case "GESTIONNAIRE_RH" -> Set.of("CONTRAT_GERER","ONBOARDING_ADMIN");
+            case "GESTIONNAIRE_RH" -> Set.of("DEMANDE_VERIFIER_RH","OFFRE_PUBLIER","CANDIDATURE_PRESELECTIONNER","ENTRETIEN_PLANIFIER","PROPOSITION_EMETTRE","EMPLOYE_CONVERTIR","CONTRAT_GERER","ONBOARDING_ADMIN");
             case "CANDIDAT" -> Set.of("PROPOSITION_REPONDRE","CANDIDATURE_POSTULER");
             case "IT","MOYENS_GENERAUX","SALARIE" -> Set.of("TACHE_TRAITER");
             default -> Set.of();
@@ -63,23 +62,23 @@ class WorkflowMachinesTest {
     }
     @Test void demandeRefusExigeJustification() {
         var e = DemandeRecrutement.nouvelle(); e.appliquerTransitionWorkflow(DemandeStatut.ATTENTE_RH);
-        assertThrows(BusinessRuleException.class, () -> new DemandeRecrutementMachine(publisher).transition(e, "refuser", role("CHARGE_RECRUTEMENT")));
+        assertThrows(BusinessRuleException.class, () -> new DemandeRecrutementMachine(publisher).transition(e, "refuser", role("GESTIONNAIRE_RH")));
     }
 
     @Test void offrePublierSeulementAvecDemandeValidee() {
         var e = OffreEmploi.nouvelle(); e.appliquerTransitionWorkflow(OffreStatut.BROUILLON);
         var demande = DemandeRecrutement.nouvelle(); demande.appliquerTransitionWorkflow(DemandeStatut.VALIDEE); e.setDemande(demande);
-        new OffreEmploiMachine(publisher).transition(e, "publier", role("CHARGE_RECRUTEMENT"));
+        new OffreEmploiMachine(publisher).transition(e, "publier", role("GESTIONNAIRE_RH"));
         assertEquals(OffreStatut.PUBLIEE, e.getStatutOffre());
     }
     @Test void offreTransitionInterditeDepuisBrouillon() {
         var e = OffreEmploi.nouvelle(); e.appliquerTransitionWorkflow(OffreStatut.BROUILLON);
-        assertThrows(BusinessRuleException.class, () -> new OffreEmploiMachine(publisher).transition(e, "cloturer", role("CHARGE_RECRUTEMENT")));
+        assertThrows(BusinessRuleException.class, () -> new OffreEmploiMachine(publisher).transition(e, "cloturer", role("GESTIONNAIRE_RH")));
     }
 
     @Test void candidaturePreselection() {
         var e = Candidature.nouvelle(); e.appliquerTransitionWorkflow(CandidatureStatut.RECUE);
-        new CandidatureMachine(publisher, employes).transition(e, "preselectionner", role("CHARGE_RECRUTEMENT"));
+        new CandidatureMachine(publisher, employes).transition(e, "preselectionner", role("GESTIONNAIRE_RH"));
         assertEquals(CandidatureStatut.PRESELECTIONNEE, e.getStatutCandidature());
     }
     @Test void candidatureTransitionInterdite() {
@@ -92,12 +91,12 @@ class WorkflowMachinesTest {
     }
     @Test void candidatureRejetExigeMotif() {
         var e = Candidature.nouvelle(); e.appliquerTransitionWorkflow(CandidatureStatut.RECUE);
-        assertThrows(BusinessRuleException.class, () -> new CandidatureMachine(publisher, employes).transition(e, "rejeter", role("CHARGE_RECRUTEMENT")));
+        assertThrows(BusinessRuleException.class, () -> new CandidatureMachine(publisher, employes).transition(e, "rejeter", role("GESTIONNAIRE_RH")));
     }
 
     @Test void propositionEnvoyer() {
         var e = PropositionEmbauche.nouvelle(); e.appliquerTransitionWorkflow(PropositionStatut.BROUILLON);
-        new PropositionEmbaucheMachine(publisher).transition(e, "envoyer", role("CHARGE_RECRUTEMENT"));
+        new PropositionEmbaucheMachine(publisher).transition(e, "envoyer", role("GESTIONNAIRE_RH"));
         assertEquals(PropositionStatut.ENVOYEE, e.getStatutProposition());
     }
     @Test void propositionRefusExigeMotif() {

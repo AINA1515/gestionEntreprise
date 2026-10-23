@@ -46,10 +46,18 @@ public class NotificationWorkflowListener {
                 var demande = demandes.findById(id).orElse(null);
                 if (demande == null) return;
                 switch (event.etatApres()) {
-                    case "ATTENTE_RH" -> { code="DEMANDE_SOUMISE"; destinataires.addAll(parRole("CHARGE_RECRUTEMENT")); }
+                    case "ATTENTE_RH" -> { code="DEMANDE_SOUMISE"; destinataires.addAll(parRole("GESTIONNAIRE_RH")); }
                     case "ATTENTE_DIRECTION" -> { code="DEMANDE_TRANSMISE_DIRECTION"; destinataires.addAll(parRole("DIRECTION")); }
-                    case "VALIDEE" -> { code="DEMANDE_VALIDEE"; destinataires.add(demande.getManager()); }
-                    case "REFUSEE" -> { code="DEMANDE_REFUSEE"; destinataires.add(demande.getManager()); }
+                    case "VALIDEE" -> {
+                        code="DEMANDE_VALIDEE";
+                        destinataires.addAll(parRole("GESTIONNAIRE_RH"));
+                        destinataires.add(demande.getManager());
+                    }
+                    case "REFUSEE" -> {
+                        code="DEMANDE_REFUSEE";
+                        destinataires.add(demande.getManager());
+                        if ("ATTENTE_DIRECTION".equals(event.etatAvant())) destinataires.addAll(parRole("GESTIONNAIRE_RH"));
+                    }
                     default -> { return; }
                 }
             }
@@ -90,8 +98,8 @@ public class NotificationWorkflowListener {
                         var candidature=proposition.getCandidature();
                         if (candidature != null && candidature.getCandidat() != null) utilisateurs.findByCandidatId(candidature.getCandidat().getId()).ifPresent(destinataires::add);
                     }
-                    case "ACCEPTEE" -> { code="PROPOSITION_ACCEPTEE"; destinataires.addAll(parRole("CHARGE_RECRUTEMENT")); }
-                    case "REFUSEE" -> { code="PROPOSITION_REFUSEE"; destinataires.addAll(parRole("CHARGE_RECRUTEMENT")); }
+                    case "ACCEPTEE" -> { code="PROPOSITION_ACCEPTEE"; destinataires.addAll(parRole("GESTIONNAIRE_RH")); }
+                    case "REFUSEE" -> { code="PROPOSITION_REFUSEE"; destinataires.addAll(parRole("GESTIONNAIRE_RH")); }
                     default -> { return; }
                 }
             }

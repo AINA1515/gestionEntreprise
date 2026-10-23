@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class OffreEmploiService {
-    private static final List<OffreStatut> STATUTS_COUVRANTS = List.of(OffreStatut.BROUILLON, OffreStatut.PUBLIEE);
+    public record DemandeEligible(Long id, String poste, String departement) {}
 
     private final OffreEmploiRepository offres;
     private final DemandeRecrutementRepository demandes;
@@ -46,9 +46,8 @@ public class OffreEmploiService {
         if (demande.getStatutValidation() != com.itu.gestionRH.entity.enums.DemandeStatut.VALIDEE) {
             throw erreur("DEMANDE_NON_VALIDEE", "Une offre ne peut être créée qu'à partir d'une demande validée.", HttpStatus.CONFLICT);
         }
-        long offresExistantes = offres.countByDemandeIdAndStatutOffreIn(demande.getId(), STATUTS_COUVRANTS);
-        if (offresExistantes >= demande.getEffectifDemande()) {
-            throw erreur("EFFECTIF_DEMANDE_COUVERT", "L'effectif demandé est déjà couvert par des offres ouvertes.", HttpStatus.CONFLICT);
+        if (offres.existsByDemandeId(demande.getId())) {
+            throw erreur("DEMANDE_OFFRE_EXISTANTE", "Une offre est déjà associée à cette demande. Reprenez cette offre au lieu d'en créer une autre.", HttpStatus.CONFLICT);
         }
         verifierDateLimite(request.dateLimiteCandidature());
 
@@ -115,7 +114,7 @@ public class OffreEmploiService {
 
     public OffreEmploi obtenir(Long id, boolean personnel) {
         OffreEmploi offre = trouver(id);
-        if (!personnel && (offre.getStatutOffre() != OffreStatut.PUBLIEE
+        if (!personnel && (offre.getStatutOffre() != OffreStatut.PUBLIEE || offre.getDateCloture() != null
                 || (offre.getDateLimiteCandidature() != null && offre.getDateLimiteCandidature().isBefore(LocalDate.now())))) {
             throw new NotFoundException("Offre introuvable.");
         }
@@ -124,6 +123,12 @@ public class OffreEmploiService {
 
     public long nombreCandidatures(Long offreId) {
         return candidatures.countByOffreId(offreId);
+    }
+
+    public List<DemandeEligible> demandesEligibles() {
+        return demandes.findValideesSansOffre().stream()
+                .map(d -> new DemandeEligible(d.getId(), d.getPoste().getIntitule(), d.getPoste().getDepartement().getLibelle()))
+                .toList();
     }
 
     @Transactional

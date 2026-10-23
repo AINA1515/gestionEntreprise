@@ -20,6 +20,7 @@ public interface OffreEmploiRepository extends JpaRepository<OffreEmploi, Long> 
     Page<OffreEmploi> findByDemandeId(Long demandeId, Pageable pageable);
     Page<OffreEmploi> findByStatutOffreAndDemandeId(OffreStatut statut, Long demandeId, Pageable pageable);
     long countByDemandeIdAndStatutOffreIn(Long demandeId, Collection<OffreStatut> statuts);
+    boolean existsByDemandeId(Long demandeId);
     List<OffreEmploi> findByStatutOffreAndDateLimiteCandidatureBefore(OffreStatut statut, LocalDate date);
 
     @Query("select o from OffreEmploi o where "
@@ -37,6 +38,7 @@ public interface OffreEmploiRepository extends JpaRepository<OffreEmploi, Long> 
             @Param("texte") String texte, Pageable pageable);
 
     @Query("select o from OffreEmploi o where o.statutOffre = com.itu.gestionRH.entity.enums.OffreStatut.PUBLIEE "
+            + "and o.dateCloture is null "
             + "and (o.dateLimiteCandidature is null or o.dateLimiteCandidature >= :dateReference) "
             + "and (:departementId is null or o.demande.poste.departement.id = :departementId) "
             + "and (:typeContrat is null or o.typeContrat = :typeContrat) "

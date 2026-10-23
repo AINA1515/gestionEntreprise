@@ -6,7 +6,6 @@ import { useToast } from '@/composables/useToast'
 
 const HOME_BY_ROLE = {
   MANAGER: '/manager/dashboard',
-  CHARGE_RECRUTEMENT: '/rh/candidatures',
   GESTIONNAIRE_RH: '/rh/accueil',
   DIRECTION: '/direction/dashboard',
   CANDIDAT: '/candidat/cv',
@@ -15,7 +14,7 @@ const HOME_BY_ROLE = {
   MOYENS_GENERAUX: '/taches',
   ADMIN: '/admin/utilisateurs',
 }
-const HOME_PRIORITY = ['ADMIN', 'MANAGER', 'CHARGE_RECRUTEMENT', 'GESTIONNAIRE_RH', 'DIRECTION', 'CANDIDAT', 'SALARIE', 'IT', 'MOYENS_GENERAUX']
+const HOME_PRIORITY = ['ADMIN', 'MANAGER', 'GESTIONNAIRE_RH', 'DIRECTION', 'CANDIDAT', 'SALARIE', 'IT', 'MOYENS_GENERAUX']
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(tokenStorage.get())
