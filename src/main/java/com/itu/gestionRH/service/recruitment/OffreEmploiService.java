@@ -108,8 +108,9 @@ public class OffreEmploiService {
     public Page<OffreEmploi> lister(boolean personnel, OffreStatut statut, Long departementId,
             String texte, com.itu.gestionRH.entity.enums.ContratType typeContrat, Pageable pageable) {
         String recherche = texte == null || texte.isBlank() ? null : texte.trim();
-        return offres.rechercher(personnel ? statut : OffreStatut.PUBLIEE, !personnel,
-                LocalDate.now(), departementId, typeContrat, recherche, pageable);
+        return personnel
+                ? offres.rechercherInterne(statut, LocalDate.now(), departementId, typeContrat, recherche, pageable)
+                : offres.rechercherPubliques(LocalDate.now(), departementId, typeContrat, recherche, pageable);
     }
 
     public OffreEmploi obtenir(Long id, boolean personnel) {

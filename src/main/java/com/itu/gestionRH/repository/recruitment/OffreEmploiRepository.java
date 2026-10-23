@@ -24,7 +24,6 @@ public interface OffreEmploiRepository extends JpaRepository<OffreEmploi, Long> 
 
     @Query("select o from OffreEmploi o where "
             + "(:statut is null or o.statutOffre = :statut) "
-            + "and (:publicOnly = false or o.dateLimiteCandidature is null or o.dateLimiteCandidature >= :dateReference) "
             + "and (:departementId is null or o.demande.poste.departement.id = :departementId) "
             + "and (:typeContrat is null or o.typeContrat = :typeContrat) "
             + "and (:texte is null or lower(o.titre) like concat(concat('%', lower(:texte)), '%') "
@@ -32,8 +31,21 @@ public interface OffreEmploiRepository extends JpaRepository<OffreEmploi, Long> 
             + "or lower(coalesce(o.profilRecherche, '')) like concat(concat('%', lower(:texte)), '%') "
             + "or lower(o.demande.poste.intitule) like concat(concat('%', lower(:texte)), '%') "
             + "or lower(o.demande.poste.departement.libelle) like concat(concat('%', lower(:texte)), '%'))")
-    Page<OffreEmploi> rechercher(@Param("statut") OffreStatut statut,
-            @Param("publicOnly") boolean publicOnly, @Param("dateReference") LocalDate dateReference,
+    Page<OffreEmploi> rechercherInterne(@Param("statut") OffreStatut statut,
+            @Param("dateReference") LocalDate dateReference,
+            @Param("departementId") Long departementId, @Param("typeContrat") ContratType typeContrat,
+            @Param("texte") String texte, Pageable pageable);
+
+    @Query("select o from OffreEmploi o where o.statutOffre = com.itu.gestionRH.entity.enums.OffreStatut.PUBLIEE "
+            + "and (o.dateLimiteCandidature is null or o.dateLimiteCandidature >= :dateReference) "
+            + "and (:departementId is null or o.demande.poste.departement.id = :departementId) "
+            + "and (:typeContrat is null or o.typeContrat = :typeContrat) "
+            + "and (:texte is null or lower(o.titre) like concat(concat('%', lower(:texte)), '%') "
+            + "or lower(coalesce(o.descriptionPoste, '')) like concat(concat('%', lower(:texte)), '%') "
+            + "or lower(coalesce(o.profilRecherche, '')) like concat(concat('%', lower(:texte)), '%') "
+            + "or lower(o.demande.poste.intitule) like concat(concat('%', lower(:texte)), '%') "
+            + "or lower(o.demande.poste.departement.libelle) like concat(concat('%', lower(:texte)), '%'))")
+    Page<OffreEmploi> rechercherPubliques(@Param("dateReference") LocalDate dateReference,
             @Param("departementId") Long departementId, @Param("typeContrat") ContratType typeContrat,
             @Param("texte") String texte, Pageable pageable);
 }

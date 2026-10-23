@@ -97,7 +97,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.oracle.database.jdbc</groupId>
-			<artifactId>ojdbc17</artifactId>
+			<artifactId>ojdbc8</artifactId>
+			<version>19.25.0.0</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
@@ -115,7 +116,13 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.hibernate.orm</groupId>
+			<artifactId>hibernate-community-dialects</artifactId>
+			<version>${hibernate.version}</version>
+		</dependency>
 	</dependencies>
+	
 
 	<build>
 		<plugins>

@@ -16,6 +16,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itu.gestionRH.security.jwt.JwtAuthenticationEntryPoint;
 import com.itu.gestionRH.security.jwt.JwtAuthenticationFilter;
 import java.util.Arrays;
@@ -29,6 +30,10 @@ public class SecurityConfig {
 
     @Bean
     PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
+
+    /** JSON utilise notamment pour memoriser le CV saisi dans l'espace candidat. */
+    @Bean
+    ObjectMapper objectMapper() { return new ObjectMapper().findAndRegisterModules(); }
 
     @Bean
     FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterServletRegistration(JwtAuthenticationFilter filter) {

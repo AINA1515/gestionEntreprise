@@ -4,12 +4,15 @@ import jakarta.persistence.Version;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import com.itu.gestionRH.common.BooleanToIntegerConverter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -46,7 +49,12 @@ public class Candidat {
     @Column(name = "CV_URL", length = 500)
     private String cvUrl;
 
+    @Lob
+    @Column(name = "CV_CONTENU")
+    private String cvContenu;
+
     @Column(name = "CONSENTEMENT_RGPD", precision = 1, scale = 0, nullable = false)
+    @Convert(converter = BooleanToIntegerConverter.class)
     private Boolean consentementRgpd;
 
     @Column(name = "DATE_CONSENTEMENT")
@@ -124,6 +132,10 @@ public class Candidat {
     public void setCvUrl(String cvUrl) {
         this.cvUrl = cvUrl;
     }
+
+    public String getCvContenu() { return cvContenu; }
+
+    public void setCvContenu(String cvContenu) { this.cvContenu = cvContenu; }
 
     public Boolean getConsentementRgpd() {
         return consentementRgpd;

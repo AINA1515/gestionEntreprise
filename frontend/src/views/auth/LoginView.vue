@@ -99,6 +99,7 @@ async function seConnecter() {
                 Besoin d’aide ?<br />
                 <span class="text-primary fw-semibold">Contactez votre administrateur.</span>
                 <br /><RouterLink :to="{ name: 'inscription' }">Créer un compte candidat</RouterLink>
+                <br /><RouterLink :to="{ name: 'offres-publiques' }">Voir les offres d’emploi disponibles</RouterLink>
               </p>
             </div>
           </section>

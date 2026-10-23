@@ -13,6 +13,9 @@ CREATE TABLE CANDIDAT (
   TELEPHONE           VARCHAR2(30),
   ADRESSE             VARCHAR2(300),
   CV_URL              VARCHAR2(500),
+  -- Le CV saisi depuis le formulaire est conserve au format JSON. Le fichier
+  -- PDF/DOCX eventuellement importe reste gere par la GED via CV_URL.
+  CV_CONTENU          CLOB,
   CONSENTEMENT_RGPD   NUMBER(1)      DEFAULT 0 NOT NULL,
   DATE_CONSENTEMENT   DATE,
   DATE_ANONYMISATION  DATE,

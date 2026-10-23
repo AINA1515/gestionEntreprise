@@ -35,7 +35,7 @@ Tu travailles sur une application de gestion des ressources humaines (RH).
 Référence fonctionnelle : le fichier demarche_gestion_rh.md à la racine. Lis-le en entier avant toute action.
 
 ARCHITECTURE (déjà en place, à respecter)
-- Backend : Spring Boot 4.1.1, Java 21, Spring Data JPA, Spring Security, base ORACLE (driver ojdbc17).
+- Backend : Spring Boot 4.1.1, Java 21, Spring Data JPA, Spring Security, base ORACLE (driver ojdbc8).
   Package racine : com.itu.gestionRH, organisé par domaine : controller/, service/, repository/, entity/
   avec les sous-packages hiring, history, misc, notifications, recruitment, onboarding, organization, security, documents.
 - Base de données : scripts SQL dans database/ (tables, index, fonctions, triggers, données de référence).

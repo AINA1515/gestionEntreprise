@@ -7,6 +7,7 @@ const items = [
   { to: '/rh/candidatures', label: 'Candidatures', icon: 'people', roles: ['CHARGE_RECRUTEMENT'], permission: 'CANDIDATURE_CONSULTER' },
   { to: '/rh/confirmation', label: 'Propositions', icon: 'envelope-check', roles: ['CHARGE_RECRUTEMENT'], permission: 'PROPOSITION_EMETTRE' },
   { to: '/rh/offres', label: 'Offres d’emploi', icon: 'briefcase', roles: ['CHARGE_RECRUTEMENT'], permission: 'OFFRE_PUBLIER' },
+  { to: '/offres', label: 'Catalogue public', icon: 'search' },
   { to: '/rh/departements', label: 'Départements', icon: 'diagram-3', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },
   { to: '/rh/postes', label: 'Postes', icon: 'briefcase', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },
   { to: '/rh/employes', label: 'Employés', icon: 'people-fill', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },

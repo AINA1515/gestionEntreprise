@@ -85,6 +85,8 @@
 @@06_data/02_permissions.sql
 @@06_data/03_role_permission.sql
 @@06_data/04_modele_onboarding.sql
+@@06_data/05_utilisateurs_demo.sql
+@@06_data/06_offres_demo.sql
 
 -- 07. Verification
 @@07_verification/01_verification.sql
