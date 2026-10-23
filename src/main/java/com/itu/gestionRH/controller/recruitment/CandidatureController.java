@@ -2,6 +2,15 @@ package com.itu.gestionRH.controller.recruitment;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Comparator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.itu.gestionRH.entity.security.NiveauFormation;
+import com.itu.gestionRH.repository.security.NiveauFormationRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +46,10 @@ public class CandidatureController {
 
     public record CandidatureResponse(Long id, String candidat, String email, String poste,
                                       LocalDate datePostulation, String statut, BigDecimal salairePropose,
-                                      BigDecimal salaireReference, List<String> actionsDisponibles) {}
+                                      BigDecimal salaireReference, List<String> actionsDisponibles,
+                                      String niveauFormationCandidat, String niveauFormationRequis,
+                                      BigDecimal plafondSalairePreselection, Boolean preselectionnee,
+                                      String motifPreselection) {}
 
     public record StatsCandidatures(long recues, long entretiensAOrganiser, long retenues) {}
 
@@ -52,14 +64,19 @@ public class CandidatureController {
     private final AccessScope accessScope;
     private final OffreEmploiRepository offreRepository;
     private final CandidatRepository candidatRepository;
+    private final NiveauFormationRepository niveauFormationRepository;
+    private final ObjectMapper objectMapper;
 
     public CandidatureController(CandidatureRepository candidatureRepository, CandidatureMachine machine, AccessScope accessScope,
-                                 OffreEmploiRepository offreRepository, CandidatRepository candidatRepository) {
+                                 OffreEmploiRepository offreRepository, CandidatRepository candidatRepository,
+                                 NiveauFormationRepository niveauFormationRepository, ObjectMapper objectMapper) {
         this.candidatureRepository = candidatureRepository;
         this.machine = machine;
         this.accessScope = accessScope;
         this.offreRepository = offreRepository;
         this.candidatRepository = candidatRepository;
+        this.niveauFormationRepository = niveauFormationRepository;
+        this.objectMapper = objectMapper;
     }
 
     /** Ex-page /rh/candidatures. */
@@ -119,11 +136,14 @@ public class CandidatureController {
     @Transactional(readOnly = true)
     public List<CandidatureResponse> lister(@RequestParam(required = false) Long offreId,
                                             @RequestParam(required = false) String statut) {
-        return candidatureRepository.findAll().stream()
+        List<Candidature> resultat = candidatureRepository.findAll().stream()
                 .filter(accessScope::canSeeCandidature)
                 .filter(c -> offreId == null || (c.getOffre() != null && offreId.equals(c.getOffre().getId())))
                 .filter(c -> statut == null || statut.equals(c.getStatutCandidature().name()))
-                .map(this::toResponse).toList();
+                .toList();
+        Map<String, NiveauFormation> niveaux = offreId == null ? Map.of() : niveauFormationRepository.findAll().stream()
+                .collect(Collectors.toMap(NiveauFormation::getCode, Function.identity()));
+        return resultat.stream().map(c -> offreId == null ? toResponse(c) : toResponse(c, evaluerPreselection(c, niveaux))).toList();
     }
 
     @PreAuthorize("hasAuthority('PERM_CANDIDATURE_PRESELECTIONNER')")
@@ -134,6 +154,10 @@ public class CandidatureController {
     }
 
     private CandidatureResponse toResponse(Candidature c) {
+        return toResponse(c, null);
+    }
+
+    private CandidatureResponse toResponse(Candidature c, EvaluationPreselection evaluation) {
         var cand = c.getCandidat();
         String nom = cand == null ? null : ((cand.getPrenom() == null ? "" : cand.getPrenom() + " ")
                 + (cand.getNom() == null ? "" : cand.getNom())).trim();
@@ -141,6 +165,47 @@ public class CandidatureController {
                 c.getOffre() != null ? c.getOffre().getTitre() : null,
                 c.getDatePostulation(), c.getStatutCandidature().name(), c.getSalairePropose(),
                 c.getOffre() == null || c.getOffre().getDemande() == null ? null : c.getOffre().getDemande().getBudgetAlloue(),
-                machine.actionsDisponibles(c, WorkflowContext.utilisateurCourant(null)));
+                machine.actionsDisponibles(c, WorkflowContext.utilisateurCourant(null)),
+                evaluation == null ? null : evaluation.niveauCandidat(),
+                evaluation == null ? null : evaluation.niveauRequis(),
+                evaluation == null ? null : evaluation.plafondSalaire(),
+                evaluation == null ? null : evaluation.retenue(),
+                evaluation == null ? null : evaluation.motif());
+    }
+
+    private record EvaluationPreselection(String niveauCandidat, String niveauRequis,
+                                          BigDecimal plafondSalaire, boolean retenue, String motif) {}
+
+    private EvaluationPreselection evaluerPreselection(Candidature candidature, Map<String, NiveauFormation> niveaux) {
+        var demande = candidature.getOffre() == null ? null : candidature.getOffre().getDemande();
+        NiveauFormation requis = demande == null ? null : demande.getNiveauFormation();
+        String niveauCandidatCode = null;
+        if (candidature.getCandidat() != null && candidature.getCandidat().getCvContenu() != null) {
+            try {
+                JsonNode formations = objectMapper.readTree(candidature.getCandidat().getCvContenu()).path("formations");
+                if (formations.isArray()) {
+                    niveauCandidatCode = StreamSupport.stream(formations.spliterator(), false)
+                            .map(f -> f.path("niveau").asText(null)).filter(code -> code != null && niveaux.containsKey(code))
+                            .max(Comparator.comparingInt(code -> niveaux.get(code).getOrdre())).orElse(null);
+                }
+            } catch (Exception ignored) { /* CV importé ou contenu non exploitable : aucun niveau structuré. */ }
+        }
+        NiveauFormation niveauCandidat = niveauCandidatCode == null ? null : niveaux.get(niveauCandidatCode);
+        String libelleCandidat = niveauCandidat == null ? null : niveauCandidat.getLibelle();
+        String libelleRequis = requis == null ? null : requis.getLibelle();
+        BigDecimal budget = demande == null ? null : demande.getBudgetAlloue();
+        BigDecimal plafond = budget == null ? null : budget.multiply(new BigDecimal("1.10"));
+        BigDecimal salaire = candidature.getSalairePropose() != null ? candidature.getSalairePropose() : budget;
+
+        boolean niveauOk = requis == null || (niveauCandidat != null && niveauCandidat.getOrdre() >= requis.getOrdre());
+        boolean salaireOk = plafond != null && salaire != null && salaire.compareTo(plafond) <= 0;
+        boolean statutEligible = candidature.getStatutCandidature() != CandidatureStatut.ANNULEE
+                && candidature.getStatutCandidature() != CandidatureStatut.REJETEE;
+        boolean retenue = niveauOk && salaireOk && statutEligible;
+        String motif = !statutEligible ? "Candidature annulée ou rejetée"
+                : !niveauOk ? "Niveau de formation inférieur ou non renseigné"
+                : !salaireOk ? (plafond == null ? "Budget de l’offre non renseigné" : "Salaire supérieur au plafond de présélection")
+                : "Niveau et salaire conformes aux critères";
+        return new EvaluationPreselection(libelleCandidat, libelleRequis, plafond, retenue, motif);
     }
 }
