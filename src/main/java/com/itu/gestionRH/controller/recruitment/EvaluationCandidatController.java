@@ -61,7 +61,7 @@ public class EvaluationCandidatController {
     public record DecisionRequest(@NotBlank @Pattern(regexp = "FAVORABLE|DEFAVORABLE|RESERVE") String decision,
                                   @NotBlank String observations, ContratType typeContrat,
                                   java.math.BigDecimal salaireBrut, java.time.LocalDate dateDebut,
-                                  java.time.LocalDate dateLimiteReponse) {}
+                                  java.time.LocalDate dateFin, java.time.LocalDate dateLimiteReponse) {}
     public record DecisionResponse(Long id, Long candidatureId, Long entretienId, String decision,
                                   String observations, Long propositionId) {}
 
@@ -79,7 +79,12 @@ public class EvaluationCandidatController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette candidature n’est pas en cours d’entretien.");
         if ("FAVORABLE".equals(request.decision()) && (request.typeContrat() == null
                 || request.dateLimiteReponse() == null || request.dateLimiteReponse().isBefore(java.time.LocalDate.now())
-                || (request.salaireBrut() != null && request.salaireBrut().signum() < 0)))
+                || (request.salaireBrut() != null && request.salaireBrut().signum() < 0)
+                || (request.salaireBrut() == null && candidature.getSalairePropose() == null
+                    && candidature.getOffre().getDemande().getBudgetAlloue() == null)
+                || (request.typeContrat() != ContratType.CDI && (request.dateFin() == null
+                    || request.dateFin().isBefore(request.dateDebut() == null ? java.time.LocalDate.now() : request.dateDebut())))
+                || (request.typeContrat() == ContratType.CDI && request.dateFin() != null)))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pour une décision favorable, indiquez le contrat et une date limite de réponse valide.");
         var entretien = entretiens.findByCandidatureOffreDemandeManagerIdOrderByDateEntretienAsc(managerId).stream()
                 .filter(e -> id.equals(e.getCandidature().getId()) && e.getEvaluation() == null)
@@ -105,8 +110,10 @@ public class EvaluationCandidatController {
             proposition.setCandidature(candidature);
             proposition.setRedacteur(utilisateurs.findById(currentId).orElseThrow());
             proposition.setTypeContratPropose(request.typeContrat());
-            proposition.setSalaireBrutPropose(request.salaireBrut());
-            proposition.setDateDebutSouhaitee(request.dateDebut());
+            proposition.setSalaireBrutPropose(request.salaireBrut() != null ? request.salaireBrut()
+                    : candidature.getSalairePropose() != null ? candidature.getSalairePropose() : candidature.getOffre().getDemande().getBudgetAlloue());
+            proposition.setDateDebutSouhaitee(request.dateDebut() == null ? java.time.LocalDate.now() : request.dateDebut());
+            proposition.setDateFinSouhaitee(request.dateFin());
             proposition.setDateEnvoi(java.time.LocalDate.now());
             proposition.setDateLimiteReponse(request.dateLimiteReponse());
             proposition.appliquerTransitionWorkflow(PropositionStatut.BROUILLON);

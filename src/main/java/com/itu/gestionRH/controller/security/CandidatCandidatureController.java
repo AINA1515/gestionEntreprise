@@ -28,7 +28,8 @@ public class CandidatCandidatureController {
     public record CandidatureResponse(Long id, Long offreId, String poste, String statut, String datePostulation,
                                       BigDecimal salairePropose, BigDecimal salaireReference) {}
     public record PropositionResponse(Long id, Long candidatureId, String poste, String typeContrat,
-            BigDecimal salaireBrut, LocalDate dateDebut, LocalDate dateEnvoi, LocalDate dateLimiteReponse, String statut) {}
+            BigDecimal salaireBrut, LocalDate dateDebut, LocalDate dateFin, LocalDate dateEnvoi,
+            LocalDate dateLimiteReponse, String statut, Long employeId, String matricule) {}
 
     @PreAuthorize("hasAuthority('PERM_PROPOSITION_REPONDRE')")
     @GetMapping("/propositions")
@@ -37,8 +38,9 @@ public class CandidatCandidatureController {
         Long candidatId = accessScope.requireCandidatCourant();
         return propositions.findByCandidatureCandidatId(candidatId, org.springframework.data.domain.Pageable.unpaged()).getContent()
                 .stream().map(p -> new PropositionResponse(p.getId(), p.getCandidature().getId(), p.getCandidature().getOffre().getTitre(),
-                        p.getTypeContratPropose().name(), p.getSalaireBrutPropose(), p.getDateDebutSouhaitee(), p.getDateEnvoi(),
-                        p.getDateLimiteReponse(), p.getStatutProposition().name())).toList();
+                        p.getTypeContratPropose().name(), p.getSalaireBrutPropose(), p.getDateDebutSouhaitee(), p.getDateFinSouhaitee(), p.getDateEnvoi(),
+                        p.getDateLimiteReponse(), p.getStatutProposition().name(), p.getEmploye() == null ? null : p.getEmploye().getId(),
+                        p.getEmploye() == null ? null : p.getEmploye().getMatricule())).toList();
     }
     @PreAuthorize("hasAnyAuthority('PERM_CANDIDATURE_POSTULER','PERM_CANDIDATURE_CONSULTER')")
     @GetMapping

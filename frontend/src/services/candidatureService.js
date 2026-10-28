@@ -8,6 +8,7 @@ export const candidatureService = {
     ...confirmation,
     salaireBrut: confirmation.salaireBrut === '' ? null : Number(confirmation.salaireBrut),
     dateDebut: confirmation.dateDebut || null,
+    dateFin: confirmation.typeContrat === 'CDI' ? null : confirmation.dateFin || null,
   }).then((r) => r.data),
   // Côté candidat
   deposer: (offreId, salairePropose = null) => http.post('/recrutement/candidatures', { offreId, salairePropose }).then((r) => r.data),
@@ -26,6 +27,7 @@ export const candidatureService = {
     ...evaluation,
     salaireBrut: evaluation.salaireBrut === '' ? null : Number(evaluation.salaireBrut),
     dateDebut: evaluation.dateDebut || null,
+    dateFin: evaluation.typeContrat === 'CDI' ? null : evaluation.dateFin || null,
   }).then((r) => r.data),
   evaluations: (candidatureId) => http.get(`/recrutement/candidatures/${candidatureId}/evaluations`).then((r) => r.data),
   mesPropositions: () => http.get('/candidat/candidatures/propositions').then((r) => r.data),

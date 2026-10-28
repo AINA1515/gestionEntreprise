@@ -25,7 +25,7 @@ async function planifier(candidature) {
 }
 async function evaluer(entretien) {
   entretienChoisi.value = entretien
-  form.value = { decision: 'FAVORABLE', observations: '', typeContrat: '', salaireBrut: '', dateDebut: '', dateLimiteReponse: '' }
+  form.value = { decision: 'FAVORABLE', observations: '', typeContrat: '', salaireBrut: '', dateDebut: '', dateFin: '', dateLimiteReponse: '' }
 }
 async function enregistrer() {
   const result = await run(() => candidatureService.evaluer(entretienChoisi.value.candidatureId, form.value))
@@ -60,6 +60,7 @@ onMounted(charger)
         <template v-if="form.decision === 'FAVORABLE'"><label class="form-label" for="type-contrat">Type de contrat proposé</label><select id="type-contrat" v-model="form.typeContrat" class="form-select mb-3" required><option value="" disabled>Choisir un contrat</option><option v-for="type in TYPES_CONTRAT" :key="type.value" :value="type.value">{{ type.label }}</option></select>
           <label class="form-label" for="salaire-brut">Salaire brut proposé (facultatif)</label><input id="salaire-brut" v-model="form.salaireBrut" class="form-control mb-3" type="number" min="0" step="0.01" />
           <label class="form-label" for="date-debut">Date de début souhaitée (facultatif)</label><input id="date-debut" v-model="form.dateDebut" class="form-control mb-3" type="date" />
+          <template v-if="form.typeContrat !== 'CDI'"><label class="form-label" for="date-fin">Date de fin du contrat</label><input id="date-fin" v-model="form.dateFin" class="form-control mb-3" type="date" :min="form.dateDebut || new Date().toISOString().slice(0, 10)" required /></template>
           <label class="form-label" for="date-limite">Date limite de réponse</label><input id="date-limite" v-model="form.dateLimiteReponse" class="form-control mb-3" type="date" :min="new Date().toISOString().slice(0, 10)" required /></template>
         <label class="form-label" for="observations">Remarque d’entretien</label><textarea id="observations" v-model="form.observations" class="form-control" rows="4" required /></div>
       <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" @click="entretienChoisi = null">Annuler</button><button class="btn btn-primary" :disabled="loading">Enregistrer l’évaluation</button></div>

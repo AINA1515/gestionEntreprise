@@ -18,6 +18,7 @@ const form = reactive({
   typeContrat: '',
   salaireBrut: '',
   dateDebut: '',
+  dateFin: '',
   dateLimiteReponse: '',
 })
 
@@ -74,6 +75,10 @@ async function confirmer() {
 
           <FormField id="debut" label="Date de début du travail">
             <input id="debut" v-model="form.dateDebut" type="date" class="form-control" />
+          </FormField>
+
+          <FormField v-if="form.typeContrat !== 'CDI'" id="dateFin" label="Date de fin du contrat">
+            <input id="dateFin" v-model="form.dateFin" type="date" class="form-control" :min="form.dateDebut || new Date().toISOString().slice(0, 10)" required />
           </FormField>
 
           <FormField id="dateLimiteReponse" label="Date limite de réponse du candidat">

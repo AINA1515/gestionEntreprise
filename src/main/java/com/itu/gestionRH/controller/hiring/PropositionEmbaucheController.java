@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.itu.gestionRH.repository.security.UtilisateurRepository;
 import com.itu.gestionRH.security.jwt.JwtAuthenticationFilter.JwtPrincipal;
+import com.itu.gestionRH.service.hiring.ContratService;
 
 /** Confirmation de recrutement (ex-page /rh/confirmation). */
 @RestController
@@ -41,9 +42,12 @@ public class PropositionEmbaucheController {
     private final CandidatureRepository candidatures;
     private final PropositionEmbaucheMachine machine;
     private final UtilisateurRepository utilisateurs;
+    private final ContratService contratService;
     public PropositionEmbaucheController(PropositionEmbaucheRepository propositions, AccessScope accessScope,
-            CandidatureRepository candidatures, PropositionEmbaucheMachine machine, UtilisateurRepository utilisateurs) {
-        this.propositions=propositions; this.accessScope=accessScope; this.candidatures=candidatures; this.machine=machine; this.utilisateurs=utilisateurs;
+            CandidatureRepository candidatures, PropositionEmbaucheMachine machine, UtilisateurRepository utilisateurs,
+            ContratService contratService) {
+        this.propositions=propositions; this.accessScope=accessScope; this.candidatures=candidatures; this.machine=machine;
+        this.utilisateurs=utilisateurs; this.contratService=contratService;
     }
 
     /** typeContrat : CDD | CDI | STAGE | ALTERNANCE (contrainte CK_PROP_TYPE). */
@@ -51,12 +55,13 @@ public class PropositionEmbaucheController {
                                       LocalDate dateDebut, String message) {}
 
     public record PropositionRequest(@NotNull Long candidatureId, @NotNull ContratType typeContrat,
-            @DecimalMin("0.00") java.math.BigDecimal salaireBrut, LocalDate dateDebut,
+            @DecimalMin("0.00") java.math.BigDecimal salaireBrut, LocalDate dateDebut, LocalDate dateFin,
             @NotNull LocalDate dateLimiteReponse) {}
 
     public record ConfirmationResponse(Long id, Long candidatureId, String poste, String typeContrat,
-            java.math.BigDecimal salaireBrut, LocalDate dateDebut, LocalDate dateEnvoi,
-            LocalDate dateLimiteReponse, String statut, List<String> actionsDisponibles) {}
+            java.math.BigDecimal salaireBrut, LocalDate dateDebut, LocalDate dateFin, LocalDate dateEnvoi,
+            LocalDate dateLimiteReponse, String statut, List<String> actionsDisponibles,
+            Long employeId, String matricule) {}
     public record ReponseRequest(String statut, String commentaire) {}
     public record EmployeConversionResponse(Long employeId, Long candidatId, String matricule, String statut) {}
 
@@ -69,6 +74,11 @@ public class PropositionEmbaucheController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La candidature doit être retenue avant l’envoi d’une proposition.");
         if (request.dateLimiteReponse().isBefore(LocalDate.now()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La date limite de réponse doit être aujourd’hui ou ultérieure.");
+        LocalDate dateDebut = request.dateDebut() == null ? LocalDate.now() : request.dateDebut();
+        if (request.typeContrat() == ContratType.CDI && request.dateFin() != null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un contrat CDI ne doit pas avoir de date de fin.");
+        if (request.typeContrat() != ContratType.CDI && (request.dateFin() == null || request.dateFin().isBefore(dateDebut)))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Une date de fin valide est requise pour ce type de contrat.");
         var existante = propositions.findByCandidatureId(candidature.getId());
         if (existante != null && existante.getStatutProposition() != PropositionStatut.ANNULEE
                 && existante.getStatutProposition() != PropositionStatut.REFUSEE
@@ -79,8 +89,14 @@ public class PropositionEmbaucheController {
         Long userId = ((JwtPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).userId();
         proposition.setRedacteur(utilisateurs.findById(userId).orElseThrow(() -> new NotFoundException("Utilisateur introuvable.")));
         proposition.setTypeContratPropose(request.typeContrat());
-        proposition.setSalaireBrutPropose(request.salaireBrut());
-        proposition.setDateDebutSouhaitee(request.dateDebut());
+        var salaire = request.salaireBrut() != null ? request.salaireBrut()
+                : candidature.getSalairePropose() != null ? candidature.getSalairePropose()
+                : candidature.getOffre().getDemande().getBudgetAlloue();
+        if (salaire == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le salaire brut doit être renseigné ou provenir du budget de la demande.");
+        proposition.setSalaireBrutPropose(salaire);
+        proposition.setDateDebutSouhaitee(dateDebut);
+        proposition.setDateFinSouhaitee(request.dateFin());
         proposition.setDateEnvoi(LocalDate.now());
         proposition.setDateLimiteReponse(request.dateLimiteReponse());
         proposition.appliquerTransitionWorkflow(PropositionStatut.BROUILLON);
@@ -104,6 +120,7 @@ public class PropositionEmbaucheController {
         proposition.setMotifRefus(action.equals("refuser") ? request.commentaire().trim() : null);
         proposition.setDateReponse(LocalDate.now());
         machine.transition(proposition, action, WorkflowContext.utilisateurCourant(request.commentaire()));
+        if (action.equals("accepter")) contratService.finaliserEmbauche(proposition);
         return versReponse(proposition);
     }
 
@@ -124,13 +141,18 @@ public class PropositionEmbaucheController {
 
     private ConfirmationResponse versReponse(PropositionEmbauche p) {
         return new ConfirmationResponse(p.getId(), p.getCandidature().getId(), p.getCandidature().getOffre().getTitre(),
-                p.getTypeContratPropose().name(), p.getSalaireBrutPropose(), p.getDateDebutSouhaitee(), p.getDateEnvoi(),
-                p.getDateLimiteReponse(), p.getStatutProposition().name(), machine.actionsDisponibles(p, WorkflowContext.utilisateurCourant(null)));
+                p.getTypeContratPropose().name(), p.getSalaireBrutPropose(), p.getDateDebutSouhaitee(), p.getDateFinSouhaitee(), p.getDateEnvoi(),
+                p.getDateLimiteReponse(), p.getStatutProposition().name(), machine.actionsDisponibles(p, WorkflowContext.utilisateurCourant(null)),
+                p.getEmploye() == null ? null : p.getEmploye().getId(), p.getEmploye() == null ? null : p.getEmploye().getMatricule());
     }
 
     @PreAuthorize("hasAuthority('PERM_EMPLOYE_CONVERTIR')")
     @org.springframework.web.bind.annotation.PostMapping("/candidats/{id}/convertir-employe")
+    @Transactional
     public EmployeConversionResponse convertir(@PathVariable Long id) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Conversion candidat vers employé à implémenter");
+        var proposition = propositions.findFirstByCandidatureCandidatIdAndStatutPropositionOrderByDateReponseDesc(id, PropositionStatut.ACCEPTEE)
+                .orElseThrow(() -> new NotFoundException("Aucune proposition acceptée pour ce candidat."));
+        var employe = contratService.finaliserEmbauche(proposition);
+        return new EmployeConversionResponse(employe.getId(), id, employe.getMatricule(), employe.getStatutActivite().name());
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 public interface AffectationRepository extends JpaRepository<Affectation, Long> {
     boolean existsByEmployeIdAndSuperieurIdAndDateFinIsNull(Long employeId, Long superieurId);
     java.util.Optional<Affectation> findFirstByEmployeIdAndDateFinIsNullOrderByDateDebutDesc(Long employeId);
+    java.util.Optional<Affectation> findFirstByEmployeIdAndPosteIdAndDateFinIsNullOrderByDateDebutDesc(Long employeId, Long posteId);
     java.util.List<Affectation> findBySuperieurIdAndDateFinIsNull(Long superieurId);
     boolean existsByPosteIdAndDateFinIsNull(Long posteId);
     java.util.List<Affectation> findByPosteIdAndDateFinIsNull(Long posteId);

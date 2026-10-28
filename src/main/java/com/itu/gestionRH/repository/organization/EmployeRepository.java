@@ -16,6 +16,7 @@ public interface EmployeRepository extends JpaRepository<Employe, Long> {
     Page<Employe> findByStatutActivite(EmployeStatut statut, Pageable pageable);
     Page<Employe> findByCandidatId(Long candidatId, Pageable pageable);
     boolean existsByCandidatId(Long candidatId);
+    boolean existsByEmailProfessionnelIgnoreCase(String emailProfessionnel);
     @Query("select distinct e from Employe e where (:statut is null or e.statutActivite = :statut) "
         + "and (:texte is null or lower(e.nom) like concat(concat('%', lower(:texte)), '%') "
         + "or lower(e.prenom) like concat(concat('%', lower(:texte)), '%') "

@@ -15,9 +15,12 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> validation(MethodArgumentNotValidException ex, HttpServletRequest req) {
         var details = ex.getBindingResult().getFieldErrors().stream()
@@ -50,6 +53,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<ApiError> integrity(DataIntegrityViolationException ex, HttpServletRequest req) {
+        log.error("Violation d'intégrité en traitant {} : {}", req.getRequestURI(), ex.getMostSpecificCause().getMessage(), ex);
         return response(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION", "Les données entrent en conflit avec une règle d'intégrité.", req, List.of());
     }
     @ExceptionHandler(MaxUploadSizeExceededException.class)

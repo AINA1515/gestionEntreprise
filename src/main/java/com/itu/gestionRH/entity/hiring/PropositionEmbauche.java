@@ -60,6 +60,9 @@ public class PropositionEmbauche {
     @Column(name = "DATE_DEBUT_SOUHAITEE")
     private LocalDate dateDebutSouhaitee;
 
+    @Column(name = "DATE_FIN_SOUHAITEE")
+    private LocalDate dateFinSouhaitee;
+
     @Column(name = "DATE_ENVOI")
     private LocalDate dateEnvoi;
 
@@ -114,6 +117,9 @@ public class PropositionEmbauche {
 
     public LocalDate getDateDebutSouhaitee() { return dateDebutSouhaitee; }
     public void setDateDebutSouhaitee(LocalDate dateDebutSouhaitee) { this.dateDebutSouhaitee = dateDebutSouhaitee; }
+
+    public LocalDate getDateFinSouhaitee() { return dateFinSouhaitee; }
+    public void setDateFinSouhaitee(LocalDate dateFinSouhaitee) { this.dateFinSouhaitee = dateFinSouhaitee; }
 
     public LocalDate getDateEnvoi() { return dateEnvoi; }
     public void setDateEnvoi(LocalDate dateEnvoi) { this.dateEnvoi = dateEnvoi; }

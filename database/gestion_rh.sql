@@ -97,6 +97,8 @@
 @@08_migrations/008_candidature_annulee.sql
 @@08_migrations/009_salaires_candidature.sql
 @@08_migrations/010_retrait_salaire_demande.sql
+@@08_migrations/011_date_fin_proposition.sql
+@@08_migrations/012_recalage_compteur_matricule.sql
 
 UPDATE ROLE_RH
    SET EST_ACTIF = 0,
