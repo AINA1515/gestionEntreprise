@@ -52,6 +52,14 @@ public class UtilisateurController {
     }
 
     @PreAuthorize("isAuthenticated()")
+    @PostMapping("/refresh")
+    public LoginResponse refresh() {
+        JwtPrincipal principal = (JwtPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var result = authService.renouvelerJeton(principal.userId());
+        return new LoginResponse(result.token(), result.expiresAt(), result.utilisateur());
+    }
+
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         SecurityContextHolder.clearContext();

@@ -10,6 +10,8 @@ import com.itu.gestionRH.entity.enums.ContratStatut;
 @Repository
 public interface ContratRepository extends JpaRepository<Contrat, Long> {
     Page<Contrat> findByEmployeId(Long employeId, Pageable pageable);
+    java.util.List<Contrat> findByEmployeIdOrderByDateDebutDescIdDesc(Long employeId);
+    java.util.Optional<Contrat> findFirstByEmployeIdAndStatutContratInOrderByDateDebutDescIdDesc(Long employeId, java.util.Collection<ContratStatut> statuts);
     Page<Contrat> findByEmployeIdAndStatutContrat(Long employeId, ContratStatut statut, Pageable pageable);
     java.util.List<Contrat> findByEmployeIdAndStatutContratIn(Long employeId, java.util.Collection<ContratStatut> statuts);
     boolean existsByPosteId(Long posteId);

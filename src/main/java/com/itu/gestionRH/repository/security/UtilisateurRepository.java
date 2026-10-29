@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> {
+    @Query("select distinct u from Utilisateur u where u.statutCompte = com.itu.gestionRH.entity.enums.CompteStatut.ACTIF "
+            + "and u.employe.id in (select a.employe.id from Affectation a where a.dateFin is null and a.poste.departement.id = :departementId)")
+    java.util.List<Utilisateur> findActiveByDepartementId(@Param("departementId") Long departementId);
     Utilisateur findByLogin(String login);
     Utilisateur findByEmail(String email);
     java.util.Optional<Utilisateur> findByLoginIgnoreCaseOrEmailIgnoreCase(String login, String email);

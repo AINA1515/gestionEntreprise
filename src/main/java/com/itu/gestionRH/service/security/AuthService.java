@@ -89,6 +89,18 @@ public class AuthService {
         return view(user, roleCodes, permissions(roleCodes));
     }
 
+    @Transactional(readOnly = true)
+    public LoginResult renouvelerJeton(Long id) {
+        Utilisateur user = utilisateurs.findById(id).orElseThrow(() -> new AuthException("INVALID_TOKEN", "Jeton invalide.", HttpStatus.UNAUTHORIZED));
+        if (user.getStatutCompte() != CompteStatut.ACTIF)
+            throw new AuthException("ACCOUNT_INACTIVE", "Ce compte n'est pas actif.", HttpStatus.UNAUTHORIZED);
+        Set<String> roleCodes = rolesActifs(user).stream().map(RoleRh::getCode).collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        Set<String> permissions = permissions(roleCodes);
+        UserView view = view(user, roleCodes, permissions);
+        JwtService.IssuedToken jwt = jwtService.issue(user.getId(), user.getLogin(), List.copyOf(roleCodes), List.copyOf(permissions));
+        return new LoginResult(jwt.value(), jwt.expiresAt(), view);
+    }
+
     @Transactional
     public void inscrireCandidat(Inscription inscription) {
         verifierComplexite(inscription.motDePasse());

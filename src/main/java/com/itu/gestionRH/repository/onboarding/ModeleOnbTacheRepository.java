@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ModeleOnbTacheRepository extends JpaRepository<ModeleOnbTache, Long> {
     ModeleOnbTache findByCode(String code);
+    java.util.List<ModeleOnbTache> findByEstActifTrueOrderByOrdreAsc();
 }

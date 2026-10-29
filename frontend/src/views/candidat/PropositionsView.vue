@@ -1,5 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { candidatureService } from '@/services/candidatureService'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { useFormatters } from '@/composables/useFormatters'
@@ -7,6 +9,8 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
 
 const propositions = ref([])
+const router = useRouter()
+const auth = useAuthStore()
 const { loading, error, run } = useAsyncAction()
 const { formatDate, formatMontant } = useFormatters()
 async function charger() { propositions.value = await run(() => candidatureService.mesPropositions()) || [] }
@@ -17,6 +21,11 @@ async function repondre(proposition, statut) {
     if (!commentaire?.trim()) return
   } else if (!window.confirm('Accepter cette proposition d’embauche ?')) return
   const resultat = await run(() => candidatureService.repondreProposition(proposition.id, statut, commentaire))
+  if (resultat && statut === 'ACCEPTEE') {
+    await auth.renouvelerSession()
+    await router.replace(auth.homeRoute)
+    return
+  }
   if (resultat) await charger()
 }
 onMounted(charger)

@@ -28,6 +28,7 @@ const routes = [
       { path: 'demandes/:id', name: 'manager-demande-detail', component: () => import('@/views/manager/DemandeDetailView.vue'), meta: { permissions: ['DEMANDE_CONSULTER'] } },
       { path: 'demandes/:id/modifier', name: 'manager-demande-modifier', component: () => import('@/views/manager/NouvelleDemandeView.vue'), meta: { permissions: ['DEMANDE_CREER'] } },
       { path: 'entretiens', name: 'manager-entretiens', component: () => import('@/views/manager/MesEntretiensView.vue'), meta: { permissions: ['EVALUATION_SAISIR'] } },
+      { path: 'onboarding', name: 'manager-onboarding', component: () => import('@/views/manager/OnboardingView.vue'), meta: { permissions: ['DEMANDE_CREER'] } },
     ],
   },
   {
@@ -80,6 +81,7 @@ const routes = [
     ],
   },
   { path: '/salarie/accueil', name: 'salarie-accueil', component: () => import('@/views/salarie/AccueilView.vue'), meta: { requiresAuth: true, roles: ['SALARIE'], espace: 'Espace salarié' } },
+  { path: '/salarie/contrats', name: 'salarie-contrats', component: () => import('@/views/salarie/ContratsView.vue'), meta: { requiresAuth: true, roles: ['SALARIE'], permissions: ['DOCUMENT_CONSULTER_PERSO'], espace: 'Mes contrats' } },
   { path: '/admin/utilisateurs', name: 'admin-utilisateurs', component: () => import('@/views/admin/UtilisateursView.vue'), meta: { requiresAuth: true, roles: ['ADMIN'], espace: 'Administration' } },
   { path: '/taches', name: 'mes-taches', component: () => import('@/views/taches/TachesView.vue'), meta: { requiresAuth: true, roles: ['MANAGER', 'GESTIONNAIRE_RH', 'SALARIE', 'IT', 'MOYENS_GENERAUX'], permissions: ['TACHE_TRAITER'], espace: 'Mes tâches' } },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue'), meta: { public: true } },

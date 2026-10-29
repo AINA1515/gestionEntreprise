@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 @Repository
 public interface DepartementRepository extends JpaRepository<Departement, Long> {
     Departement findByCode(String code);
+    java.util.List<Departement> findByResponsableIdAndEstActifTrue(Long responsableId);
     Page<Departement> findByEstActif(Boolean estActif, Pageable pageable);
     boolean existsByDepartementParentId(Long id);
 }

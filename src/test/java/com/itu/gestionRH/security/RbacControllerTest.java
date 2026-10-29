@@ -25,6 +25,11 @@ import com.itu.gestionRH.service.onboarding.OnboardingTacheService;
 import com.itu.gestionRH.service.recruitment.DemandeRecrutementService;
 import com.itu.gestionRH.service.recruitment.OffreEmploiService;
 import com.itu.gestionRH.repository.onboarding.OnboardingTacheRepository;
+import com.itu.gestionRH.repository.hiring.ContratRepository;
+import com.itu.gestionRH.repository.organization.EmployeRepository;
+import com.itu.gestionRH.repository.organization.PosteRepository;
+import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
+import com.itu.gestionRH.repository.hiring.PropositionEmbaucheRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,11 +75,19 @@ class RbacControllerTest {
     @MockitoBean OnboardingTacheRepository tacheRepository;
     @MockitoBean OnboardingTacheMachine tacheMachine;
     @MockitoBean OnboardingTacheService tacheService;
+    @MockitoBean ContratRepository contratRepository;
+    @MockitoBean EmployeRepository employeRepository;
+    @MockitoBean PosteRepository posteRepository;
+    @MockitoBean CandidatureRepository candidatureRepository;
+    @MockitoBean PropositionEmbaucheRepository propositionEmbaucheRepository;
 
     @Test void chaqueRoleDisposeDUneRoutePermiseEtDUneRouteInterdite() throws Exception {
         when(adminService.utilisateurs()).thenReturn(List.of());
         when(offreService.creer(any())).thenReturn(OffreEmploi.nouvelle());
         when(accessScope.currentUserId()).thenReturn(1L);
+        when(accessScope.requireCandidatCourant()).thenReturn(1L);
+        when(candidatureRepository.findByCandidatId(eq(1L), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(org.springframework.data.domain.Page.empty());
         when(tacheRepository.findByAssigneeAId(eq(1L),any(org.springframework.data.domain.Pageable.class)))
                 .thenReturn(org.springframework.data.domain.Page.empty());
         List<RoleCase> cases=List.of(

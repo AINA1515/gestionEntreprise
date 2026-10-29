@@ -43,6 +43,13 @@ onMounted(store.chargerDashboard)
     </div>
   </div>
 
+  <section class="card border-primary-subtle shadow-sm mb-4">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div><h2 class="h5 mb-1">Intégration des nouveaux salariés</h2><p class="text-body-secondary mb-0">Choisissez un salarié et attribuez chaque tâche d’intégration à un membre de votre équipe.</p></div>
+      <RouterLink class="btn btn-primary" :to="{ name: 'manager-onboarding' }"><i class="bi bi-person-check me-2" aria-hidden="true"></i>Attribuer les tâches</RouterLink>
+    </div>
+  </section>
+
   <section class="card shadow-sm">
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center gap-3 mb-3">

@@ -14,7 +14,7 @@ const HOME_BY_ROLE = {
   MOYENS_GENERAUX: '/taches',
   ADMIN: '/admin/utilisateurs',
 }
-const HOME_PRIORITY = ['ADMIN', 'MANAGER', 'GESTIONNAIRE_RH', 'DIRECTION', 'CANDIDAT', 'SALARIE', 'IT', 'MOYENS_GENERAUX']
+const HOME_PRIORITY = ['ADMIN', 'MANAGER', 'GESTIONNAIRE_RH', 'DIRECTION', 'SALARIE', 'CANDIDAT', 'IT', 'MOYENS_GENERAUX']
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(tokenStorage.get())
@@ -52,6 +52,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function renouvelerSession() {
+    const session = await authService.renouveler()
+    token.value = session.token
+    utilisateur.value = session.utilisateur
+    tokenStorage.set(session.token)
+    return utilisateur.value
+  }
+
   function nettoyerSession() {
     token.value = null
     utilisateur.value = null
@@ -73,5 +81,5 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return { token, utilisateur, isAuthenticated, homeRoute, hasRole, hasPermission, hasAnyPermission,
-    login, chargerUtilisateur, logout, changerMotDePasse }
+    login, chargerUtilisateur, renouvelerSession, logout, changerMotDePasse }
 })

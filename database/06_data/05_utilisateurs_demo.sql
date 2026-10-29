@@ -13,6 +13,7 @@
      moyens     / DemoRH!2026  (MOYENS_GENERAUX)
      candidat   / DemoRH!2026  (CANDIDAT)
      Jaune@demo-rh.local DemoRH!20266
+     rouge@demo-rh.local DemoRH!20266
    ============================================================================= */
 
 INSERT INTO EMPLOYE (MATRICULE, NOM, PRENOM, EMAIL_PROFESSIONNEL, TELEPHONE, DATE_EMBAUCHE_INITIALE, STATUT_ACTIVITE)

@@ -10,6 +10,7 @@ import com.itu.gestionRH.entity.hiring.Affectation;
 import com.itu.gestionRH.entity.hiring.Contrat;
 import com.itu.gestionRH.entity.hiring.PropositionEmbauche;
 import com.itu.gestionRH.entity.enums.EmployeStatut;
+import com.itu.gestionRH.entity.enums.CompteType;
 import com.itu.gestionRH.entity.enums.PosteStatut;
 import com.itu.gestionRH.entity.enums.PropositionStatut;
 import com.itu.gestionRH.entity.organization.Employe;
@@ -24,6 +25,7 @@ import com.itu.gestionRH.repository.security.UtilisateurRepository;
 import com.itu.gestionRH.repository.security.UtilisateurRoleRepository;
 import com.itu.gestionRH.workflow.PosteMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
+import com.itu.gestionRH.service.onboarding.OnboardingService;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,10 +42,12 @@ public class ContratService {
     private final UtilisateurRepository utilisateurs;
     private final RoleRhRepository roles;
     private final UtilisateurRoleRepository attributions;
+    private final OnboardingService onboardingService;
 
     public ContratService(EmployeRepository employes, ContratRepository contrats, AffectationRepository affectations,
             PosteRepository postes, PosteMachine posteMachine, EntityManager entityManager,
-            UtilisateurRepository utilisateurs, RoleRhRepository roles, UtilisateurRoleRepository attributions) {
+            UtilisateurRepository utilisateurs, RoleRhRepository roles, UtilisateurRoleRepository attributions,
+            OnboardingService onboardingService) {
         this.employes = employes;
         this.contrats = contrats;
         this.affectations = affectations;
@@ -53,6 +57,7 @@ public class ContratService {
         this.utilisateurs = utilisateurs;
         this.roles = roles;
         this.attributions = attributions;
+        this.onboardingService = onboardingService;
     }
 
     @Transactional
@@ -101,18 +106,27 @@ public class ContratService {
         entityManager.refresh(employe);
         utilisateurs.findByCandidatId(candidat.getId()).ifPresent(utilisateur -> {
             utilisateur.setEmploye(employe);
+            utilisateur.setTypeCompte(CompteType.SALARIE);
+            var roleCandidat = roles.findByCode("CANDIDAT");
+            if (roleCandidat != null) attributions.findByUtilisateurIdAndDateFinIsNullAndDateDebutLessThanEqual(utilisateur.getId(), LocalDate.now())
+                    .stream().filter(a -> roleCandidat.getId().equals(a.getRole().getId()))
+                    .forEach(a -> a.setDateFin(a.getDateDebut().isBefore(LocalDate.now())
+                            ? LocalDate.now().minusDays(1) : a.getDateDebut()));
             var roleSalarie = roles.findByCode("SALARIE");
             // Un compte candidat peut déjà avoir une attribution SALARIE planifiée
             // à la date de début du contrat. Vérifier uniquement les rôles actifs
             // aujourd'hui provoquait alors une violation de UK_UR à l'embauche future.
-            boolean attributionSalarieExistante = roleSalarie != null && attributions
-                    .findByUtilisateurIdAndDateFinIsNullAndDateDebutLessThanEqual(utilisateur.getId(), debut)
-                    .stream().anyMatch(a -> roleSalarie.getId().equals(a.getRole().getId()));
+            var attributionsSalarie = roleSalarie == null ? java.util.List.<UtilisateurRole>of() : attributions
+                    .findByUtilisateurIdAndDateFinIsNullAndDateDebutLessThanEqual(utilisateur.getId(), debut).stream()
+                    .filter(a -> roleSalarie.getId().equals(a.getRole().getId())).toList();
+            boolean attributionSalarieExistante = !attributionsSalarie.isEmpty();
+            attributionsSalarie.stream().filter(a -> a.getDateDebut().isAfter(LocalDate.now()))
+                    .forEach(a -> a.setDateDebut(LocalDate.now()));
             if (roleSalarie != null && !attributionSalarieExistante) {
                 UtilisateurRole attribution = UtilisateurRole.nouvelle();
                 attribution.setUtilisateur(utilisateur);
                 attribution.setRole(roleSalarie);
-                attribution.setDateDebut(debut);
+                attribution.setDateDebut(LocalDate.now());
                 attribution.setMotif("Conversion du compte candidat après acceptation de la proposition");
                 attributions.save(attribution);
             }
@@ -157,6 +171,7 @@ public class ContratService {
         postes.saveAndFlush(poste);
 
         proposition.setEmploye(employe);
+        onboardingService.initialiser(employe.getId());
         return employe;
     }
 

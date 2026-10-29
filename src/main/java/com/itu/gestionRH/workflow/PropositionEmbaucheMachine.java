@@ -15,7 +15,7 @@ public class PropositionEmbaucheMachine {
                 PropositionEmbauche::getStatutProposition, PropositionEmbauche::appliquerTransitionWorkflow,
                 PropositionEmbauche::getId, publisher);
         b.transition(PropositionStatut.BROUILLON, "envoyer", PropositionStatut.ENVOYEE,
-                java.util.Set.of("MANAGER"), java.util.Set.of("PROPOSITION_EMETTRE"), r -> true, r -> {},
+                java.util.Set.of(), java.util.Set.of("PROPOSITION_EMETTRE"), r -> true, r -> {},
                 "WORKFLOW_PRECONDITION_REFUSEE", "L’envoi de cette proposition n’est pas autorisé.");
         b.transition(PropositionStatut.ENVOYEE, "accepter", PropositionStatut.ACCEPTEE, "PROPOSITION_REPONDRE");
         b.transition(PropositionStatut.ENVOYEE, "refuser", PropositionStatut.REFUSEE,

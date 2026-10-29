@@ -11,6 +11,9 @@ import com.itu.gestionRH.entity.enums.EmployeStatut;
 
 @Repository
 public interface EmployeRepository extends JpaRepository<Employe, Long> {
+    @Query("select e from Employe e where exists (select a.id from Affectation a where a.employe = e "
+            + "and a.dateFin is null and a.poste.departement.id = :departementId) order by e.nom, e.prenom")
+    java.util.List<Employe> findActifsByDepartementId(@Param("departementId") Long departementId);
     Employe findByMatricule(String matricule);
     Employe findByNomAndPrenom(String nom, String prenom);
     Page<Employe> findByStatutActivite(EmployeStatut statut, Pageable pageable);

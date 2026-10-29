@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TacheAssignmentRepository extends JpaRepository<TacheAssignment, Long> {
+    java.util.Optional<TacheAssignment> findFirstByOnboardingTacheIdAndDateFinIsNullOrderByDateDebutDesc(Long tacheId);
 }

@@ -86,6 +86,12 @@ public class AccessScope {
         if(u!=null && id.equals(u.getEmployeId())) return;
         if(u!=null && u.getEmployeId()!=null && has("PERM_DEMANDE_CREER")
                 && affectations.existsByEmployeIdAndSuperieurIdAndDateFinIsNull(id,u.getEmployeId())) return;
+        if(u!=null && u.getEmployeId()!=null && has("PERM_DEMANDE_CREER")) {
+            var managerAffectation = affectations.findFirstByEmployeIdAndDateFinIsNullOrderByDateDebutDesc(u.getEmployeId()).orElse(null);
+            var salarieAffectation = affectations.findFirstByEmployeIdAndDateFinIsNullOrderByDateDebutDesc(id).orElse(null);
+            if(managerAffectation!=null && salarieAffectation!=null
+                    && managerAffectation.getPoste().getDepartement().getId().equals(salarieAffectation.getPoste().getDepartement().getId())) return;
+        }
         throw new NotFoundException("Ressource introuvable.");
     }
 
