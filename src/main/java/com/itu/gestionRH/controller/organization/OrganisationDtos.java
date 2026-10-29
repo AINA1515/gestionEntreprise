@@ -21,9 +21,11 @@ public final class OrganisationDtos {
             @Size(max=4000) String description, @NotNull @Positive Long departementId) {}
     public record PosteDto(Long id, String codePoste, String intitule, String description, Long departementId,
             String departement, PosteStatut statut, List<String> actionsDisponibles) {}
-    public record ContratResume(Long id, String type, LocalDate dateDebut, LocalDate dateFin, String statut) {}
-    public record AffectationResume(Long posteId, String codePoste, String intitule, LocalDate dateDebut, Long superieurId) {}
+    public record ContratResume(Long id, String type, LocalDate dateDebut, LocalDate dateFin,
+            java.math.BigDecimal salaireBrut, String devise, String statut) {}
+    public record AffectationResume(Long posteId, String codePoste, String intitule, String statutPoste,
+            LocalDate dateDebut, Long superieurId) {}
     public record EmployeDto(Long id, String matricule, String nom, String prenom, String emailProfessionnel,
             String telephone, EmployeStatut statutActivite, Long departementId, String departement,
-            AffectationResume affectationCourante, List<ContratResume> contratsActifs) {}
+            AffectationResume affectationCourante, List<ContratResume> contrats) {}
 }

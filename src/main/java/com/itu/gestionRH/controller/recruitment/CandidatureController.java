@@ -37,6 +37,7 @@ import com.itu.gestionRH.entity.enums.OffreStatut;
 import com.itu.gestionRH.repository.recruitment.OffreEmploiRepository;
 import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
 import com.itu.gestionRH.repository.security.CandidatRepository;
+import com.itu.gestionRH.service.security.CandidatService;
 import com.itu.gestionRH.workflow.CandidatureMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
 import com.itu.gestionRH.security.AccessScope;
@@ -61,6 +62,7 @@ public class CandidatureController {
             @DecimalMin("0.00") @Digits(integer=13, fraction=2) BigDecimal salairePropose) {}
     public record StatutRequest(String statut, String commentaire) {}
     public record TransmissionRequest(@NotEmpty List<Long> candidatureIds) {}
+    public record CandidatProfilResponse(Long candidatId, CandidatService.CvDto cv) {}
 
     private final CandidatureRepository candidatureRepository;
     private final CandidatureMachine machine;
@@ -171,6 +173,34 @@ public class CandidatureController {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Une candidature sélectionnée n’est plus en attente de présélection.");
         }
         return selectionnees.stream().map(this::toResponse).toList();
+    }
+
+    /** Le manager consulte le CV uniquement après transmission RH de sa candidature. */
+    @PreAuthorize("hasAuthority('PERM_EVALUATION_SAISIR')")
+    @GetMapping("/recrutement/candidatures/{id}/profil")
+    @Transactional(readOnly = true)
+    public CandidatProfilResponse profilCandidatTransmis(@PathVariable Long id) {
+        Candidature candidature = accessScope.requireCandidature(id);
+        var demande = candidature.getOffre() == null ? null : candidature.getOffre().getDemande();
+        Long managerId = demande == null || demande.getManager() == null ? null : demande.getManager().getId();
+        if (managerId == null || !managerId.equals(accessScope.currentUserId())
+                || candidature.getStatutCandidature() == CandidatureStatut.RECUE
+                || candidature.getStatutCandidature() == CandidatureStatut.ANNULEE) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil candidat introuvable.");
+        }
+        var candidat = candidature.getCandidat();
+        if (candidat == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil candidat introuvable.");
+        CandidatService.CvDto cv = null;
+        if (candidat.getCvContenu() != null && !candidat.getCvContenu().isBlank()) {
+            try { cv = objectMapper.readValue(candidat.getCvContenu(), CandidatService.CvDto.class); }
+            catch (Exception ignored) { /* Un CV importé reste disponible dans la GED. */ }
+        }
+        if (cv == null) {
+            cv = new CandidatService.CvDto(candidat.getNom(), candidat.getPrenom(), candidat.getEmail(),
+                    candidat.getTelephone(), candidat.getAdresse(), "", "", "", null, "", "", "", "", "", "",
+                    List.of(), List.of());
+        }
+        return new CandidatProfilResponse(candidat.getId(), cv);
     }
 
     @PreAuthorize("hasAuthority('PERM_CANDIDATURE_PRESELECTIONNER')")

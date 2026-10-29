@@ -22,6 +22,7 @@ export const candidatureService = {
   transmettreAuManager: (offreId, candidatureIds) => http.post(`/recrutement/offres/${offreId}/transmettre-manager`, { candidatureIds }).then((r) => r.data),
   entretiens: (params = {}) => http.get('/recrutement/entretiens', { params }).then((r) => r.data),
   candidaturesAPlanifier: () => http.get('/recrutement/candidatures', { params: { statut: 'PRESELECTIONNEE' } }).then((r) => r.data),
+  profilCandidat: (candidatureId) => http.get(`/recrutement/candidatures/${candidatureId}/profil`).then((r) => r.data),
   planifierEntretien: (candidatureId, entretien) => http.post(`/recrutement/candidatures/${candidatureId}/entretiens`, entretien).then((r) => r.data),
   evaluer: (candidatureId, evaluation) => http.post(`/recrutement/candidatures/${candidatureId}/evaluations`, {
     ...evaluation,

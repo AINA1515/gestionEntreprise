@@ -57,17 +57,20 @@ public class EmployeService {
     private Employe trouver(Long id) { return employes.findById(id).orElseThrow(() -> new NotFoundException("Employé introuvable.")); }
     private EmployeDto dto(Employe e) {
         Affectation current = affectations.findFirstByEmployeIdAndDateFinIsNullOrderByDateDebutDesc(e.getId()).orElse(null);
-        var contratActifs = contrats.findByEmployeIdAndStatutContratIn(e.getId(), List.of(ContratStatut.EN_COURS)).stream()
-                .map(c -> new ContratResume(c.getId(), c.getTypeContrat().name(), c.getDateDebut(), c.getDateFin(), c.getStatutContrat().name())).toList();
+        var contratsDuSalarie = contrats.findByEmployeIdAndStatutContratIn(e.getId(),
+                        List.of(ContratStatut.EN_ATTENTE, ContratStatut.EN_COURS)).stream()
+                .map(c -> new ContratResume(c.getId(), c.getTypeContrat().name(), c.getDateDebut(),
+                        c.getDateFin(), c.getSalaireBrut(), c.getDevise(), c.getStatutContrat().name())).toList();
         AffectationResume affectation = null;
         Long departementId = null; String departement = null;
         if (current != null) {
             var poste = current.getPoste();
             departementId = poste.getDepartement().getId(); departement = poste.getDepartement().getLibelle();
-            affectation = new AffectationResume(poste.getId(), poste.getCodePoste(), poste.getIntitule(), current.getDateDebut(),
+            affectation = new AffectationResume(poste.getId(), poste.getCodePoste(), poste.getIntitule(),
+                    poste.getStatutPoste().name(), current.getDateDebut(),
                     current.getSuperieur() == null ? null : current.getSuperieur().getId());
         }
         return new EmployeDto(e.getId(), e.getMatricule(), e.getNom(), e.getPrenom(), e.getEmailProfessionnel(), e.getTelephone(),
-                e.getStatutActivite(), departementId, departement, affectation, contratActifs);
+                e.getStatutActivite(), departementId, departement, affectation, contratsDuSalarie);
     }
 }

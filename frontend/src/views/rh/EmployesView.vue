@@ -24,7 +24,7 @@ async function detail(id) { await action.run(() => store.obtenir(id)) }
 
 <template>
   <div class="container-fluid py-3">
-    <PageHeader title="Employés" subtitle="Consultez les fiches, contrats actifs et affectations courantes." />
+    <PageHeader title="Employés" subtitle="Consultez les fiches salariés, leurs contrats et leurs affectations." />
     <AlertMessage :message="action.error.value" />
     <div class="card card-body mb-3"><div class="row g-3 align-items-end">
       <div class="col-md-4"><FormField id="departement-filtre" label="Département"><select id="departement-filtre" v-model="filters.departementId" class="form-select"><option value="">Tous</option><option v-for="d in referentiel.departements" :key="d.id" :value="d.id">{{ d.libelle }}</option></select></FormField></div>
@@ -37,8 +37,8 @@ async function detail(id) { await action.run(() => store.obtenir(id)) }
     </DataTable></div>
     <section v-if="selected" class="card mt-4"><div class="card-body">
       <div class="d-flex justify-content-between align-items-start"><div><h2 class="h4">{{ selected.prenom }} {{ selected.nom }}</h2><p class="text-body-secondary">{{ selected.matricule }} · {{ selected.emailProfessionnel || 'Email professionnel non renseigné' }}</p></div><button class="btn-close" aria-label="Fermer la fiche" @click="store.employeSelectionne = null"></button></div>
-      <div class="row g-3"><div class="col-lg-6"><h3 class="h6">Affectation courante</h3><p v-if="selected.affectationCourante">{{ selected.affectationCourante.intitule }} · {{ selected.departement }} <span v-if="selected.affectationCourante.superieurId">(responsable salarié #{{ selected.affectationCourante.superieurId }})</span></p><p v-else class="text-body-secondary">Aucune affectation active. Le poste peut rester vacant.</p></div>
-        <div class="col-lg-6"><h3 class="h6">Contrats actifs</h3><ul v-if="selected.contratsActifs.length" class="list-group list-group-flush"><li v-for="c in selected.contratsActifs" :key="c.id" class="list-group-item px-0">{{ c.type }} · depuis {{ c.dateDebut }}<span v-if="c.dateFin"> jusqu’au {{ c.dateFin }}</span></li></ul><p v-else class="text-body-secondary">Aucun contrat actif.</p></div></div>
+      <div class="row g-3"><div class="col-lg-6"><h3 class="h6">Poste et affectation</h3><div v-if="selected.affectationCourante"><p class="mb-1"><strong>{{ selected.affectationCourante.intitule }}</strong> · {{ selected.departement }}</p><p class="small text-body-secondary">{{ selected.affectationCourante.codePoste }} · poste {{ selected.affectationCourante.statutPoste }} · affectation depuis {{ selected.affectationCourante.dateDebut }}</p><p v-if="selected.affectationCourante.superieurId" class="small">Responsable salarié #{{ selected.affectationCourante.superieurId }}</p></div><p v-else class="text-body-secondary">Aucune affectation enregistrée.</p></div>
+        <div class="col-lg-6"><h3 class="h6">Contrats</h3><ul v-if="selected.contrats?.length" class="list-group list-group-flush"><li v-for="c in selected.contrats" :key="c.id" class="list-group-item px-0"><strong>{{ c.type }}</strong> · {{ c.statut.replace('_', ' ') }} · début {{ c.dateDebut }}<span v-if="c.dateFin"> · fin {{ c.dateFin }}</span><span v-if="c.salaireBrut != null"> · {{ Number(c.salaireBrut).toLocaleString('fr-FR') }} {{ c.devise }}</span></li></ul><p v-else class="text-body-secondary">Aucun contrat enregistré.</p></div></div>
     </div></section>
   </div>
 </template>
