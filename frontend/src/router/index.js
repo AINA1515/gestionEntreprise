@@ -46,6 +46,7 @@ const routes = [
       { path: 'departements', name: 'rh-departements', component: () => import('@/views/rh/DepartementsView.vue'), meta: { permissions: ['CONTRAT_GERER'] } },
       { path: 'postes', name: 'rh-postes', component: () => import('@/views/rh/PostesView.vue'), meta: { permissions: ['CONTRAT_GERER'] } },
       { path: 'employes', name: 'rh-employes', component: () => import('@/views/rh/EmployesView.vue'), meta: { permissions: ['CONTRAT_GERER'] } },
+      { path: 'employes/:id', name: 'rh-employe-detail', component: () => import('@/views/rh/EmployeDetailView.vue'), meta: { permissions: ['CONTRAT_GERER'] } },
     ],
   },
   {
