@@ -1,18 +1,22 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { lienNotification } from '@/composables/notificationLink'
 import { useNotificationsStore } from '@/stores/notifications'
 import { usePolling } from '@/composables/usePolling'
 
 const store = useNotificationsStore()
 const router = useRouter()
+const auth = useAuthStore()
 const lastTen = computed(() => store.notifications.slice(0, 10))
 const dates = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
 usePolling(() => store.actualiser({ limit: 10 }), 60_000)
 
 async function ouvrir(notification) {
-  if (!notification.lue) await store.marquerLue(notification.id)
-  await router.push({ name: 'notifications' })
+  try { if (!notification.lue) await store.marquerLue(notification.id) } catch { /* la navigation prime */ }
+  // Mène directement à la page concernée ; à défaut, à la liste complète.
+  await router.push(lienNotification(notification, auth) ?? { name: 'notifications' })
 }
 </script>
 

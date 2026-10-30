@@ -24,9 +24,13 @@ import java.util.List;
 
 @Service
 public class CandidatService {
-    public record FormationDto(String diplome, String etablissement, Integer annee, String niveau) {}
+    /** Une formation n'a pas de niveau : le niveau se renseigne sur chaque expérience professionnelle. */
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+    public record FormationDto(String diplome, String etablissement, Integer annee) {}
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
     public record ExperienceDto(String poste, String entreprise, String periode, String missions, String niveau, String typeEmploi) {}
     public record CvOptionDto(String code, String libelle) {}
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
     public record CvDto(String nom, String prenom, String email, String telephone, String adresse,
                         String profil, String diplome, String etablissement, Integer annee,
                         String poste, String entreprise, String periode, String missions,
@@ -77,7 +81,6 @@ public class CandidatService {
     public CvDto enregistrerCv(CvDto demande) {
         if (demande == null) throw new BusinessRuleException("CV_REQUIS", "Les informations du CV sont obligatoires.");
         verifierObligatoires(demande);
-        verifierNiveauxFormation(demande.formations());
         verifierExperiences(demande.experiences());
         Candidat candidat = candidatCourant();
         String email = demande.email().trim().toLowerCase(Locale.ROOT);
@@ -127,15 +130,6 @@ public class CandidatService {
         if (cv.nom().trim().length() > 100 || cv.prenom().trim().length() > 100 || cv.email().trim().length() > 150
                 || cv.telephone().trim().length() > 30 || (cv.adresse() != null && cv.adresse().trim().length() > 300))
             throw new BusinessRuleException("CV_CHAMP_TROP_LONG", "Un des champs du CV dépasse sa longueur maximale.");
-    }
-    private void verifierNiveauxFormation(List<FormationDto> formations) {
-        if (formations == null) return;
-        for (FormationDto formation : formations) {
-            if (formation != null && formation.niveau() != null && !formation.niveau().isBlank()
-                    && !niveauxFormation.existsByCodeAndEstActifTrue(formation.niveau())) {
-                throw new BusinessRuleException("NIVEAU_FORMATION_INVALIDE", "Un niveau de formation sélectionné n'existe pas dans le référentiel.");
-            }
-        }
     }
     private void verifierExperiences(List<ExperienceDto> experiences) {
         if (experiences == null) return;

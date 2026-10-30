@@ -7,6 +7,7 @@ import StatCard from '@/components/ui/StatCard.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
+import ContratsExpirantAlert from '@/components/ui/ContratsExpirantAlert.vue'
 import { useRouter } from 'vue-router'
 
 const store = useDemandesStore()
@@ -36,6 +37,7 @@ onMounted(store.chargerDashboard)
               subtitle="Retrouvez ici le suivi de vos demandes de personnel." />
 
   <AlertMessage :message="store.error" />
+  <ContratsExpirantAlert />
 
   <div class="row g-3 mb-4">
     <div v-for="[code, label, icon] in statuts" :key="code" class="col-sm-6 col-xl">

@@ -55,7 +55,7 @@ class DemandeRecrutementServiceTest {
         postes=mock(PosteRepository.class); employes=mock(EmployeRepository.class); utilisateurs=mock(UtilisateurRepository.class);
         accessScope=mock(AccessScope.class);
         var machine=new DemandeRecrutementMachine(mock(ApplicationEventPublisher.class));
-        service=new DemandeRecrutementService(demandes, validations, postes, employes, utilisateurs, machine, accessScope, mock(NiveauFormationRepository.class));
+        service=new DemandeRecrutementService(demandes, validations, postes, employes, utilisateurs, machine, accessScope, mock(NiveauFormationRepository.class), mock(com.itu.gestionRH.repository.security.TypeEmploiRepository.class));
 
         manager=utilisateur(10L, "Manager");
         Departement departement=Departement.nouvelle(); departement.setLibelle("Informatique"); departement.setEstActif(true);
@@ -81,7 +81,7 @@ class DemandeRecrutementServiceTest {
     void cycleCompletAjouteTroisLignesDHistorique() {
         authentifier(10L, "MANAGER", "DEMANDE_CREER", "DEMANDE_CONSULTER");
         var created=service.creer(new DemandeCreateRequest(7L, TypeDemande.CREATION, null, 2, "Renfort équipe",
-                BigDecimal.valueOf(50000), LocalDate.now().plusMonths(2), null, false));
+                BigDecimal.valueOf(50000), LocalDate.now().plusMonths(2), null, null, false));
         assertEquals(DemandeStatut.BROUILLON, created.statut());
         service.soumettre(55L);
         assertEquals(DemandeStatut.ATTENTE_RH, demande.getStatutValidation());

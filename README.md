@@ -47,3 +47,40 @@ La migration `database/08_migrations/002_offre_champs_candidat.sql` ajoute à `O
 L'outbox est alimentée dans la transaction métier par les événements de workflow, puis le planificateur envoie les lignes arrivées à échéance. Le verrou Oracle `FOR UPDATE SKIP LOCKED` empêche deux instances de traiter simultanément la même ligne. Les erreurs SMTP sont rejouées après 1, 2, 4 puis 8 minutes ; après cinq tentatives, le statut passe à `ECHEC`. Par défaut, l'envoi SMTP est désactivé et les courriels sont consignés dans les logs pour le développement. Pour activer SMTP, définir `NOTIFICATIONS_MAIL_ENABLED=true`, `SMTP_HOST`, `SMTP_PORT` et, si nécessaire, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH=true`, `SMTP_STARTTLS=true`, ainsi que `NOTIFICATIONS_MAIL_FROM`. `NOTIFICATIONS_SCHEDULER_ENABLED=false` désactive les traitements planifiés. Le cron quotidien des rappels est configurable par `NOTIFICATIONS_REMINDERS_CRON`.
 
 L'API in-app expose `GET /api/v1/notifications?page=0&size=20`, `GET /api/v1/notifications/non-lues/count`, `PATCH /api/v1/notifications/{id}/lue` et `PATCH /api/v1/notifications/lire-tout`. Chaque requête ne retourne ou ne modifie que les notifications de l'utilisateur authentifié.
+
+
+## Contrats : suivi, fin de contrat et alertes
+
+`GET /api/v1/onboarding/contrats/{id}` consulte un contrat ; `POST /api/v1/onboarding/contrats/{id}/terminer` (permission `CONTRAT_GERER`, corps optionnel `{ "dateFin": "AAAA-MM-JJ" }`) clôture un contrat sans supprimer la ligne : `DATE_FIN_EFFECTIVE` est renseignée, le statut passe à `TERMINE`, l'affectation est fermée, le salarié passe à `SORTI` s'il n'a plus de contrat actif et le poste redevient `VACANT` s'il n'est plus occupé. `GET /api/v1/onboarding/contrats/expirant?jours=30` liste les CDD en cours qui se terminent bientôt (tous pour la RH, ceux du département pour un manager) et alimente l'alerte affichée sur l'accueil RH et le tableau de bord manager. `GET /api/v1/employes/moi/contrats` renvoie les contrats du salarié connecté.
+
+Une tâche planifiée (`app.contrats.echeances.cron`, défaut `0 10 0 * * *`) passe en `EN_COURS` les contrats `EN_ATTENTE` dont la date de début est atteinte et termine les CDD échus.
+
+## Reporting Direction
+
+`GET /api/v1/reporting/synthese` (permission `REPORTING_CONSULTER`) renvoie les agrégats calculés en base : demandes par statut, entonnoir des candidatures, propositions, effectifs par statut et par département, onboardings, tâches en retard par service et masse salariale des contrats en cours par département. Il alimente `/direction/dashboard`.
+
+## Justificatifs d'onboarding
+
+Valider une tâche d'onboarding dont le modèle est `SAL_RIB`, `SAL_IDENTITE`, `SAL_VITALE`, `SAL_REGLEMENT` ou `RH_CONTRAT_SIGNE` exige un document actif du type correspondant (`RIB`, `PIECE_IDENTITE`, `CARTE_VITALE`, `REGLEMENT_SIGNE`, `CONTRAT_SIGNE`) rattaché à la tâche (`ONBOARDING_TACHE`) ; sinon l'API répond `422 JUSTIFICATIF_REQUIS`. L'écran « Mes tâches » propose le dépôt du document avant la validation.
+
+## Affectations (mutation d'un salarié en poste)
+
+Page RH `/rh/affectations`, réservée aux salariés actifs (l'embauche d'un candidat garde son propre flux). `POST /api/v1/affectations/mutations` (permission `CONTRAT_GERER`) : l'affectation actuelle est clôturée à la date d'effet, le contrat en cours est terminé et remplacé par un avenant sur le nouveau poste (salaire inchangé sauf indication), une nouvelle affectation est créée, l'ancien poste redevient `VACANT` s'il n'a plus personne et le nouveau poste passe à `POURVU`. `GET /api/v1/affectations/employes/{id}` renvoie l'historique.
+
+## CV candidat : expériences et niveaux
+
+Un CV peut contenir plusieurs formations et plusieurs expériences professionnelles. Le **niveau** (référentiel `NIVEAU_FORMATION`) se renseigne sur chaque expérience, avec son type d'emploi ; une formation n'a plus de niveau (les anciens CV qui en contiennent un sont lus normalement, la valeur est ignorée).
+
+## Navigation et notifications
+
+Tout l'espace connecté passe par `MainLayout` : le menu de gauche est calculé une seule fois à partir du profil de l'utilisateur (`composables/useRoleMenu.js`) et ne change plus selon la page (Mes tâches, Offres, Notifications, Mes contrats… sont toujours dans le même menu). Chaque notification mène à la page concernée (`composables/notificationLink.js`) depuis la cloche comme depuis `/notifications`, et l'attribution d'une tâche d'intégration envoie désormais la notification `ONBOARDING_TACHE_ASSIGNEE`.
+
+## Type d'emploi et présélection automatique
+
+Le **type d'emploi** est un domaine d'activité (Informatique, Finance et comptabilité, RH, Commercial et marketing…) géré dans la table `TYPE_EMPLOI` (migration `014_type_emploi_domaines.sql` : les anciennes valeurs CDI/CDD… sont désactivées, pas supprimées). Il se renseigne sur chaque expérience du CV et sur chaque demande de recrutement (`DEMANDE_RECRUTEMENT.TYPE_EMPLOI_CODE`, `GET /api/v1/referentiels/types-emploi`).
+
+La présélection (`CandidatureController.evaluerPreselection`) retient un candidat si : (1) quand la demande précise un type d'emploi, il a au moins une expérience de ce type ; (2) son niveau d'expérience (le plus élevé parmi ces expériences, ou parmi toutes si la demande n'impose pas de type) est au moins égal au niveau demandé ; (3) son salaire souhaité ne dépasse pas le budget + 10 %. Les anciens CV dont le niveau était saisi sur les formations sont encore lus en dernier recours.
+
+## Évaluation d'un candidat par le manager
+
+Une évaluation favorable envoie automatiquement la proposition d'embauche. Cet envoi exige `PROPOSITION_EMETTRE` (permission RH) : il est effectué au nom du manager avec cette seule permission ajoutée pour l'étape (`WorkflowContext.avecPermission`), sans lui accorder ce droit ailleurs.

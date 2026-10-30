@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { demandeService } from '@/services/demandeService'
 import PageHeader from '@/components/ui/PageHeader.vue'
+import ContratsExpirantAlert from '@/components/ui/ContratsExpirantAlert.vue'
 
 const demandesEnAttente = ref(0)
 const chargement = ref(true)
@@ -19,6 +20,7 @@ onMounted(async () => {
 <template>
   <PageHeader title="Espace Ressources humaines" :breadcrumb="['Espace RH', 'Accueil']"
     subtitle="Gérez les demandes de recrutement, les candidatures et l’administration du personnel." />
+  <ContratsExpirantAlert lien-employe />
   <div class="row g-3">
     <div class="col-md-6 col-xl-4">
       <RouterLink to="/rh/demandes-a-traiter" class="card card-body h-100 text-decoration-none">

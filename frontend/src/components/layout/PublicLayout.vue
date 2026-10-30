@@ -2,19 +2,15 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import AppLayout from './AppLayout.vue'
+import { useRoleMenu } from '@/composables/useRoleMenu'
 
 const auth = useAuthStore()
 const utilisateurConnecte = computed(() => auth.isAuthenticated)
-const menuConnecte = [
-  { to: '/', label: 'Accueil', icon: 'house' },
-  { to: '/candidat/cv', label: 'Mon CV', icon: 'file-person', roles: ['CANDIDAT'], permission: 'DOCUMENT_CONSULTER_PERSO' },
-  { to: '/candidat/candidature', label: 'Mes candidatures', icon: 'briefcase', roles: ['CANDIDAT'], permission: 'CANDIDATURE_POSTULER' },
-  { to: '/offres', label: 'Offres d’emploi', icon: 'search' },
-]
+const { items: menuConnecte, espace } = useRoleMenu()
 </script>
 
 <template>
-  <AppLayout v-if="utilisateurConnecte" espace="Espace personnel" :items="menuConnecte">
+  <AppLayout v-if="utilisateurConnecte" :espace="espace" :items="menuConnecte">
     <div class="container-fluid"><RouterView /></div>
   </AppLayout>
   <div v-else class="min-vh-100 bg-body-tertiary">

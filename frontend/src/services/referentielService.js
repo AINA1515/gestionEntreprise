@@ -2,6 +2,7 @@ import http from './http'
 
 export const referentielService = {
   niveauxFormation: () => http.get('/referentiels/niveaux-formation').then((r) => r.data),
+  typesEmploi: () => http.get('/referentiels/types-emploi').then((r) => r.data),
   departements: () => http.get('/departements', { params: { size: 500 } }).then((r) => r.data.content ?? r.data),
   listerDepartements: (params = {}) => http.get('/departements', { params }).then((r) => r.data),
   departement: (id) => http.get(`/departements/${id}`).then((r) => r.data),

@@ -33,7 +33,7 @@ public class OnboardingTacheController {
         this.repository=repository;this.machine=machine;this.service=service;this.accessScope=accessScope;
     }
     public record TacheResponse(Long id, String intitule, String statut, String serviceResponsable,
-                                java.time.LocalDate dateLimite, List<String> actionsDisponibles) {}
+                                java.time.LocalDate dateLimite, List<String> actionsDisponibles, String justificatifRequis) {}
     public record MiseAJourTacheRequest(String statut, String commentaire) {}
     @PreAuthorize("hasAuthority('PERM_TACHE_TRAITER')")
     @GetMapping("/mes-taches")
@@ -62,5 +62,6 @@ public class OnboardingTacheController {
     }
 
     private TacheResponse toResponse(OnboardingTache task){return new TacheResponse(task.getId(),task.getIntituleTache(),task.getStatutTache().name(),
-            task.getServiceResponsable().name(),task.getDateLimite(),machine.actionsDisponibles(task,WorkflowContext.utilisateurCourant(null)));}
+            task.getServiceResponsable().name(),task.getDateLimite(),machine.actionsDisponibles(task,WorkflowContext.utilisateurCourant(null)),
+            OnboardingTacheService.justificatifRequis(task)==null?null:OnboardingTacheService.justificatifRequis(task).name());}
 }

@@ -43,18 +43,19 @@ onMounted(async () => {
   <section v-if="!loading && preselectionnees.length" class="card shadow-sm mb-4">
     <div class="card-header bg-success-subtle">
       <h2 class="h5 mb-1">Candidats présélectionnés ({{ preselectionnees.length }})</h2>
-      <p class="small mb-0">Niveau de formation au moins égal au niveau demandé et salaire souhaité inférieur ou égal au budget majoré de 10 %.</p>
+      <p class="small mb-0">Expérience dans le type d’emploi demandé, niveau d’expérience au moins égal au niveau demandé et salaire souhaité inférieur ou égal au budget majoré de 10 %.</p>
       <div class="d-flex flex-wrap gap-2 mt-3" v-if="preselectionnees.some(c => c.statut === 'RECUE')">
         <button class="btn btn-success btn-sm" type="button" :disabled="loading || !selection.length" @click="transmettre">Transmettre la sélection au manager ({{ selection.length }})</button>
       </div>
     </div>
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
-        <thead class="table-light"><tr><th v-if="candidatures.some(c => c.statut === 'RECUE')"></th><th>Candidat</th><th>Niveau obtenu</th><th>Niveau requis</th><th>Salaire souhaité</th><th>Plafond (+10 %)</th><th></th></tr></thead>
+        <thead class="table-light"><tr><th v-if="candidatures.some(c => c.statut === 'RECUE')"></th><th>Candidat</th><th>Type d’emploi</th><th>Niveau obtenu</th><th>Niveau requis</th><th>Salaire souhaité</th><th>Plafond (+10 %)</th><th></th></tr></thead>
         <tbody>
           <tr v-for="candidature in preselectionnees" :key="candidature.id">
             <td v-if="candidatures.some(c => c.statut === 'RECUE')"><input v-if="candidature.statut === 'RECUE'" v-model="selection" class="form-check-input" type="checkbox" :value="candidature.id" :aria-label="`Sélectionner ${candidature.candidat}`" /></td>
             <td>{{ candidature.candidat }}<span class="d-block small text-body-secondary">{{ candidature.email }}</span></td>
+            <td>{{ candidature.typeEmploiRequis || 'Non imposé' }}</td>
             <td>{{ candidature.niveauFormationCandidat || 'Non renseigné' }}</td>
             <td>{{ candidature.niveauFormationRequis || 'Aucun niveau imposé' }}</td>
             <td>{{ formatMontant(candidature.salairePropose ?? candidature.salaireReference) }}</td>
@@ -71,10 +72,11 @@ onMounted(async () => {
     <div v-else-if="!candidatures.length" class="card-body text-center text-body-secondary py-5">Aucun candidat n’a postulé à cette offre.</div>
     <div v-else class="table-responsive">
       <table class="table table-hover align-middle mb-0">
-        <thead class="table-light"><tr><th>Candidat</th><th>E-mail</th><th>Date de candidature</th><th>Niveau de formation</th><th>Salaire souhaité</th><th>Présélection</th><th>Statut</th><th></th></tr></thead>
+        <thead class="table-light"><tr><th>Candidat</th><th>E-mail</th><th>Date de candidature</th><th>Type d’emploi demandé</th><th>Niveau d’expérience</th><th>Salaire souhaité</th><th>Présélection</th><th>Statut</th><th></th></tr></thead>
         <tbody>
           <tr v-for="candidature in candidatures" :key="candidature.id">
             <td>{{ candidature.candidat }}</td><td>{{ candidature.email }}</td><td>{{ formatDate(candidature.datePostulation) }}</td>
+            <td>{{ candidature.typeEmploiRequis || 'Non imposé' }}<span v-if="candidature.typeEmploiConforme != null" class="d-block small" :class="candidature.typeEmploiConforme ? 'text-success' : 'text-danger'">{{ candidature.typeEmploiConforme ? 'Expérience dans ce domaine' : 'Aucune expérience dans ce domaine' }}</span></td>
             <td>{{ candidature.niveauFormationCandidat || 'Non renseigné' }}</td>
             <td>{{ formatMontant(candidature.salairePropose ?? candidature.salaireReference) }}<span v-if="candidature.salairePropose == null && candidature.salaireReference != null" class="d-block small text-body-secondary">Salaire de référence accepté</span></td>
             <td><span class="badge" :class="candidature.preselectionnee ? 'text-bg-success' : 'text-bg-secondary'">{{ candidature.preselectionnee ? 'Retenue' : 'Non retenue' }}</span><span v-if="!candidature.preselectionnee" class="d-block small text-body-secondary">{{ candidature.motifPreselection }}</span></td>

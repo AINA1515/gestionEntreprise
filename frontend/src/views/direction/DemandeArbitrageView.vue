@@ -55,7 +55,7 @@ onMounted(() => store.obtenir(route.params.id))
         <div class="col-md-4"><div class="small text-body-secondary">Date souhaitée</div><div class="fs-4 fw-semibold">{{ formatDate(demande.dateSouhaitee) }}</div></div>
         <div class="col-md-6"><div class="small text-body-secondary">Manager demandeur</div><div>{{ demande.manager }}</div></div>
         <div class="col-md-6"><div class="small text-body-secondary">Type de demande</div><div>{{ demande.typeDemande }}<span v-if="demande.employeRemplaceId"> · salarié #{{ demande.employeRemplaceId }}</span></div></div>
-        <div class="col-md-6"><div class="small text-body-secondary">Niveau de formation requis</div><div>{{ demande.niveauFormationLibelle || 'Non précisé' }}</div></div>
+        <div class="col-md-6"><div class="small text-body-secondary">Niveau d’expérience requis</div><div>{{ demande.niveauFormationLibelle || 'Non précisé' }}</div></div><div class="col-md-6"><div class="small text-body-secondary">Type d’emploi</div><div>{{ demande.typeEmploiLibelle || 'Non précisé' }}</div></div>
         <div class="col-12"><div class="small text-body-secondary">Motif</div><p class="mb-0">{{ demande.motif }}</p></div>
       </div>
       <div v-if="actions.includes('valider') || demande.statut === 'ATTENTE_DIRECTION'" class="d-flex flex-wrap gap-2 mt-4">

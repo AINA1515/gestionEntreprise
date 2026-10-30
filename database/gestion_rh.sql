@@ -99,6 +99,8 @@
 @@08_migrations/010_retrait_salaire_demande.sql
 @@08_migrations/011_date_fin_proposition.sql
 @@08_migrations/012_recalage_compteur_matricule.sql
+@@08_migrations/013_espace_salarie_historique_onboarding.sql
+@@08_migrations/014_type_emploi_domaines.sql
 
 UPDATE ROLE_RH
    SET EST_ACTIF = 0,

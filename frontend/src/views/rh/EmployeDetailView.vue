@@ -42,6 +42,15 @@ async function initialiserOnboarding() {
   finally { onboardingChargement.value = false }
 }
 
+async function terminerContrat(contrat) {
+  if (!window.confirm(`Terminer le contrat #${contrat.id} ? Le salarié passera en « sorti » s’il n’a aucun autre contrat actif.`)) return
+  contratErreur.value = ''
+  try {
+    await contratService.terminer(contrat.id)
+    await store.obtenir(employe.value.id)
+  } catch (error) { contratErreur.value = error.message || 'Impossible de terminer le contrat.' }
+}
+
 async function creerContrat() {
   if (!employe.value) return
   contratErreur.value = ''
@@ -113,6 +122,7 @@ watch(() => route.params.id, async (id) => {
             </div>
             <button class="btn btn-primary btn-sm mt-3" type="submit" :disabled="contratEnregistrement">{{ contratEnregistrement ? 'Enregistrement…' : 'Enregistrer le contrat' }}</button>
           </form>
+          <p v-if="contratErreur && !formulaireContrat" class="alert alert-danger py-2 mt-3">{{ contratErreur }}</p>
           <div v-if="employe.contrats?.length" class="list-group list-group-flush">
             <article v-for="contrat in employe.contrats" :key="contrat.id" class="list-group-item px-0">
               <div class="d-flex justify-content-between gap-2"><strong>{{ contrat.type }} · {{ contrat.acte?.replaceAll('_', ' ') }} · contrat #{{ contrat.id }}</strong><span class="badge text-bg-light">{{ contrat.statut.replaceAll('_', ' ') }}</span></div>
@@ -120,6 +130,7 @@ watch(() => route.params.id, async (id) => {
               <div v-if="contrat.dateFinEffective" class="small text-body-secondary">Fin effective : {{ formatDate(contrat.dateFinEffective) }}</div>
               <div v-if="contrat.contratPrecedentId" class="small text-body-secondary">Succède au contrat #{{ contrat.contratPrecedentId }}</div>
               <div v-if="contrat.salaireBrut != null" class="small">Salaire brut : {{ formatMontant(contrat.salaireBrut) }} {{ contrat.devise }}</div>
+              <button v-if="['EN_COURS', 'EN_ATTENTE'].includes(contrat.statut)" class="btn btn-sm btn-outline-danger mt-2" type="button" @click="terminerContrat(contrat)">Terminer le contrat</button>
             </article>
           </div>
           <p v-else class="text-body-secondary mb-0">Aucun contrat enregistré.</p>
