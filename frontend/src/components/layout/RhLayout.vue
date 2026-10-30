@@ -11,6 +11,7 @@ const items = [
   { to: '/offres', label: 'Catalogue public', icon: 'search' },
   { to: '/rh/departements', label: 'Départements', icon: 'diagram-3', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },
   { to: '/rh/postes', label: 'Postes', icon: 'briefcase', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },
+  { to: '/rh/affectations', label: 'Affectations', icon: 'arrow-left-right', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },
   { to: '/rh/employes', label: 'Employés', icon: 'people-fill', roles: ['GESTIONNAIRE_RH'], permission: 'CONTRAT_GERER' },
 ]
 </script>

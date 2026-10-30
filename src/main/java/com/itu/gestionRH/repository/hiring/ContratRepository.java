@@ -17,4 +17,7 @@ public interface ContratRepository extends JpaRepository<Contrat, Long> {
     boolean existsByPosteId(Long posteId);
     java.util.List<Contrat> findByPosteIdAndStatutContrat(Long posteId, ContratStatut statut);
     java.util.List<Contrat> findByTypeContratAndStatutContratAndDateFinBetween(com.itu.gestionRH.entity.enums.ContratType type, ContratStatut statut, java.time.LocalDate debut, java.time.LocalDate fin);
+    java.util.List<Contrat> findByStatutContratAndDateDebutLessThanEqual(ContratStatut statut, java.time.LocalDate date);
+    java.util.List<Contrat> findByTypeContratAndStatutContratAndDateFinBefore(com.itu.gestionRH.entity.enums.ContratType type, ContratStatut statut, java.time.LocalDate date);
+    java.util.List<Contrat> findByTypeContratAndStatutContratInAndDateFinBetweenOrderByDateFinAsc(com.itu.gestionRH.entity.enums.ContratType type, java.util.Collection<ContratStatut> statuts, java.time.LocalDate debut, java.time.LocalDate fin);
 }

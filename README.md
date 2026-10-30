@@ -47,3 +47,22 @@ La migration `database/08_migrations/002_offre_champs_candidat.sql` ajoute à `O
 L'outbox est alimentée dans la transaction métier par les événements de workflow, puis le planificateur envoie les lignes arrivées à échéance. Le verrou Oracle `FOR UPDATE SKIP LOCKED` empêche deux instances de traiter simultanément la même ligne. Les erreurs SMTP sont rejouées après 1, 2, 4 puis 8 minutes ; après cinq tentatives, le statut passe à `ECHEC`. Par défaut, l'envoi SMTP est désactivé et les courriels sont consignés dans les logs pour le développement. Pour activer SMTP, définir `NOTIFICATIONS_MAIL_ENABLED=true`, `SMTP_HOST`, `SMTP_PORT` et, si nécessaire, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH=true`, `SMTP_STARTTLS=true`, ainsi que `NOTIFICATIONS_MAIL_FROM`. `NOTIFICATIONS_SCHEDULER_ENABLED=false` désactive les traitements planifiés. Le cron quotidien des rappels est configurable par `NOTIFICATIONS_REMINDERS_CRON`.
 
 L'API in-app expose `GET /api/v1/notifications?page=0&size=20`, `GET /api/v1/notifications/non-lues/count`, `PATCH /api/v1/notifications/{id}/lue` et `PATCH /api/v1/notifications/lire-tout`. Chaque requête ne retourne ou ne modifie que les notifications de l'utilisateur authentifié.
+
+
+## Contrats : suivi, fin de contrat et alertes
+
+`GET /api/v1/onboarding/contrats/{id}` consulte un contrat ; `POST /api/v1/onboarding/contrats/{id}/terminer` (permission `CONTRAT_GERER`, corps optionnel `{ "dateFin": "AAAA-MM-JJ" }`) clôture un contrat sans supprimer la ligne : `DATE_FIN_EFFECTIVE` est renseignée, le statut passe à `TERMINE`, l'affectation est fermée, le salarié passe à `SORTI` s'il n'a plus de contrat actif et le poste redevient `VACANT` s'il n'est plus occupé. `GET /api/v1/onboarding/contrats/expirant?jours=30` liste les CDD en cours qui se terminent bientôt (tous pour la RH, ceux du département pour un manager) et alimente l'alerte affichée sur l'accueil RH et le tableau de bord manager. `GET /api/v1/employes/moi/contrats` renvoie les contrats du salarié connecté.
+
+Une tâche planifiée (`app.contrats.echeances.cron`, défaut `0 10 0 * * *`) passe en `EN_COURS` les contrats `EN_ATTENTE` dont la date de début est atteinte et termine les CDD échus.
+
+## Reporting Direction
+
+`GET /api/v1/reporting/synthese` (permission `REPORTING_CONSULTER`) renvoie les agrégats calculés en base : demandes par statut, entonnoir des candidatures, propositions, effectifs par statut et par département, onboardings, tâches en retard par service et masse salariale des contrats en cours par département. Il alimente `/direction/dashboard`.
+
+## Justificatifs d'onboarding
+
+Valider une tâche d'onboarding dont le modèle est `SAL_RIB`, `SAL_IDENTITE`, `SAL_VITALE`, `SAL_REGLEMENT` ou `RH_CONTRAT_SIGNE` exige un document actif du type correspondant (`RIB`, `PIECE_IDENTITE`, `CARTE_VITALE`, `REGLEMENT_SIGNE`, `CONTRAT_SIGNE`) rattaché à la tâche (`ONBOARDING_TACHE`) ; sinon l'API répond `422 JUSTIFICATIF_REQUIS`. L'écran « Mes tâches » propose le dépôt du document avant la validation.
+
+## Affectations (mutation d'un salarié en poste)
+
+Page RH `/rh/affectations`, réservée aux salariés actifs (l'embauche d'un candidat garde son propre flux). `POST /api/v1/affectations/mutations` (permission `CONTRAT_GERER`) : l'affectation actuelle est clôturée à la date d'effet, le contrat en cours est terminé et remplacé par un avenant sur le nouveau poste (salaire inchangé sauf indication), une nouvelle affectation est créée, l'ancien poste redevient `VACANT` s'il n'a plus personne et le nouveau poste passe à `POURVU`. `GET /api/v1/affectations/employes/{id}` renvoie l'historique.
