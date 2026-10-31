@@ -47,7 +47,7 @@ public class ContratSuiviController {
         this.accessScope = accessScope;
     }
 
-    @PreAuthorize("hasAnyAuthority('PERM_CONTRAT_GERER','PERM_DOCUMENT_CONSULTER_PERSO')")
+    @PreAuthorize("hasAnyAuthority('PERM_CONTRAT_GERER','PERM_DOCUMENT_CONSULTER_PERSO','PERM_DEMANDE_CREER')")
     @GetMapping("/onboarding/contrats/{id:\\d+}")
     @Transactional(readOnly = true)
     public ContratDetail obtenir(@PathVariable Long id) {

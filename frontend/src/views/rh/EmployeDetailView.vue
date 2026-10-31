@@ -130,6 +130,7 @@ watch(() => route.params.id, async (id) => {
               <div v-if="contrat.dateFinEffective" class="small text-body-secondary">Fin effective : {{ formatDate(contrat.dateFinEffective) }}</div>
               <div v-if="contrat.contratPrecedentId" class="small text-body-secondary">Succède au contrat #{{ contrat.contratPrecedentId }}</div>
               <div v-if="contrat.salaireBrut != null" class="small">Salaire brut : {{ formatMontant(contrat.salaireBrut) }} {{ contrat.devise }}</div>
+              <RouterLink class="btn btn-sm btn-outline-primary mt-2 me-2" :to="{ name: 'contrat-detail', params: { id: contrat.id } }">Voir le détail</RouterLink>
               <button v-if="['EN_COURS', 'EN_ATTENTE'].includes(contrat.statut)" class="btn btn-sm btn-outline-danger mt-2" type="button" @click="terminerContrat(contrat)">Terminer le contrat</button>
             </article>
           </div>

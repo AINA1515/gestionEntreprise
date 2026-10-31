@@ -84,6 +84,8 @@ const routes = [
       { path: 'salarie/accueil', name: 'salarie-accueil', component: () => import('@/views/salarie/AccueilView.vue'), meta: { requiresAuth: true, roles: ['SALARIE'], espace: 'Espace salarié' } },
       { path: 'salarie/contrats', name: 'salarie-contrats', component: () => import('@/views/salarie/ContratsView.vue'), meta: { requiresAuth: true, roles: ['SALARIE'], permissions: ['DOCUMENT_CONSULTER_PERSO'], espace: 'Mes contrats' } },
       { path: 'admin/utilisateurs', name: 'admin-utilisateurs', component: () => import('@/views/admin/UtilisateursView.vue'), meta: { requiresAuth: true, roles: ['ADMIN'], espace: 'Administration' } },
+      { path: 'contrats/:id', name: 'contrat-detail', component: () => import('@/views/contrats/ContratDetailView.vue'), meta: { permissions: ['CONTRAT_GERER', 'DOCUMENT_CONSULTER_PERSO', 'DEMANDE_CREER'] } },
+      { path: 'candidatures/:id', name: 'candidature-detail', component: () => import('@/views/rh/CandidatureDetailView.vue'), meta: { permissions: ['CANDIDATURE_CONSULTER', 'EVALUATION_SAISIR'] } },
       { path: 'taches', name: 'mes-taches', component: () => import('@/views/taches/TachesView.vue'), meta: { requiresAuth: true, roles: ['MANAGER', 'GESTIONNAIRE_RH', 'SALARIE', 'IT', 'MOYENS_GENERAUX'], permissions: ['TACHE_TRAITER'], espace: 'Mes tâches' } },
     ],
   },

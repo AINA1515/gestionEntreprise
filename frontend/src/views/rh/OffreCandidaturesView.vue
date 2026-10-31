@@ -54,7 +54,7 @@ onMounted(async () => {
         <tbody>
           <tr v-for="candidature in preselectionnees" :key="candidature.id">
             <td v-if="candidatures.some(c => c.statut === 'RECUE')"><input v-if="candidature.statut === 'RECUE'" v-model="selection" class="form-check-input" type="checkbox" :value="candidature.id" :aria-label="`Sélectionner ${candidature.candidat}`" /></td>
-            <td>{{ candidature.candidat }}<span class="d-block small text-body-secondary">{{ candidature.email }}</span></td>
+            <td><RouterLink :to="{ name: 'candidature-detail', params: { id: candidature.id } }">{{ candidature.candidat }}</RouterLink><span class="d-block small text-body-secondary">{{ candidature.email }}</span></td>
             <td>{{ candidature.typeEmploiRequis || 'Non imposé' }}</td>
             <td>{{ candidature.niveauFormationCandidat || 'Non renseigné' }}</td>
             <td>{{ candidature.niveauFormationRequis || 'Aucun niveau imposé' }}</td>
@@ -75,7 +75,7 @@ onMounted(async () => {
         <thead class="table-light"><tr><th>Candidat</th><th>E-mail</th><th>Date de candidature</th><th>Type d’emploi demandé</th><th>Niveau d’expérience</th><th>Salaire souhaité</th><th>Présélection</th><th>Statut</th><th></th></tr></thead>
         <tbody>
           <tr v-for="candidature in candidatures" :key="candidature.id">
-            <td>{{ candidature.candidat }}</td><td>{{ candidature.email }}</td><td>{{ formatDate(candidature.datePostulation) }}</td>
+            <td><RouterLink :to="{ name: 'candidature-detail', params: { id: candidature.id } }">{{ candidature.candidat }}</RouterLink></td><td>{{ candidature.email }}</td><td>{{ formatDate(candidature.datePostulation) }}</td>
             <td>{{ candidature.typeEmploiRequis || 'Non imposé' }}<span v-if="candidature.typeEmploiConforme != null" class="d-block small" :class="candidature.typeEmploiConforme ? 'text-success' : 'text-danger'">{{ candidature.typeEmploiConforme ? 'Expérience dans ce domaine' : 'Aucune expérience dans ce domaine' }}</span></td>
             <td>{{ candidature.niveauFormationCandidat || 'Non renseigné' }}</td>
             <td>{{ formatMontant(candidature.salairePropose ?? candidature.salaireReference) }}<span v-if="candidature.salairePropose == null && candidature.salaireReference != null" class="d-block small text-body-secondary">Salaire de référence accepté</span></td>

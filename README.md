@@ -84,3 +84,7 @@ La présélection (`CandidatureController.evaluerPreselection`) retient un candi
 ## Évaluation d'un candidat par le manager
 
 Une évaluation favorable envoie automatiquement la proposition d'embauche. Cet envoi exige `PROPOSITION_EMETTRE` (permission RH) : il est effectué au nom du manager avec cette seule permission ajoutée pour l'étape (`WorkflowContext.avecPermission`), sans lui accorder ce droit ailleurs.
+
+## Pages de détail
+
+`/contrats/:id` (contrat : dates, salaire, contrat précédent, échéance, bouton « Terminer » pour la RH) et `/candidatures/:id` (candidat, CV avec expériences, entretiens et évaluations, proposition d'embauche ; `GET /api/v1/recrutement/candidatures/{id}/detail`). Elles sont accessibles depuis « Mes contrats », la fiche salarié, l'alerte de fin de CDD, les listes de candidatures RH, les entretiens du manager et les notifications. Le manager ne voit une candidature qu'après sa transmission par la RH.

@@ -53,6 +53,7 @@ onMounted(store.charger)
         <template #cell-statut="{ value }"><StatusBadge type="candidature" :value="value" /></template>
         <template #cell-actions="{ row }">
           <div class="d-flex gap-2">
+            <RouterLink class="btn btn-sm btn-outline-secondary" :to="{ name: 'candidature-detail', params: { id: row.id } }">Détail</RouterLink>
             <RouterLink class="btn btn-sm btn-outline-primary"
                         :to="{ name: 'rh-decision', query: { candidatureId: row.id } }">Décision</RouterLink>
             <RouterLink v-if="row.statut === 'RETENUE'" class="btn btn-sm btn-outline-success"

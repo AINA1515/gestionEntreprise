@@ -33,6 +33,7 @@ export function lienNotification(n, auth) {
     case 'ONBOARDING_TACHE_EN_RETARD':
       return { name: 'mes-taches' }
     case 'CONTRAT_FIN_PROCHE':
+      if (id) return { name: 'contrat-detail', params: { id } }
       return rh ? { name: 'rh-employes' } : { name: 'salarie-contrats' }
     default:
       return null

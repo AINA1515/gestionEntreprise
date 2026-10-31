@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { employeService } from '@/services/employeService'
 import { useFormatters } from '@/composables/useFormatters'
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -31,7 +32,8 @@ onMounted(async () => {
           <p class="text-body-secondary mb-2">Du {{ formatDate(contrat.dateDebut) }}<span v-if="contrat.dateFin"> au {{ formatDate(contrat.dateFin) }}</span></p>
           <p v-if="contrat.dateFinEffective" class="small text-body-secondary mb-2">Fin effective : {{ formatDate(contrat.dateFinEffective) }}</p>
           <p v-if="contrat.contratPrecedentId" class="small text-body-secondary mb-2">Succède au contrat #{{ contrat.contratPrecedentId }}</p>
-          <p v-if="contrat.salaireBrut != null" class="mb-0">Salaire brut : {{ formatMontant(contrat.salaireBrut) }} {{ contrat.devise }}</p>
+          <p v-if="contrat.salaireBrut != null" class="mb-2">Salaire brut : {{ formatMontant(contrat.salaireBrut) }} {{ contrat.devise }}</p>
+          <RouterLink class="btn btn-sm btn-outline-primary" :to="{ name: 'contrat-detail', params: { id: contrat.id } }">Voir le détail</RouterLink>
         </article>
       </div>
     </section>

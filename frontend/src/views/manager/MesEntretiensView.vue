@@ -51,7 +51,7 @@ onMounted(charger)
   <section v-if="aPlanifier.length" class="card shadow-sm mb-4">
     <div class="card-header"><h2 class="h5 mb-1">Candidats transmis par les RH</h2><p class="small text-body-secondary mb-0">Choisissez une date pour organiser chaque entretien.</p></div>
     <div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Candidat</th><th>Offre</th><th>Transmission</th><th>Date de l’entretien</th><th>Profil / CV</th><th></th></tr></thead>
-      <tbody><tr v-for="c in aPlanifier" :key="c.id"><td>{{ c.candidat }}</td><td>{{ c.poste }}</td><td>{{ formatDate(c.datePostulation) }}</td><td><input v-model="dates[c.id]" type="date" class="form-control form-control-sm" :min="new Date().toISOString().slice(0, 10)" :aria-label="`Date de l'entretien pour ${c.candidat}`" /></td><td><button class="btn btn-sm btn-outline-primary" :disabled="loading" @click="voirProfil(c.id)">Voir le profil</button></td><td><button class="btn btn-sm btn-success" :disabled="loading || !dates[c.id]" @click="planifier(c)">Planifier</button></td></tr></tbody>
+      <tbody><tr v-for="c in aPlanifier" :key="c.id"><td><RouterLink :to="{ name: 'candidature-detail', params: { id: c.id } }">{{ c.candidat }}</RouterLink></td><td>{{ c.poste }}</td><td>{{ formatDate(c.datePostulation) }}</td><td><input v-model="dates[c.id]" type="date" class="form-control form-control-sm" :min="new Date().toISOString().slice(0, 10)" :aria-label="`Date de l'entretien pour ${c.candidat}`" /></td><td><button class="btn btn-sm btn-outline-primary" :disabled="loading" @click="voirProfil(c.id)">Voir le profil</button></td><td><button class="btn btn-sm btn-success" :disabled="loading || !dates[c.id]" @click="planifier(c)">Planifier</button></td></tr></tbody>
     </table></div>
   </section>
   <section class="card shadow-sm">
@@ -59,7 +59,7 @@ onMounted(charger)
     <div v-else-if="!entretiens.length" class="card-body text-center text-body-secondary py-5">Aucun entretien ne vous est assigné.</div>
     <div v-else class="table-responsive"><table class="table align-middle mb-0">
       <thead class="table-light"><tr><th>Candidat</th><th>Offre</th><th>Date</th><th>Évaluation</th><th>Profil / CV</th><th></th></tr></thead>
-      <tbody><tr v-for="entretien in entretiens" :key="entretien.id"><td>{{ entretien.candidat }}</td><td>{{ entretien.poste }}</td><td>{{ formatDate(entretien.dateEntretien) }}</td>
+      <tbody><tr v-for="entretien in entretiens" :key="entretien.id"><td><RouterLink :to="{ name: 'candidature-detail', params: { id: entretien.candidatureId } }">{{ entretien.candidat }}</RouterLink></td><td>{{ entretien.poste }}</td><td>{{ formatDate(entretien.dateEntretien) }}</td>
         <td>{{ entretien.decision || 'À évaluer' }}<small v-if="entretien.commentaires" class="d-block text-body-secondary">{{ entretien.commentaires }}</small></td>
         <td><button class="btn btn-sm btn-outline-primary" :disabled="loading" @click="voirProfil(entretien.candidatureId)">Voir le profil</button></td>
         <td><button v-if="!entretien.decision" class="btn btn-sm btn-primary" @click="evaluer(entretien)">Évaluer</button></td>
