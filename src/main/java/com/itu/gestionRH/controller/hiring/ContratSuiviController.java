@@ -30,7 +30,7 @@ public class ContratSuiviController {
             String posteIntitule, String typeContrat, String typeActe, Long contratPrecedentId, LocalDate dateDebut,
             LocalDate dateFin, LocalDate dateFinEffective, BigDecimal salaireBrut, String devise, String statut,
             Long joursRestants) {}
-    public record TerminerContratRequest(LocalDate dateFin) {}
+    public record TerminerContratRequest(LocalDate dateFin, @jakarta.validation.constraints.Size(max = 300) String motif) {}
 
     private final ContratSuiviService service;
     private final ContratRepository contrats;
@@ -72,9 +72,10 @@ public class ContratSuiviController {
     @PreAuthorize("hasAuthority('PERM_CONTRAT_GERER')")
     @PostMapping("/onboarding/contrats/{id:\\d+}/terminer")
     @Transactional
-    public ContratDetail terminer(@PathVariable Long id, @RequestBody(required = false) TerminerContratRequest request) {
+    public ContratDetail terminer(@PathVariable Long id, @jakarta.validation.Valid @RequestBody(required = false) TerminerContratRequest request) {
         LocalDate fin = request == null ? null : request.dateFin();
-        return detail(service.terminer(id, fin, WorkflowContext.utilisateurCourant("Fin de contrat")));
+        String motif = request == null ? null : request.motif();
+        return detail(service.terminer(id, fin, motif, WorkflowContext.utilisateurCourant("Fin de contrat")));
     }
 
     @PreAuthorize("hasAuthority('PERM_DOCUMENT_CONSULTER_PERSO')")
@@ -104,6 +105,7 @@ public class ContratSuiviController {
         return new ContratDetail(c.getId(), e.getId(), e.getPrenom() + " " + e.getNom(), e.getMatricule(), c.getPoste().getId(),
                 c.getPoste().getIntitule(), c.getTypeContrat().name(), c.getTypeActe().name(),
                 c.getContratPrecedent() == null ? null : c.getContratPrecedent().getId(), c.getDateDebut(), c.getDateFin(),
-                c.getDateFinEffective(), c.getSalaireBrut(), c.getDevise(), c.getStatutContrat().name(), jours);
+                c.getDateFinEffective(), accessScope.peutVoirSalaireContrat(e.getId()) ? c.getSalaireBrut() : null,
+                c.getDevise(), c.getStatutContrat().name(), jours);
     }
 }

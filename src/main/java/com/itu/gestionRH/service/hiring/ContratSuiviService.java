@@ -59,6 +59,12 @@ public class ContratSuiviService {
      */
     @Transactional
     public Contrat terminer(Long id, LocalDate dateFin, WorkflowContext contexte) {
+        return terminer(id, dateFin, null, contexte);
+    }
+
+    /** Idem, avec le motif de sortie à enregistrer si le salarié n'a plus de contrat actif (sinon : le commentaire du contexte). */
+    @Transactional
+    public Contrat terminer(Long id, LocalDate dateFin, String motifSortie, WorkflowContext contexte) {
         Contrat contrat = obtenir(id);
         if (contrat.getStatutContrat() != ContratStatut.EN_COURS && contrat.getStatutContrat() != ContratStatut.EN_ATTENTE)
             throw new BusinessRuleException("CONTRAT_NON_ACTIF", "Seul un contrat en cours ou en attente peut être terminé.");
@@ -81,6 +87,10 @@ public class ContratSuiviService {
         if (!autreContratActif) {
             var employe = contrat.getEmploye();
             employe.setStatutActivite(EmployeStatut.SORTI);
+            employe.setDateSortie(fin.isBefore(employe.getDateEmbaucheInitiale()) ? employe.getDateEmbaucheInitiale() : fin);
+            String motif = motifSortie != null && !motifSortie.isBlank() ? motifSortie.trim()
+                    : contexte != null && contexte.commentaire() != null ? contexte.commentaire() : "Fin de contrat";
+            employe.setMotifSortie(motif.length() <= 300 ? motif : motif.substring(0, 300));
             employes.save(employe);
         }
         boolean posteEncoreOccupe = !affectations.findByPosteIdAndDateFinIsNull(poste.getId()).isEmpty();

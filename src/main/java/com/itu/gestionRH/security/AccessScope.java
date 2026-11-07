@@ -95,6 +95,33 @@ public class AccessScope {
         throw new NotFoundException("Ressource introuvable.");
     }
 
+    /** Dossier salarié : tous les dossiers (DOSSIER_CONSULTER_TOUS) ou le sien (DOSSIER_CONSULTER_PERSO). */
+    public void requireDossier(Long employeId) {
+        if (has("PERM_DOSSIER_CONSULTER_TOUS")) return;
+        if (has("PERM_DOSSIER_CONSULTER_PERSO") && estSoiMeme(employeId)) return;
+        throw new NotFoundException("Ressource introuvable.");
+    }
+
+    public boolean estSoiMeme(Long employeId) {
+        Utilisateur u = currentUser();
+        return u != null && employeId != null && employeId.equals(u.getEmployeId());
+    }
+
+    /** CIN, n° CNaPS et coordonnées bancaires en clair : habilitation dédiée, ou le salarié lui-même. */
+    public boolean peutVoirDonneesSensibles(Long employeId) {
+        return has("PERM_DONNEES_SENSIBLES_CONSULTER") || estSoiMeme(employeId);
+    }
+
+    /** Rémunération du dossier : SALAIRE_CONSULTER, ou le salarié lui-même. */
+    public boolean peutVoirSalaire(Long employeId) {
+        return has("PERM_SALAIRE_CONSULTER") || estSoiMeme(employeId);
+    }
+
+    /** Écrans de contrat existants : la gestion des contrats continue de donner accès au salaire. */
+    public boolean peutVoirSalaireContrat(Long employeId) {
+        return peutVoirSalaire(employeId) || has("PERM_CONTRAT_GERER");
+    }
+
     public Long requireCandidatCourant() {
         Utilisateur u=currentUser();
         if(u==null || u.getCandidatId()==null) throw new NotFoundException("Ressource introuvable.");
