@@ -5,7 +5,6 @@ Gérer les documents administratifs et leur validité.
 Prévoir confidentialité, habilitations et Journal d'audit.
 Le dossier salarié devient le référentiel central du SIRH.
 
-Analyse aussi ce qui n'est pas utiliser dans le bloc 5
 Ce qui existe déjà au niveau de bloc 5 :
 
 **Identité et situation professionnelle.** La table `EMPLOYE` est créée à l'embauche, avec matricule, civilité, nom, prénom, date de naissance, e-mail professionnel, téléphone, dates d'embauche et de sortie, motif de sortie et statut. La fiche salarié RH affiche le poste actuel, les contrats et l'onboarding.
