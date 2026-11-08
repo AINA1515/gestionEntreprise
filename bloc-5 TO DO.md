@@ -63,7 +63,7 @@ Ce qui existe déjà au niveau de bloc 5 :
 
 1. Base de données : migration `015` (nouveaux champs du dossier, validité des documents, journal d'audit, nouvelles permissions).
 2. Backend du dossier : modification des données, chronologie de carrière, masquage des champs sensibles.
-3. Documents : validité, validation, pièces obligatoires, alertes. <<-- On est ici. 1,2 finie
+3. Documents : validité, validation, pièces obligatoires, alertes.
 4. Audit : écriture dans les actions sensibles, API et page de consultation.
 5. Habilitations : page d'administration des rôles et permissions.
 6. Frontend : dossier à onglets pour la RH, « Mon dossier » pour le salarié.
