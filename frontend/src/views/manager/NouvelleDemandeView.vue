@@ -22,13 +22,14 @@ const fieldErrors = computed(() => fromApiError({ details: demandes.errorDetails
 
 const form = reactive({
   departementId: '', posteId: '', typeDemande: 'CREATION', employeRemplaceId: null,
-  effectif: 1, motif: '', budget: 0, dateSouhaitee: '', niveauFormation: '',
+  effectif: 1, motif: '', budget: 0, dateSouhaitee: '', niveauFormation: '', typeEmploi: '',
 })
 
 onMounted(async () => {
   await Promise.all([
     chargement.run(() => referentiel.chargerDepartements()),
     chargement.run(() => referentiel.chargerNiveauxFormation()),
+    chargement.run(() => referentiel.chargerTypesEmploi()),
     employes.chargerCollaborateurs({ size: 100 }).catch(() => {}),
   ])
   if (modification.value) {
@@ -45,6 +46,7 @@ onMounted(async () => {
       effectif: demande.effectif, motif: demande.motif, budget: demande.budget ?? 0,
       dateSouhaitee: demande.dateSouhaitee,
       niveauFormation: demande.niveauFormation ?? '',
+      typeEmploi: demande.typeEmploi ?? '',
     })
   }
 })
@@ -64,6 +66,7 @@ async function enregistrer(soumettre = false) {
     effectif: form.effectif, motif: form.motif, budget: form.budget,
     dateSouhaitee: form.dateSouhaitee,
     niveauFormation: form.niveauFormation || null,
+    typeEmploi: form.typeEmploi || null,
   }
   if (modification.value) {
     if (!await demandes.modifier(route.params.id, payload)) return
@@ -102,7 +105,15 @@ async function enregistrer(soumettre = false) {
           </select>
         </FormField>
 
-        <FormField id="niveauFormation" label="Niveau de formation requis" :error="fieldErrors.niveauFormation">
+        <FormField id="typeEmploi" label="Type d’emploi recherché" :error="fieldErrors.typeEmploi">
+          <select id="typeEmploi" v-model="form.typeEmploi" class="form-select" :class="{ 'is-invalid': fieldErrors.typeEmploi }">
+            <option value="">-- Non précisé --</option>
+            <option v-for="type in referentiel.typesEmploi" :key="type.code" :value="type.code">{{ type.libelle }}</option>
+          </select>
+          <div class="form-text">La présélection automatique ne retient que les candidats ayant une expérience dans ce type d’emploi.</div>
+        </FormField>
+
+        <FormField id="niveauFormation" label="Niveau d’expérience requis" :error="fieldErrors.niveauFormation">
           <select id="niveauFormation" v-model="form.niveauFormation" class="form-select" :class="{ 'is-invalid': fieldErrors.niveauFormation }">
             <option value="">-- Non précisé --</option>
             <option v-for="niveau in referentiel.niveauxFormation" :key="niveau.code" :value="niveau.code">{{ niveau.libelle }}</option>

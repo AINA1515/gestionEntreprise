@@ -118,7 +118,10 @@ public class EvaluationCandidatController {
             proposition.setDateLimiteReponse(request.dateLimiteReponse());
             proposition.appliquerTransitionWorkflow(PropositionStatut.BROUILLON);
             propositions.save(proposition);
-            propositionMachine.transition(proposition, "envoyer", WorkflowContext.utilisateurCourant("Évaluation favorable : proposition d’embauche"));
+            // Le manager n'a pas PROPOSITION_EMETTRE (réservée à la RH) : l'envoi découle de son évaluation favorable,
+            // il est donc fait en son nom avec cette seule permission en plus, pour cette étape.
+            propositionMachine.transition(proposition, "envoyer",
+                    WorkflowContext.utilisateurCourant("Évaluation favorable : proposition d’embauche").avecPermission("PROPOSITION_EMETTRE"));
         }
         return new DecisionResponse(saved.getId(), id, entretien.getId(), saved.getDecision().name(), saved.getCommentaires(), proposition == null ? null : proposition.getId());
     }

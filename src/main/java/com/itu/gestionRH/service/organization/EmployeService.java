@@ -57,10 +57,11 @@ public class EmployeService {
     private Employe trouver(Long id) { return employes.findById(id).orElseThrow(() -> new NotFoundException("Employé introuvable.")); }
     private EmployeDto dto(Employe e) {
         Affectation current = affectations.findFirstByEmployeIdAndDateFinIsNullOrderByDateDebutDesc(e.getId()).orElse(null);
+        boolean salaireVisible = accessScope.peutVoirSalaireContrat(e.getId());
         var contratsDuSalarie = contrats.findByEmployeIdOrderByDateDebutDescIdDesc(e.getId()).stream()
                 .map(c -> new ContratResume(c.getId(), c.getTypeContrat().name(), c.getTypeActe().name(),
                         c.getContratPrecedent() == null ? null : c.getContratPrecedent().getId(),
-                        c.getDateDebut(), c.getDateFin(), c.getDateFinEffective(), c.getSalaireBrut(),
+                        c.getDateDebut(), c.getDateFin(), c.getDateFinEffective(), salaireVisible ? c.getSalaireBrut() : null,
                         c.getDevise(), c.getStatutContrat().name())).toList();
         AffectationResume affectation = null;
         Long departementId = null; String departement = null;

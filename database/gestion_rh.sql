@@ -6,7 +6,7 @@
          sqlplus utilisateur/motdepasse@base @gestion_rh.sql
    (@@ = chemin relatif au script appelant)
 
-   Blocs couverts : 1 Besoin | 2 Recrutement | 3 Embauche | 4 Contrat/Onboarding
+   Blocs couverts : 1 Besoin | 2 Recrutement | 3 Embauche | 4 Contrat/Onboarding | 5 Dossier salarie
                     + Securite (RBAC), GED, Notifications, Journaux de securite.
 
    OBJETS UTILISES : tables, sequences, triggers, fonctions (+ index et contraintes
@@ -99,6 +99,9 @@
 @@08_migrations/010_retrait_salaire_demande.sql
 @@08_migrations/011_date_fin_proposition.sql
 @@08_migrations/012_recalage_compteur_matricule.sql
+@@08_migrations/013_espace_salarie_historique_onboarding.sql
+@@08_migrations/014_type_emploi_domaines.sql
+@@08_migrations/015_dossier_salarie.sql
 
 UPDATE ROLE_RH
    SET EST_ACTIF = 0,

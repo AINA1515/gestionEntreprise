@@ -19,6 +19,8 @@ import com.itu.gestionRH.repository.recruitment.DemandeRecrutementRepository;
 import com.itu.gestionRH.repository.recruitment.DemandeValidationRepository;
 import com.itu.gestionRH.repository.security.UtilisateurRepository;
 import com.itu.gestionRH.repository.security.NiveauFormationRepository;
+import com.itu.gestionRH.repository.security.TypeEmploiRepository;
+import com.itu.gestionRH.entity.security.TypeEmploi;
 import com.itu.gestionRH.security.AccessScope;
 import com.itu.gestionRH.workflow.DemandeRecrutementMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
@@ -45,10 +47,13 @@ public class DemandeRecrutementService {
     private final DemandeRecrutementMachine machine;
     private final AccessScope accessScope;
     private final NiveauFormationRepository niveauxFormation;
+    private final TypeEmploiRepository typesEmploi;
 
     public DemandeRecrutementService(DemandeRecrutementRepository demandes, DemandeValidationRepository validations,
             PosteRepository postes, EmployeRepository employes, UtilisateurRepository utilisateurs,
-            DemandeRecrutementMachine machine, AccessScope accessScope, NiveauFormationRepository niveauxFormation) {
+            DemandeRecrutementMachine machine, AccessScope accessScope, NiveauFormationRepository niveauxFormation,
+            TypeEmploiRepository typesEmploi) {
+        this.typesEmploi=typesEmploi;
         this.demandes=demandes; this.validations=validations; this.postes=postes; this.employes=employes;
         this.utilisateurs=utilisateurs; this.machine=machine; this.accessScope=accessScope; this.niveauxFormation=niveauxFormation;
     }
@@ -61,7 +66,7 @@ public class DemandeRecrutementService {
         validerMetier(request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.budget());
         Utilisateur manager=utilisateurs.findById(contexte.utilisateurId()).orElseThrow(() -> new NotFoundException("Utilisateur introuvable."));
         DemandeRecrutement demande=DemandeRecrutement.nouvelle();
-        appliquer(demande, request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.motif(), request.budget(), request.dateSouhaitee(), request.niveauFormation());
+        appliquer(demande, request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.motif(), request.budget(), request.dateSouhaitee(), request.niveauFormation(), request.typeEmploi());
         demande.setPoste(poste); demande.setManager(manager); demande.initialiserEnBrouillon();
         demande=demandes.saveAndFlush(demande);
         if (Boolean.TRUE.equals(request.soumettreDirectement())) {
@@ -80,7 +85,7 @@ public class DemandeRecrutementService {
         if (demande.getStatutValidation() != DemandeStatut.BROUILLON) throw erreur("DEMANDE_NON_MODIFIABLE", "Seule une demande en brouillon peut être modifiée.", HttpStatus.CONFLICT);
         var poste=posteActif(request.posteId());
         validerMetier(request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.budget());
-        appliquer(demande, request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.motif(), request.budget(), request.dateSouhaitee(), request.niveauFormation());
+        appliquer(demande, request.typeDemande(), request.employeRemplaceId(), request.effectif(), request.motif(), request.budget(), request.dateSouhaitee(), request.niveauFormation(), request.typeEmploi());
         demande.setPoste(poste);
         return reponse(demandes.save(demande), contexte);
     }
@@ -194,10 +199,21 @@ public class DemandeRecrutementService {
     }
 
     private void appliquer(DemandeRecrutement demande, TypeDemande type, Long employeId,
-            Integer effectif, String motif, java.math.BigDecimal budget, java.time.LocalDate date, String niveauCode) {
+            Integer effectif, String motif, java.math.BigDecimal budget, java.time.LocalDate date, String niveauCode, String typeEmploiCode) {
         demande.setTypeDemande(type); demande.setEmployeRemplaceId(employeId); demande.setEffectifDemande(effectif);
         demande.setMotif(motif.trim()); demande.setBudgetAlloue(budget); demande.setDateSouhaitee(date);
         demande.setNiveauFormation(chargerNiveauFormation(niveauCode));
+        demande.setTypeEmploi(chargerTypeEmploi(typeEmploiCode));
+    }
+
+    private TypeEmploi chargerTypeEmploi(String code) {
+        String normalise=normaliser(code);
+        if (normalise == null) return null;
+        TypeEmploi type=typesEmploi.findById(normalise)
+                .orElseThrow(() -> erreur("TYPE_EMPLOI_INVALIDE", "Le type d'emploi sélectionné n'existe pas.", HttpStatus.BAD_REQUEST));
+        if (!Boolean.TRUE.equals(type.getEstActif()))
+            throw erreur("TYPE_EMPLOI_INACTIF", "Le type d'emploi sélectionné n'est plus actif.", HttpStatus.BAD_REQUEST);
+        return type;
     }
 
     private NiveauFormation chargerNiveauFormation(String code) {
@@ -258,7 +274,9 @@ public class DemandeRecrutementService {
                 d.getTypeDemande(), d.getEmployeRemplaceId(), d.getEffectifDemande(), d.getMotif(), d.getBudgetAlloue(),
                 d.getDateSouhaitee(), d.getStatutValidation(), d.getDateCreation(),
                 d.getNiveauFormation() == null ? null : d.getNiveauFormation().getCode(),
-                d.getNiveauFormation() == null ? null : d.getNiveauFormation().getLibelle(), machine.actionsDisponibles(d, context));
+                d.getNiveauFormation() == null ? null : d.getNiveauFormation().getLibelle(),
+                d.getTypeEmploi() == null ? null : d.getTypeEmploi().getCode(),
+                d.getTypeEmploi() == null ? null : d.getTypeEmploi().getLibelle(), machine.actionsDisponibles(d, context));
     }
     private static String normaliser(String value) { return value == null || value.isBlank() ? null : value.trim(); }
     private static BusinessRuleException erreur(String code, String message, HttpStatus status) { return new BusinessRuleException(code, message, status); }

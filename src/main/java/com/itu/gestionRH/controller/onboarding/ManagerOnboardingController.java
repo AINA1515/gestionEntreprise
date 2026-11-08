@@ -10,6 +10,7 @@ import com.itu.gestionRH.repository.onboarding.OnboardingTacheRepository;
 import com.itu.gestionRH.repository.organization.EmployeRepository;
 import com.itu.gestionRH.repository.organization.DepartementRepository;
 import com.itu.gestionRH.repository.security.UtilisateurRepository;
+import com.itu.gestionRH.service.notifications.NotificationService;
 import com.itu.gestionRH.service.onboarding.OnboardingService;
 import com.itu.gestionRH.security.AccessScope;
 import java.time.LocalDate;
@@ -33,10 +34,13 @@ public class ManagerOnboardingController {
     private final DepartementRepository departements;
     private final AccessScope accessScope;
     private final OnboardingService onboardingService;
+    private final NotificationService notifications;
 
     public ManagerOnboardingController(OnboardingTacheRepository taches,
             UtilisateurRepository utilisateurs, AffectationRepository affectations, EmployeRepository employes,
-            DepartementRepository departements, AccessScope accessScope, OnboardingService onboardingService) {
+            DepartementRepository departements, AccessScope accessScope, OnboardingService onboardingService,
+            NotificationService notifications) {
+        this.notifications = notifications;
         this.taches = taches; this.utilisateurs = utilisateurs;
         this.affectations = affectations; this.employes = employes; this.departements = departements;
         this.accessScope = accessScope;
@@ -100,6 +104,9 @@ public class ManagerOnboardingController {
         // écrit la nouvelle ligne d'historique à la mise à jour de ce champ.
         tache.setAssigneeAId(nouvelAssigne.getId());
         taches.saveAndFlush(tache);
+        notifications.programmer("ONBOARDING_TACHE_ASSIGNEE", List.of(nouvelAssigne),
+                java.util.Map.of("reference", "Tâche #" + tache.getId(), "message", tache.getIntituleTache()),
+                "ONBOARDING_TACHE", tache.getId());
         return dto(tache);
     }
 

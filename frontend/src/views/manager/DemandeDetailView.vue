@@ -58,7 +58,7 @@ onMounted(recharger)
         <StepTimeline :steps="['Manager', 'RH', 'Direction', 'Ouvert']" :current-index="progression.index" :stopped="progression.stopped" />
         <div class="row g-3 mt-4">
           <div class="col-md-6"><span class="small text-body-secondary">Type de demande</span><div>{{ demande.typeDemande === 'REMPLACEMENT' ? 'Remplacement' : 'Création' }}</div></div>
-          <div class="col-md-6"><span class="small text-body-secondary">Niveau de formation requis</span><div>{{ demande.niveauFormationLibelle || 'Non précisé' }}</div></div>
+          <div class="col-md-6"><span class="small text-body-secondary">Niveau d’expérience requis</span><div>{{ demande.niveauFormationLibelle || 'Non précisé' }}</div></div><div class="col-md-6"><span class="small text-body-secondary">Type d’emploi</span><div>{{ demande.typeEmploiLibelle || 'Non précisé' }}</div></div>
           <div v-if="demande.employeRemplaceId" class="col-md-6"><span class="small text-body-secondary">Salarié remplacé</span><div>#{{ demande.employeRemplaceId }}</div></div>
           <div class="col-md-6"><span class="small text-body-secondary">Effectif</span><div>{{ demande.effectif }}</div></div>
           <div class="col-md-6"><span class="small text-body-secondary">Budget estimé</span><div>{{ formatMontant(demande.budget) }}</div></div>

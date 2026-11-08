@@ -20,6 +20,12 @@ public interface EmployeRepository extends JpaRepository<Employe, Long> {
     Page<Employe> findByCandidatId(Long candidatId, Pageable pageable);
     boolean existsByCandidatId(Long candidatId);
     boolean existsByEmailProfessionnelIgnoreCase(String emailProfessionnel);
+    @Query("select count(e) from Employe e where upper(replace(e.numCin, ' ', '')) = :valeur and e.id <> :id")
+    long compterParCin(@Param("valeur") String valeurNormalisee, @Param("id") Long id);
+    @Query("select count(e) from Employe e where upper(replace(e.numCnaps, ' ', '')) = :valeur and e.id <> :id")
+    long compterParCnaps(@Param("valeur") String valeurNormalisee, @Param("id") Long id);
+    @Query("select count(e) from Employe e where lower(e.emailProfessionnel) = :valeur and e.id <> :id")
+    long compterParEmailProfessionnel(@Param("valeur") String emailMinuscule, @Param("id") Long id);
     @Query("select distinct e from Employe e where (:statut is null or e.statutActivite = :statut) "
         + "and (:texte is null or lower(e.nom) like concat(concat('%', lower(:texte)), '%') "
         + "or lower(e.prenom) like concat(concat('%', lower(:texte)), '%') "

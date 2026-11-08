@@ -28,12 +28,15 @@ public class NotificationReminderService {
     private final UtilisateurRoleRepository roles;
     private final NotificationService notifications;
     private final PropositionEmbaucheMachine propositionMachine;
+    private final DocumentExpirationReminderService documentsExpiration;
 
     public NotificationReminderService(OnboardingTacheRepository taches, PropositionEmbaucheRepository propositions,
             ContratRepository contrats, UtilisateurRepository utilisateurs, UtilisateurRoleRepository roles,
-            NotificationService notifications, PropositionEmbaucheMachine propositionMachine) {
+            NotificationService notifications, PropositionEmbaucheMachine propositionMachine,
+            DocumentExpirationReminderService documentsExpiration) {
         this.taches=taches; this.propositions=propositions; this.contrats=contrats; this.utilisateurs=utilisateurs;
         this.roles=roles; this.notifications=notifications; this.propositionMachine=propositionMachine;
+        this.documentsExpiration=documentsExpiration;
     }
 
     @Transactional
@@ -59,5 +62,7 @@ public class NotificationReminderService {
                     Map.of("reference", "Contrat #" + contrat.getId(), "date", contrat.getDateFin().toString(),
                             "message", "Veuillez préparer le renouvellement ou la fin du contrat."), "CONTRAT", contrat.getId());
         }
+
+        documentsExpiration.programmerAlertes();
     }
 }

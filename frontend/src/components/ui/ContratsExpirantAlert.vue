@@ -34,6 +34,7 @@ function urgence(contrat) {
           {{ c.employeNom }}
         </component>
         <span class="text-body-secondary">{{ c.employeMatricule }} · {{ c.posteIntitule }} · fin le {{ formatDate(c.dateFin) }}</span>
+        <RouterLink :to="{ name: 'contrat-detail', params: { id: c.id } }">Voir le contrat</RouterLink>
       </li>
     </ul>
   </section>

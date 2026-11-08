@@ -1,19 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import AppLayout from '@/components/layout/AppLayout.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
 import { employeService } from '@/services/employeService'
 import { onboardingService } from '@/services/onboardingService'
 import { useFormatters } from '@/composables/useFormatters'
-
-const items = [
-  { to: '/salarie/accueil', label: 'Accueil', icon: 'house', roles: ['SALARIE'] },
-  { to: '/salarie/contrats', label: 'Mes contrats', icon: 'file-earmark-text', roles: ['SALARIE'], permission: 'DOCUMENT_CONSULTER_PERSO' },
-  { to: '/taches', label: 'Mes tâches', icon: 'check2-square', roles: ['SALARIE'], permission: 'TACHE_TRAITER' },
-  { to: '/offres', label: 'Offres d’emploi', icon: 'search' },
-]
 
 const { formatDate } = useFormatters()
 const employe = ref(null)
@@ -43,8 +35,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppLayout espace="Espace salarié" :items="items">
-    <div class="container-fluid py-3">
+  <div class="container-fluid py-3">
       <PageHeader :title="employe ? `Bonjour ${employe.prenom}` : 'Mon espace salarié'" :breadcrumb="['Espace salarié', 'Accueil']"
         :subtitle="employe ? `Matricule ${employe.matricule}` : ''" />
       <AlertMessage :message="error" />
@@ -77,5 +68,4 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-  </AppLayout>
 </template>

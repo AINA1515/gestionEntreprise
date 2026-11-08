@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import PageHeader from '@/components/ui/PageHeader.vue'
-import AppLayout from '@/components/layout/AppLayout.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -21,8 +20,7 @@ async function submit() {
 </script>
 
 <template>
-  <AppLayout espace="Mon profil" :items="[]">
-    <div class="container py-3" style="max-width: 44rem">
+  <div class="container py-3" style="max-width: 44rem">
       <PageHeader title="Changer le mot de passe" />
       <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
       <form class="card card-body" @submit.prevent="submit">
@@ -36,5 +34,4 @@ async function submit() {
         <button class="btn btn-primary align-self-start" type="submit" :disabled="loading || form.nouveau !== form.confirmation">{{ loading ? 'Enregistrement…' : 'Enregistrer' }}</button>
       </form>
     </div>
-  </AppLayout>
 </template>

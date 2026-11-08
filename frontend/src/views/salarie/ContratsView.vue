@@ -1,17 +1,10 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { employeService } from '@/services/employeService'
 import { useFormatters } from '@/composables/useFormatters'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
-import AppLayout from '@/components/layout/AppLayout.vue'
-
-const items = [
-  { to: '/salarie/accueil', label: 'Accueil', icon: 'house', roles: ['SALARIE'] },
-  { to: '/salarie/contrats', label: 'Mes contrats', icon: 'file-earmark-text', roles: ['SALARIE'], permission: 'DOCUMENT_CONSULTER_PERSO' },
-  { to: '/taches', label: 'Mes tâches', icon: 'check2-square', roles: ['SALARIE'], permission: 'TACHE_TRAITER' },
-  { to: '/offres', label: 'Offres d’emploi', icon: 'search' },
-]
 
 const employe = ref(null)
 const loading = ref(false)
@@ -27,7 +20,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppLayout espace="Espace salarié" :items="items"><div class="container-fluid py-3">
+  <div class="container-fluid py-3">
     <PageHeader title="Mes contrats" :breadcrumb="['Espace salarié', 'Contrats']" subtitle="Consultez vos contrats successifs et leur historique." />
     <AlertMessage :message="error" />
     <section class="card shadow-sm">
@@ -39,9 +32,10 @@ onMounted(async () => {
           <p class="text-body-secondary mb-2">Du {{ formatDate(contrat.dateDebut) }}<span v-if="contrat.dateFin"> au {{ formatDate(contrat.dateFin) }}</span></p>
           <p v-if="contrat.dateFinEffective" class="small text-body-secondary mb-2">Fin effective : {{ formatDate(contrat.dateFinEffective) }}</p>
           <p v-if="contrat.contratPrecedentId" class="small text-body-secondary mb-2">Succède au contrat #{{ contrat.contratPrecedentId }}</p>
-          <p v-if="contrat.salaireBrut != null" class="mb-0">Salaire brut : {{ formatMontant(contrat.salaireBrut) }} {{ contrat.devise }}</p>
+          <p v-if="contrat.salaireBrut != null" class="mb-2">Salaire brut : {{ formatMontant(contrat.salaireBrut) }} {{ contrat.devise }}</p>
+          <RouterLink class="btn btn-sm btn-outline-primary" :to="{ name: 'contrat-detail', params: { id: contrat.id } }">Voir le détail</RouterLink>
         </article>
       </div>
     </section>
-  </div></AppLayout>
+  </div>
 </template>

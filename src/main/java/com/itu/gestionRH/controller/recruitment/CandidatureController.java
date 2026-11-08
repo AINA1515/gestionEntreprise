@@ -52,7 +52,7 @@ public class CandidatureController {
                                       BigDecimal salaireReference, List<String> actionsDisponibles,
                                       String niveauFormationCandidat, String niveauFormationRequis,
                                       BigDecimal plafondSalairePreselection, Boolean preselectionnee,
-                                      String motifPreselection) {}
+                                      String motifPreselection, String typeEmploiRequis, Boolean typeEmploiConforme) {}
 
     public record StatsCandidatures(long recues, long entretiensAOrganiser, long retenues) {}
 
@@ -227,24 +227,49 @@ public class CandidatureController {
                 evaluation == null ? null : evaluation.niveauRequis(),
                 evaluation == null ? null : evaluation.plafondSalaire(),
                 evaluation == null ? null : evaluation.retenue(),
-                evaluation == null ? null : evaluation.motif());
+                evaluation == null ? null : evaluation.motif(),
+                evaluation == null ? null : evaluation.typeEmploiRequis(),
+                evaluation == null ? null : evaluation.typeEmploiConforme());
     }
 
     private record EvaluationPreselection(String niveauCandidat, String niveauRequis,
-                                          BigDecimal plafondSalaire, boolean retenue, String motif) {}
+                                          BigDecimal plafondSalaire, boolean retenue, String motif,
+                                          String typeEmploiRequis, Boolean typeEmploiConforme) {}
 
+    /**
+     * Présélection automatique : le candidat est retenu s'il a un niveau suffisant, une prétention salariale dans
+     * le plafond (budget + 10 %) et, lorsque la demande précise un type d'emploi, une expérience dans ce type.
+     * Le niveau pris en compte est celui des expériences professionnelles : uniquement celles du type d'emploi
+     * demandé quand il y en a un, sinon toutes.
+     */
     private EvaluationPreselection evaluerPreselection(Candidature candidature, Map<String, NiveauFormation> niveaux) {
         var demande = candidature.getOffre() == null ? null : candidature.getOffre().getDemande();
         NiveauFormation requis = demande == null ? null : demande.getNiveauFormation();
+        String typeRequisCode = demande == null || demande.getTypeEmploi() == null ? null : demande.getTypeEmploi().getCode();
+        String typeRequisLibelle = demande == null || demande.getTypeEmploi() == null ? null : demande.getTypeEmploi().getLibelle();
+
+        boolean aExperienceDuType = typeRequisCode == null;
         String niveauCandidatCode = null;
         if (candidature.getCandidat() != null && candidature.getCandidat().getCvContenu() != null) {
             try {
-                JsonNode formations = objectMapper.readTree(candidature.getCandidat().getCvContenu()).path("formations");
-                if (formations.isArray()) {
-                    niveauCandidatCode = StreamSupport.stream(formations.spliterator(), false)
-                            .map(f -> f.path("niveau").asText(null)).filter(code -> code != null && niveaux.containsKey(code))
-                            .max(Comparator.comparingInt(code -> niveaux.get(code).getOrdre())).orElse(null);
+                JsonNode cv = objectMapper.readTree(candidature.getCandidat().getCvContenu());
+                List<String> niveauxExperiences = new java.util.ArrayList<>();
+                JsonNode experiences = cv.path("experiences");
+                if (experiences.isArray()) {
+                    for (JsonNode experience : experiences) {
+                        boolean typeCorrespond = typeRequisCode == null || typeRequisCode.equals(experience.path("typeEmploi").asText(null));
+                        if (!typeCorrespond) continue;
+                        aExperienceDuType = true;
+                        niveauxExperiences.add(experience.path("niveau").asText(null));
+                    }
                 }
+                // Anciens CV : le niveau était saisi sur les formations ; on le reprend tant qu'aucune expérience n'en porte un.
+                JsonNode formations = cv.path("formations");
+                if (formations.isArray() && niveauxExperiences.stream().noneMatch(code -> code != null && niveaux.containsKey(code))) {
+                    for (JsonNode formation : formations) niveauxExperiences.add(formation.path("niveau").asText(null));
+                }
+                niveauCandidatCode = niveauxExperiences.stream().filter(code -> code != null && niveaux.containsKey(code))
+                        .max(Comparator.comparingInt(code -> niveaux.get(code).getOrdre())).orElse(null);
             } catch (Exception ignored) { /* CV importé ou contenu non exploitable : aucun niveau structuré. */ }
         }
         NiveauFormation niveauCandidat = niveauCandidatCode == null ? null : niveaux.get(niveauCandidatCode);
@@ -254,15 +279,19 @@ public class CandidatureController {
         BigDecimal plafond = budget == null ? null : budget.multiply(new BigDecimal("1.10"));
         BigDecimal salaire = candidature.getSalairePropose() != null ? candidature.getSalairePropose() : budget;
 
+        boolean typeOk = aExperienceDuType;
         boolean niveauOk = requis == null || (niveauCandidat != null && niveauCandidat.getOrdre() >= requis.getOrdre());
         boolean salaireOk = plafond != null && salaire != null && salaire.compareTo(plafond) <= 0;
         boolean statutEligible = candidature.getStatutCandidature() != CandidatureStatut.ANNULEE
                 && candidature.getStatutCandidature() != CandidatureStatut.REJETEE;
-        boolean retenue = niveauOk && salaireOk && statutEligible;
+        boolean retenue = typeOk && niveauOk && salaireOk && statutEligible;
         String motif = !statutEligible ? "Candidature annulée ou rejetée"
-                : !niveauOk ? "Niveau de formation inférieur ou non renseigné"
+                : !typeOk ? "Aucune expérience dans le type d’emploi demandé (" + typeRequisLibelle + ")"
+                : !niveauOk ? "Niveau d’expérience inférieur ou non renseigné"
                 : !salaireOk ? (plafond == null ? "Budget de l’offre non renseigné" : "Salaire supérieur au plafond de présélection")
-                : "Niveau et salaire conformes aux critères";
-        return new EvaluationPreselection(libelleCandidat, libelleRequis, plafond, retenue, motif);
+                : typeRequisCode == null ? "Niveau et salaire conformes aux critères"
+                : "Type d’emploi, niveau et salaire conformes aux critères";
+        return new EvaluationPreselection(libelleCandidat, libelleRequis, plafond, retenue, motif,
+                typeRequisLibelle, typeRequisCode == null ? null : typeOk);
     }
 }

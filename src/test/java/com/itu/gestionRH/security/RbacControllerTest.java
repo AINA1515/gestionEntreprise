@@ -72,6 +72,7 @@ class RbacControllerTest {
     @MockitoBean OffreEmploiRepository offreRepository;
     @MockitoBean AccessScope accessScope;
     @MockitoBean AdminService adminService;
+    @MockitoBean com.itu.gestionRH.service.audit.AuditService auditService;
     @MockitoBean OnboardingTacheRepository tacheRepository;
     @MockitoBean OnboardingTacheMachine tacheMachine;
     @MockitoBean OnboardingTacheService tacheService;

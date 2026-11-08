@@ -32,7 +32,7 @@ onMounted(() => action.run(async () => { await referentiel.chargerDepartements()
     </div><button class="btn btn-outline-primary align-self-start" @click="load">Filtrer</button></div>
     <div class="card"><DataTable :columns="columns" :rows="rows" :loading="store.loading">
       <template #cell-statutActivite="{ row }"><StatusBadge type="employe" :value="row.statutActivite" /></template>
-      <template #cell-actions="{ row }"><RouterLink class="btn btn-sm btn-outline-primary" :to="{ name: 'rh-employe-detail', params: { id: row.id } }">Voir la fiche</RouterLink></template>
+      <template #cell-actions="{ row }"><RouterLink class="btn btn-sm btn-outline-primary me-1" :to="{ name: 'rh-employe-detail', params: { id: row.id } }">Voir la fiche</RouterLink><RouterLink class="btn btn-sm btn-outline-secondary" :to="{ name: 'rh-employe-dossier', params: { id: row.id } }">Dossier</RouterLink></template>
     </DataTable></div>
   </div>
 </template>

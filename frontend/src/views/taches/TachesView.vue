@@ -1,13 +1,11 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import AppLayout from '@/components/layout/AppLayout.vue'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
 import FileUploader from '@/components/ui/FileUploader.vue'
 import { onboardingService } from '@/services/onboardingService'
 import { documentService } from '@/services/documentService'
 import { useFormatters } from '@/composables/useFormatters'
 
-const items = [{ to: '/taches', label: 'Mes tâches', icon: 'check2-square', permission: 'TACHE_TRAITER' }, { to: '/offres', label: 'Offres d’emploi', icon: 'search' }]
 const taches = ref([])
 const chargement = ref(true)
 const actionEnCours = ref(false)
@@ -60,8 +58,7 @@ onMounted(charger)
 </script>
 
 <template>
-  <AppLayout espace="Mes tâches" :items="items">
-    <section class="container-fluid py-3">
+  <section class="container-fluid py-3">
       <h1 class="h2">Mes tâches d’intégration</h1>
       <p class="text-body-secondary">Consultez les tâches qui vous ont été attribuées et mettez leur avancement à jour.</p>
       <AlertMessage :message="erreur" />
@@ -96,5 +93,4 @@ onMounted(charger)
         </article>
       </div>
     </section>
-  </AppLayout>
 </template>

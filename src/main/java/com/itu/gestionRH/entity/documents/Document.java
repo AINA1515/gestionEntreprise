@@ -78,6 +78,27 @@ public class Document {
     @Enumerated(EnumType.STRING)
     private DocumentStatut statutDocument;
 
+    // --- Validité et validation des pièces (migration 015) ---
+    @Column(name = "DATE_EMISSION")
+    private java.time.LocalDate dateEmission;
+
+    @Column(name = "DATE_EXPIRATION")
+    private java.time.LocalDate dateExpiration;
+
+    @Column(name = "STATUT_VALIDATION", nullable = false, length = 10)
+    @Enumerated(EnumType.STRING)
+    private com.itu.gestionRH.entity.enums.DocumentValidation statutValidation = com.itu.gestionRH.entity.enums.DocumentValidation.A_VALIDER;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "VALIDE_PAR_ID")
+    private com.itu.gestionRH.entity.security.Utilisateur validePar;
+
+    @Column(name = "DATE_VALIDATION")
+    private LocalDateTime dateValidation;
+
+    @Column(name = "MOTIF_REFUS", length = 500)
+    private String motifRefus;
+
     // Colonnes d'audit gérées par le trigger TBR_DOCUMENT (script GC-01)
     @Column(name = "DATE_CREATION", nullable = false, insertable = false, updatable = false)
     private LocalDateTime dateCreation;
@@ -133,6 +154,19 @@ public class Document {
 
     public DocumentStatut getStatutDocument() { return statutDocument; }
     public void setStatutDocument(DocumentStatut statutDocument) { this.statutDocument = statutDocument; }
+
+    public java.time.LocalDate getDateEmission() { return dateEmission; }
+    public void setDateEmission(java.time.LocalDate dateEmission) { this.dateEmission = dateEmission; }
+    public java.time.LocalDate getDateExpiration() { return dateExpiration; }
+    public void setDateExpiration(java.time.LocalDate dateExpiration) { this.dateExpiration = dateExpiration; }
+    public com.itu.gestionRH.entity.enums.DocumentValidation getStatutValidation() { return statutValidation; }
+    public void setStatutValidation(com.itu.gestionRH.entity.enums.DocumentValidation statutValidation) { this.statutValidation = statutValidation; }
+    public com.itu.gestionRH.entity.security.Utilisateur getValidePar() { return validePar; }
+    public void setValidePar(com.itu.gestionRH.entity.security.Utilisateur validePar) { this.validePar = validePar; }
+    public LocalDateTime getDateValidation() { return dateValidation; }
+    public void setDateValidation(LocalDateTime dateValidation) { this.dateValidation = dateValidation; }
+    public String getMotifRefus() { return motifRefus; }
+    public void setMotifRefus(String motifRefus) { this.motifRefus = motifRefus; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
 

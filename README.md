@@ -66,3 +66,25 @@ Valider une tâche d'onboarding dont le modèle est `SAL_RIB`, `SAL_IDENTITE`, `
 ## Affectations (mutation d'un salarié en poste)
 
 Page RH `/rh/affectations`, réservée aux salariés actifs (l'embauche d'un candidat garde son propre flux). `POST /api/v1/affectations/mutations` (permission `CONTRAT_GERER`) : l'affectation actuelle est clôturée à la date d'effet, le contrat en cours est terminé et remplacé par un avenant sur le nouveau poste (salaire inchangé sauf indication), une nouvelle affectation est créée, l'ancien poste redevient `VACANT` s'il n'a plus personne et le nouveau poste passe à `POURVU`. `GET /api/v1/affectations/employes/{id}` renvoie l'historique.
+
+## CV candidat : expériences et niveaux
+
+Un CV peut contenir plusieurs formations et plusieurs expériences professionnelles. Le **niveau** (référentiel `NIVEAU_FORMATION`) se renseigne sur chaque expérience, avec son type d'emploi ; une formation n'a plus de niveau (les anciens CV qui en contiennent un sont lus normalement, la valeur est ignorée).
+
+## Navigation et notifications
+
+Tout l'espace connecté passe par `MainLayout` : le menu de gauche est calculé une seule fois à partir du profil de l'utilisateur (`composables/useRoleMenu.js`) et ne change plus selon la page (Mes tâches, Offres, Notifications, Mes contrats… sont toujours dans le même menu). Chaque notification mène à la page concernée (`composables/notificationLink.js`) depuis la cloche comme depuis `/notifications`, et l'attribution d'une tâche d'intégration envoie désormais la notification `ONBOARDING_TACHE_ASSIGNEE`.
+
+## Type d'emploi et présélection automatique
+
+Le **type d'emploi** est un domaine d'activité (Informatique, Finance et comptabilité, RH, Commercial et marketing…) géré dans la table `TYPE_EMPLOI` (migration `014_type_emploi_domaines.sql` : les anciennes valeurs CDI/CDD… sont désactivées, pas supprimées). Il se renseigne sur chaque expérience du CV et sur chaque demande de recrutement (`DEMANDE_RECRUTEMENT.TYPE_EMPLOI_CODE`, `GET /api/v1/referentiels/types-emploi`).
+
+La présélection (`CandidatureController.evaluerPreselection`) retient un candidat si : (1) quand la demande précise un type d'emploi, il a au moins une expérience de ce type ; (2) son niveau d'expérience (le plus élevé parmi ces expériences, ou parmi toutes si la demande n'impose pas de type) est au moins égal au niveau demandé ; (3) son salaire souhaité ne dépasse pas le budget + 10 %. Les anciens CV dont le niveau était saisi sur les formations sont encore lus en dernier recours.
+
+## Évaluation d'un candidat par le manager
+
+Une évaluation favorable envoie automatiquement la proposition d'embauche. Cet envoi exige `PROPOSITION_EMETTRE` (permission RH) : il est effectué au nom du manager avec cette seule permission ajoutée pour l'étape (`WorkflowContext.avecPermission`), sans lui accorder ce droit ailleurs.
+
+## Pages de détail
+
+`/contrats/:id` (contrat : dates, salaire, contrat précédent, échéance, bouton « Terminer » pour la RH) et `/candidatures/:id` (candidat, CV avec expériences, entretiens et évaluations, proposition d'embauche ; `GET /api/v1/recrutement/candidatures/{id}/detail`). Elles sont accessibles depuis « Mes contrats », la fiche salarié, l'alerte de fin de CDD, les listes de candidatures RH, les entretiens du manager et les notifications. Le manager ne voit une candidature qu'après sa transmission par la RH.

@@ -23,6 +23,7 @@ import com.itu.gestionRH.entity.organization.Employe;
 import com.itu.gestionRH.entity.organization.Poste;
 import com.itu.gestionRH.entity.security.Utilisateur;
 import com.itu.gestionRH.entity.security.NiveauFormation;
+import com.itu.gestionRH.entity.security.TypeEmploi;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -81,6 +82,10 @@ public class DemandeRecrutement {
     @JoinColumn(name = "NIVEAU_FORMATION_CODE")
     private NiveauFormation niveauFormation;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "TYPE_EMPLOI_CODE")
+    private TypeEmploi typeEmploi;
+
     @Column(name = "STATUT_VALIDATION", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private DemandeStatut statutValidation;
@@ -137,6 +142,8 @@ public class DemandeRecrutement {
 
     public NiveauFormation getNiveauFormation() { return niveauFormation; }
     public void setNiveauFormation(NiveauFormation niveauFormation) { this.niveauFormation = niveauFormation; }
+    public TypeEmploi getTypeEmploi() { return typeEmploi; }
+    public void setTypeEmploi(TypeEmploi typeEmploi) { this.typeEmploi = typeEmploi; }
 
     public DemandeStatut getStatutValidation() { return statutValidation; }
     public void appliquerTransitionWorkflow(DemandeStatut nouvelEtat) { this.statutValidation = nouvelEtat; }

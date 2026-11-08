@@ -9,9 +9,11 @@ import AlertMessage from '@/components/ui/AlertMessage.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import { onboardingService } from '@/services/onboardingService'
 import { contratService } from '@/services/contratService'
+import { usePermissions } from '@/composables/usePermissions'
 
 const route = useRoute()
 const store = useEmployesStore()
+const { can } = usePermissions()
 const { loading, error, run } = useAsyncAction()
 const { formatDate, formatMontant } = useFormatters()
 const employe = computed(() => store.employeSelectionne)
@@ -92,7 +94,10 @@ watch(() => route.params.id, async (id) => {
       <section class="card shadow-sm mb-4"><div class="card-body">
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
           <div><h1 class="h3 mb-1">{{ employe.prenom }} {{ employe.nom }}</h1><p class="text-body-secondary mb-0">Matricule : <strong>{{ employe.matricule }}</strong></p></div>
-          <StatusBadge type="employe" :value="employe.statutActivite" />
+          <div class="d-flex align-items-center gap-2">
+            <RouterLink v-if="can('DOSSIER_CONSULTER_TOUS')" class="btn btn-sm btn-primary" :to="{ name: 'rh-employe-dossier', params: { id: employe.id } }"><i class="bi bi-person-vcard me-1" aria-hidden="true"></i>Dossier administratif</RouterLink>
+            <StatusBadge type="employe" :value="employe.statutActivite" />
+          </div>
         </div>
         <hr />
         <div class="row g-3"><div class="col-md-6"><strong>E-mail professionnel</strong><p>{{ employe.emailProfessionnel || 'Non renseigné' }}</p></div><div class="col-md-6"><strong>Téléphone</strong><p>{{ employe.telephone || 'Non renseigné' }}</p></div></div>
@@ -130,6 +135,7 @@ watch(() => route.params.id, async (id) => {
               <div v-if="contrat.dateFinEffective" class="small text-body-secondary">Fin effective : {{ formatDate(contrat.dateFinEffective) }}</div>
               <div v-if="contrat.contratPrecedentId" class="small text-body-secondary">Succède au contrat #{{ contrat.contratPrecedentId }}</div>
               <div v-if="contrat.salaireBrut != null" class="small">Salaire brut : {{ formatMontant(contrat.salaireBrut) }} {{ contrat.devise }}</div>
+              <RouterLink class="btn btn-sm btn-outline-primary mt-2 me-2" :to="{ name: 'contrat-detail', params: { id: contrat.id } }">Voir le détail</RouterLink>
               <button v-if="['EN_COURS', 'EN_ATTENTE'].includes(contrat.statut)" class="btn btn-sm btn-outline-danger mt-2" type="button" @click="terminerContrat(contrat)">Terminer le contrat</button>
             </article>
           </div>

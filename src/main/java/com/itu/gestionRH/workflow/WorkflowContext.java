@@ -38,6 +38,13 @@ public record WorkflowContext(String acteur, Long utilisateurId, Set<String> rol
         return new WorkflowContext(auth.getName(), userId, roles, permissions, commentaire, Map.of());
     }
 
+    /** Même acteur, avec une permission de plus : pour une étape automatique qui découle d'une action déjà autorisée. */
+    public WorkflowContext avecPermission(String permission) {
+        var etendues = new java.util.HashSet<>(permissions);
+        etendues.add(permission);
+        return new WorkflowContext(acteur, utilisateurId, roles, etendues, commentaire, attributs);
+    }
+
     public boolean hasAccess(Set<String> rolesRequis, Set<String> permissionsRequises) {
         if (rolesRequis.isEmpty() && permissionsRequises.isEmpty()) return true;
         return roles.stream().anyMatch(rolesRequis::contains)
