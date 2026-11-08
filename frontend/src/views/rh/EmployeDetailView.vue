@@ -9,9 +9,11 @@ import AlertMessage from '@/components/ui/AlertMessage.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import { onboardingService } from '@/services/onboardingService'
 import { contratService } from '@/services/contratService'
+import { usePermissions } from '@/composables/usePermissions'
 
 const route = useRoute()
 const store = useEmployesStore()
+const { can } = usePermissions()
 const { loading, error, run } = useAsyncAction()
 const { formatDate, formatMontant } = useFormatters()
 const employe = computed(() => store.employeSelectionne)
@@ -92,7 +94,10 @@ watch(() => route.params.id, async (id) => {
       <section class="card shadow-sm mb-4"><div class="card-body">
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
           <div><h1 class="h3 mb-1">{{ employe.prenom }} {{ employe.nom }}</h1><p class="text-body-secondary mb-0">Matricule : <strong>{{ employe.matricule }}</strong></p></div>
-          <StatusBadge type="employe" :value="employe.statutActivite" />
+          <div class="d-flex align-items-center gap-2">
+            <RouterLink v-if="can('DOSSIER_CONSULTER_TOUS')" class="btn btn-sm btn-primary" :to="{ name: 'rh-employe-dossier', params: { id: employe.id } }"><i class="bi bi-person-vcard me-1" aria-hidden="true"></i>Dossier administratif</RouterLink>
+            <StatusBadge type="employe" :value="employe.statutActivite" />
+          </div>
         </div>
         <hr />
         <div class="row g-3"><div class="col-md-6"><strong>E-mail professionnel</strong><p>{{ employe.emailProfessionnel || 'Non renseigné' }}</p></div><div class="col-md-6"><strong>Téléphone</strong><p>{{ employe.telephone || 'Non renseigné' }}</p></div></div>

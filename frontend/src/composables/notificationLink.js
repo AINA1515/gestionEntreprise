@@ -35,6 +35,9 @@ export function lienNotification(n, auth) {
     case 'CONTRAT_FIN_PROCHE':
       if (id) return { name: 'contrat-detail', params: { id } }
       return rh ? { name: 'rh-employes' } : { name: 'salarie-contrats' }
+    case 'DOCUMENT_EXPIRATION_PROCHE':
+      if (rh && id) return { name: 'rh-employe-dossier', params: { id } }
+      return auth.hasPermission('DOSSIER_CONSULTER_PERSO') ? { name: 'salarie-dossier', query: { onglet: 'documents' } } : null
     default:
       return null
   }

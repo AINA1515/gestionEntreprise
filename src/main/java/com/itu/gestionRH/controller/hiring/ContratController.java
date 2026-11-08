@@ -29,9 +29,10 @@ public class ContratController {
     private final ContratRepository contrats;
     private final EmployeRepository employes;
     private final PosteRepository postes;
+    private final com.itu.gestionRH.service.audit.AuditService audit;
     public ContratController(AccessScope accessScope, ContratRepository contrats,
-            EmployeRepository employes, PosteRepository postes) {
-        this.accessScope=accessScope; this.contrats=contrats; this.employes=employes; this.postes=postes;
+            EmployeRepository employes, PosteRepository postes, com.itu.gestionRH.service.audit.AuditService audit) {
+        this.accessScope=accessScope; this.contrats=contrats; this.employes=employes; this.postes=postes; this.audit=audit;
     }
     public record ContratRequest(Long employeId, Long posteId, String typeContrat,
                                  String typeActe, Long contratPrecedentId, LocalDate dateDebut,
@@ -88,7 +89,12 @@ public class ContratController {
         contrat.setContratPrecedent(precedent); contrat.setDateDebut(debut); contrat.setDateFin(request.dateFin());
         contrat.setSalaireBrut(request.salaireBrut()); contrat.setDevise("MGA");
         contrat.setStatutContrat(debut.isAfter(LocalDate.now()) ? ContratStatut.EN_ATTENTE : ContratStatut.EN_COURS);
-        return response(contrats.saveAndFlush(contrat));
+        Contrat saved = contrats.saveAndFlush(contrat);
+        audit.tracer(com.itu.gestionRH.entity.enums.AuditAction.CREATION, "CONTRAT", saved.getId(), employe.getId(),
+                new com.itu.gestionRH.service.audit.AuditService.Diff().champ("typeContrat", null, type).champ("typeActe", null, acte)
+                        .champ("poste", null, poste.getIntitule()).champ("dateDebut", null, debut).champ("dateFin", null, request.dateFin())
+                        .montant("salaireBrut", precedent == null ? null : precedent.getSalaireBrut(), request.salaireBrut()).liste(), null);
+        return response(saved);
     }
     @PreAuthorize("hasAnyAuthority('PERM_CONTRAT_GERER','PERM_DOCUMENT_CONSULTER_PERSO')")
     @GetMapping("/employes/{id}/contrats")

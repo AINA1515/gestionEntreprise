@@ -13,6 +13,7 @@ const ESPACES = {
 const MENUS = {
   ADMIN: [
     { to: '/admin/utilisateurs', label: 'Utilisateurs', icon: 'people', permission: 'UTILISATEUR_ADMIN' },
+    { to: '/admin/audit', label: 'Journal d’audit', icon: 'journal-text', permission: 'AUDIT_CONSULTER' },
   ],
   MANAGER: [
     { to: '/manager/dashboard', label: 'Tableau de bord', icon: 'grid' },
@@ -39,6 +40,7 @@ const MENUS = {
   ],
   SALARIE: [
     { to: '/salarie/accueil', label: 'Accueil', icon: 'house' },
+    { to: '/salarie/dossier', label: 'Mon dossier', icon: 'person-vcard', permission: 'DOSSIER_CONSULTER_PERSO' },
     { to: '/salarie/contrats', label: 'Mes contrats', icon: 'file-earmark-text', permission: 'DOCUMENT_CONSULTER_PERSO' },
   ],
   CANDIDAT: [
@@ -66,7 +68,9 @@ export function useRoleMenu() {
     // Un manager, un RH… est aussi salarié : il garde l'accès à ses propres contrats.
     const contrats = principal.value !== 'SALARIE' && auth.hasRole('SALARIE') && auth.hasPermission('DOCUMENT_CONSULTER_PERSO')
       ? [{ to: '/salarie/contrats', label: 'Mes contrats', icon: 'file-earmark-text' }] : []
-    return [...propres, ...contrats, ...COMMUNS].filter((item) => !item.permission || auth.hasPermission(item.permission))
+    const dossier = principal.value !== 'SALARIE' && auth.hasRole('SALARIE') && auth.hasPermission('DOSSIER_CONSULTER_PERSO')
+      ? [{ to: '/salarie/dossier', label: 'Mon dossier', icon: 'person-vcard' }] : []
+    return [...propres, ...contrats, ...dossier, ...COMMUNS].filter((item) => !item.permission || auth.hasPermission(item.permission))
   })
   return { items, espace, principal }
 }

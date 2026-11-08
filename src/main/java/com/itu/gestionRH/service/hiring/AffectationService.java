@@ -32,14 +32,17 @@ public class AffectationService {
     private final EmployeRepository employes;
     private final PosteRepository postes;
     private final PosteMachine posteMachine;
+    private final com.itu.gestionRH.service.audit.AuditService audit;
 
     public AffectationService(AffectationRepository affectations, ContratRepository contrats,
-            EmployeRepository employes, PosteRepository postes, PosteMachine posteMachine) {
+            EmployeRepository employes, PosteRepository postes, PosteMachine posteMachine,
+            com.itu.gestionRH.service.audit.AuditService audit) {
         this.affectations = affectations;
         this.contrats = contrats;
         this.employes = employes;
         this.postes = postes;
         this.posteMachine = posteMachine;
+        this.audit = audit;
     }
 
     @Transactional(readOnly = true)
@@ -121,6 +124,9 @@ public class AffectationService {
         nouveauPoste.getAffectations().add(nouvelle);
         posteMachine.transition(nouveauPoste, "pourvoir", contexte);
         postes.save(nouveauPoste);
+        audit.tracer(com.itu.gestionRH.entity.enums.AuditAction.CREATION, "AFFECTATION", nouvelle.getId(), employeId,
+                new com.itu.gestionRH.service.audit.AuditService.Diff().champ("poste", ancienPoste.getIntitule(), nouveauPoste.getIntitule())
+                        .champ("dateEffet", null, effet).montant("salaireBrut", actuel.getSalaireBrut(), avenant.getSalaireBrut()).liste(), motif.trim());
         return nouvelle;
     }
 }

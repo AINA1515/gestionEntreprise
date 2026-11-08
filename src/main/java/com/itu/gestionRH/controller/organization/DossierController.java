@@ -2,6 +2,8 @@ package com.itu.gestionRH.controller.organization;
 
 import com.itu.gestionRH.controller.organization.DossierDtos.*;
 import com.itu.gestionRH.security.AccessScope;
+import com.itu.gestionRH.service.documents.DossierPiecesService;
+import com.itu.gestionRH.service.documents.DossierPiecesService.EtatPieces;
 import com.itu.gestionRH.service.organization.DossierService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -19,10 +21,12 @@ public class DossierController {
     private static final String LECTURE = "hasAnyAuthority('PERM_DOSSIER_CONSULTER_TOUS','PERM_DOSSIER_CONSULTER_PERSO')";
 
     private final DossierService service;
+    private final DossierPiecesService pieces;
     private final AccessScope accessScope;
 
-    public DossierController(DossierService service, AccessScope accessScope) {
+    public DossierController(DossierService service, DossierPiecesService pieces, AccessScope accessScope) {
         this.service = service;
+        this.pieces = pieces;
         this.accessScope = accessScope;
     }
 
@@ -72,4 +76,12 @@ public class DossierController {
     public PointSalaire enregistrerEvolution(@PathVariable Long id, @Valid @RequestBody EvolutionSalaireRequest request) {
         return service.enregistrerEvolution(id, request);
     }
+
+    @GetMapping("/moi/pieces")
+    @PreAuthorize("hasAuthority('PERM_DOSSIER_CONSULTER_PERSO')")
+    public EtatPieces mesPieces() { return pieces.etat(service.employeIdDe(accessScope.currentUserId())); }
+
+    @GetMapping("/{id:\\d+}/pieces")
+    @PreAuthorize(LECTURE)
+    public EtatPieces pieces(@PathVariable Long id) { return pieces.etat(id); }
 }

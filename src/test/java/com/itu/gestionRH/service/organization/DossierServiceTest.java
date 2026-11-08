@@ -24,6 +24,7 @@ import com.itu.gestionRH.repository.hiring.EvolutionSalaireRepository;
 import com.itu.gestionRH.repository.organization.EmployeRepository;
 import com.itu.gestionRH.repository.security.UtilisateurRepository;
 import com.itu.gestionRH.security.AccessScope;
+import com.itu.gestionRH.service.audit.AuditService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -40,6 +41,7 @@ class DossierServiceTest {
     private ContratRepository contrats;
     private EvolutionSalaireRepository evolutions;
     private AccessScope scope;
+    private AuditService audit;
     private DossierService service;
     private Employe employe;
 
@@ -50,7 +52,8 @@ class DossierServiceTest {
         contrats = mock(ContratRepository.class);
         evolutions = mock(EvolutionSalaireRepository.class);
         scope = mock(AccessScope.class);
-        service = new DossierService(employes, affectations, contrats, evolutions, mock(UtilisateurRepository.class), scope);
+        audit = mock(AuditService.class);
+        service = new DossierService(employes, affectations, contrats, evolutions, mock(UtilisateurRepository.class), scope, audit);
 
         employe = Employe.nouvelle();
         ReflectionTestUtils.setField(employe, "id", 5L);

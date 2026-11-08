@@ -5,6 +5,20 @@ import com.itu.gestionRH.entity.enums.TypeDocument;
 import com.itu.gestionRH.service.documents.DocumentService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import com.itu.gestionRH.entity.enums.DocumentConfidentialite;
+import com.itu.gestionRH.entity.documents.DocumentObligatoire;
+import com.itu.gestionRH.repository.documents.DocumentObligatoireRepository;
+import com.itu.gestionRH.common.NotFoundException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ContentDisposition;
@@ -28,15 +42,26 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentController {
     private static final String DOCUMENT_ACCESS = "hasAnyAuthority('PERM_DOCUMENT_CONSULTER_TOUS','PERM_DOCUMENT_CONSULTER_PERSO','PERM_CANDIDATURE_PRESELECTIONNER','PERM_EVALUATION_SAISIR','PERM_DEMANDE_CREER','PERM_CONTRAT_GERER','PERM_ONBOARDING_ADMIN','PERM_TACHE_TRAITER','PERM_OFFRE_PUBLIER','PERM_PROPOSITION_EMETTRE','PERM_UTILISATEUR_ADMIN')";
     private final DocumentService service;
+    private final DocumentObligatoireRepository obligatoires;
 
-    public DocumentController(DocumentService service) { this.service = service; }
+    public record ObligatoireDto(Long id, String typeDocument, String typeContrat, String libelle, Integer delaiAlerteJours, Integer ordre, Boolean estActif) {}
+    public record RefusRequest(@NotBlank @Size(max = 500) String motif) {}
+    public record ConfidentialiteRequest(DocumentConfidentialite niveau) {}
+    public record ValiditeRequest(@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateEmission,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateExpiration) {}
+    public record ObligatoirePatch(@Min(0) @Max(365) Integer delaiAlerteJours, Boolean estActif) {}
+
+    public DocumentController(DocumentService service, DocumentObligatoireRepository obligatoires) {
+        this.service = service; this.obligatoires = obligatoires;
+    }
 
     @PreAuthorize(DOCUMENT_ACCESS)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentService.DocumentDto> televerser(@RequestPart("fichier") MultipartFile fichier,
             @RequestParam TypeDocument typeDocument, @RequestParam DocumentEntite entiteRattachement,
-            @RequestParam Long entiteId, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.televerser(fichier, typeDocument, entiteRattachement, entiteId, request));
+            @RequestParam Long entiteId, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateEmission,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateExpiration, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.televerser(fichier, typeDocument, entiteRattachement, entiteId, dateEmission, dateExpiration, request));
     }
 
     @PreAuthorize(DOCUMENT_ACCESS)
@@ -60,8 +85,9 @@ public class DocumentController {
     @PreAuthorize(DOCUMENT_ACCESS)
     @PostMapping(value = "/{id}/versions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentService.DocumentDto> remplacer(@PathVariable Long id,
-            @RequestPart("fichier") MultipartFile fichier, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.remplacer(id, fichier, request));
+            @RequestPart("fichier") MultipartFile fichier, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateEmission,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateExpiration, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.remplacer(id, fichier, dateEmission, dateExpiration, request));
     }
 
     @PreAuthorize(DOCUMENT_ACCESS)
@@ -69,5 +95,48 @@ public class DocumentController {
     public ResponseEntity<Void> archiver(@PathVariable Long id, HttpServletRequest request) {
         service.archiver(id, request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasAuthority('PERM_DOCUMENT_VALIDER')")
+    @PostMapping("/{id}/validation")
+    public DocumentService.DocumentDto valider(@PathVariable Long id) { return service.valider(id); }
+
+    @PreAuthorize("hasAuthority('PERM_DOCUMENT_VALIDER')")
+    @PostMapping("/{id}/refus")
+    public DocumentService.DocumentDto refuser(@PathVariable Long id, @Valid @RequestBody RefusRequest request) {
+        return service.refuser(id, request.motif());
+    }
+
+    @PreAuthorize("hasAuthority('PERM_DOCUMENT_CONFIDENTIALITE_GERER')")
+    @PatchMapping("/{id}/confidentialite")
+    public DocumentService.DocumentDto confidentialite(@PathVariable Long id, @RequestBody ConfidentialiteRequest request) {
+        return service.changerConfidentialite(id, request.niveau());
+    }
+
+    @PreAuthorize("hasAuthority('PERM_DOSSIER_MODIFIER')")
+    @PatchMapping("/{id}/validite")
+    public DocumentService.DocumentDto validite(@PathVariable Long id, @RequestBody ValiditeRequest request) {
+        return service.modifierValidite(id, request.dateEmission(), request.dateExpiration());
+    }
+
+    /** Liste des pièces exigées (référentiel), pour l'écran de dépôt et l'état du dossier. */
+    @PreAuthorize("hasAnyAuthority('PERM_DOSSIER_CONSULTER_TOUS','PERM_DOSSIER_CONSULTER_PERSO')")
+    @GetMapping("/obligatoires")
+    @Transactional(readOnly = true)
+    public List<ObligatoireDto> obligatoires() { return obligatoires.findAllByOrderByOrdreAscIdAsc().stream().map(this::dto).toList(); }
+
+    @PreAuthorize("hasAuthority('PERM_DOSSIER_MODIFIER')")
+    @PatchMapping("/obligatoires/{id}")
+    @Transactional
+    public ObligatoireDto modifierObligatoire(@PathVariable Long id, @Valid @RequestBody ObligatoirePatch patch) {
+        DocumentObligatoire o = obligatoires.findById(id).orElseThrow(() -> new NotFoundException("Pièce obligatoire introuvable."));
+        if (patch.delaiAlerteJours() != null) o.setDelaiAlerteJours(patch.delaiAlerteJours());
+        if (patch.estActif() != null) o.setEstActif(patch.estActif());
+        return dto(obligatoires.saveAndFlush(o));
+    }
+
+    private ObligatoireDto dto(DocumentObligatoire o) {
+        return new ObligatoireDto(o.getId(), o.getTypeDocument().name(), o.getTypeContrat() == null ? null : o.getTypeContrat().name(),
+                o.getLibelle(), o.getDelaiAlerteJours(), o.getOrdre(), o.getEstActif());
     }
 }

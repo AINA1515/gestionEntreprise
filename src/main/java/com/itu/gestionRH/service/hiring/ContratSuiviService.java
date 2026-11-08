@@ -18,6 +18,8 @@ import com.itu.gestionRH.repository.organization.EmployeRepository;
 import com.itu.gestionRH.repository.organization.PosteRepository;
 import com.itu.gestionRH.workflow.PosteMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
+import com.itu.gestionRH.entity.enums.AuditAction;
+import com.itu.gestionRH.service.audit.AuditService;
 
 /** Cycle de vie des contrats après leur création : activation, fin, sortie, alertes d'échéance. */
 @Service
@@ -29,14 +31,16 @@ public class ContratSuiviService {
     private final EmployeRepository employes;
     private final PosteRepository postes;
     private final PosteMachine posteMachine;
+    private final AuditService audit;
 
     public ContratSuiviService(ContratRepository contrats, AffectationRepository affectations,
-            EmployeRepository employes, PosteRepository postes, PosteMachine posteMachine) {
+            EmployeRepository employes, PosteRepository postes, PosteMachine posteMachine, AuditService audit) {
         this.contrats = contrats;
         this.affectations = affectations;
         this.employes = employes;
         this.postes = postes;
         this.posteMachine = posteMachine;
+        this.audit = audit;
     }
 
     @Transactional(readOnly = true)
@@ -71,9 +75,12 @@ public class ContratSuiviService {
         LocalDate fin = dateFin == null ? LocalDate.now() : dateFin;
         if (fin.isBefore(contrat.getDateDebut()))
             throw new BusinessRuleException("DATES_CONTRAT_INVALIDES", "La date de fin ne peut pas précéder le début du contrat.");
+        var statutAvant = contrat.getStatutContrat();
         contrat.setDateFinEffective(fin);
         contrat.setStatutContrat(ContratStatut.TERMINE);
         contrats.saveAndFlush(contrat);
+        audit.tracer(AuditAction.MODIFICATION, "CONTRAT", contrat.getId(), contrat.getEmploye().getId(),
+                new AuditService.Diff().champ("statutContrat", statutAvant, ContratStatut.TERMINE).champ("dateFinEffective", null, fin).liste(), motifSortie);
 
         Long employeId = contrat.getEmploye().getId();
         var poste = contrat.getPoste();
@@ -92,6 +99,9 @@ public class ContratSuiviService {
                     : contexte != null && contexte.commentaire() != null ? contexte.commentaire() : "Fin de contrat";
             employe.setMotifSortie(motif.length() <= 300 ? motif : motif.substring(0, 300));
             employes.save(employe);
+            audit.tracer(AuditAction.MODIFICATION, "EMPLOYE", employe.getId(), employe.getId(),
+                    new AuditService.Diff().champ("statutActivite", EmployeStatut.ACTIF, EmployeStatut.SORTI).champ("dateSortie", null, employe.getDateSortie())
+                            .champ("motifSortie", null, employe.getMotifSortie()).liste(), null);
         }
         boolean posteEncoreOccupe = !affectations.findByPosteIdAndDateFinIsNull(poste.getId()).isEmpty();
         if (!posteEncoreOccupe && poste.getStatutPoste() == PosteStatut.POURVU) {

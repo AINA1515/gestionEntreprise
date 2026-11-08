@@ -25,6 +25,12 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import com.itu.gestionRH.entity.enums.AuditAction;
+import com.itu.gestionRH.service.audit.AuditService;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.http.HttpStatus;
@@ -48,22 +54,29 @@ public class DossierService {
     private final EvolutionSalaireRepository evolutions;
     private final UtilisateurRepository utilisateurs;
     private final AccessScope accessScope;
+    private final AuditService audit;
 
     public DossierService(EmployeRepository employes, AffectationRepository affectations, ContratRepository contrats,
-            EvolutionSalaireRepository evolutions, UtilisateurRepository utilisateurs, AccessScope accessScope) {
+            EvolutionSalaireRepository evolutions, UtilisateurRepository utilisateurs, AccessScope accessScope, AuditService audit) {
         this.employes = employes;
         this.affectations = affectations;
         this.contrats = contrats;
         this.evolutions = evolutions;
         this.utilisateurs = utilisateurs;
         this.accessScope = accessScope;
+        this.audit = audit;
     }
 
     // ------------------------------------------------------------------ lecture
 
     public DossierDto obtenir(Long id) {
         accessScope.requireDossier(id);
-        return dto(trouver(id));
+        DossierDto dossier = dto(trouver(id));
+        // Le salarié qui consulte son propre dossier n'est pas tracé ; toute autre consultation l'est.
+        if (!accessScope.estSoiMeme(id))
+            audit.tracerConsultation("EMPLOYE", id, id, dossier.droits().donneesSensiblesVisibles()
+                    ? "Consultation du dossier (données sensibles visibles)" : "Consultation du dossier");
+        return dossier;
     }
 
     public Long employeIdDe(Long utilisateurId) {
@@ -85,6 +98,7 @@ public class DossierService {
     public DossierDto modifierParRh(Long id, DossierRhRequest r) {
         Employe e = trouver(id);
         verifierVersion(e, r.version());
+        Map<String, String> avant = instantane(e);
         boolean sensibles = accessScope.hasPermission("DONNEES_SENSIBLES_CONSULTER");
         Identite i = r.identite();
         Coordonnees c = r.coordonnees();
@@ -121,6 +135,7 @@ public class DossierService {
         if (sensibles && r.coordonneesBancaires() != null) appliquerBanque(e, r.coordonneesBancaires());
 
         employes.saveAndFlush(e);
+        tracerModifications(e, avant);
         return dto(e);
     }
 
@@ -129,10 +144,12 @@ public class DossierService {
     public DossierDto modifierCoordonnees(Long utilisateurId, CoordonneesPersonnellesRequest r) {
         Employe e = trouver(employeIdDe(utilisateurId));
         verifierVersion(e, r.version());
+        Map<String, String> avant = instantane(e);
         appliquerCoordonneesPersonnelles(e, r.emailPersonnel(), r.telephonePersonnel(), r.adresseLigne1(),
                 r.adresseLigne2(), r.codePostal(), r.ville(), r.pays());
         if (r.contactUrgence() != null) appliquerUrgence(e, r.contactUrgence());
         employes.saveAndFlush(e);
+        tracerModifications(e, avant);
         return dto(e);
     }
 
@@ -166,7 +183,8 @@ public class DossierService {
             BigDecimal ancien = c.getContratPrecedent() == null ? null : c.getContratPrecedent().getSalaireBrut();
             evenements.add(new CarriereEvenement(c.getDateDebut(), type, libelle, detail, "CONTRAT", c.getId(),
                     salaire ? ancien : null, salaire ? c.getSalaireBrut() : null, salaire ? c.getDevise() : null));
-            if (c.getStatutContrat() == ContratStatut.TERMINE && c.getDateFinEffective() != null)
+            boolean aSuccesseur = contratsAsc.stream().anyMatch(x -> x.getContratPrecedent() != null && c.getId().equals(x.getContratPrecedent().getId()));
+            if (c.getStatutContrat() == ContratStatut.TERMINE && c.getDateFinEffective() != null && !aSuccesseur)
                 evenements.add(new CarriereEvenement(c.getDateFinEffective(), CarriereEvenementType.FIN_CONTRAT,
                         "Fin du contrat " + c.getTypeContrat().name(), detail, "CONTRAT", c.getId(), null, null, null));
         }
@@ -209,6 +227,7 @@ public class DossierService {
         accessScope.requireDossier(id);
         trouver(id);
         exigerSalaire(id);
+        if (!accessScope.estSoiMeme(id)) audit.tracerConsultation("EMPLOYE", id, id, "Consultation de la rémunération");
         List<PointSalaire> historique = points(id);
         LocalDate aujourdHui = LocalDate.now();
         PointSalaire actuel = pointA(historique, aujourdHui);
@@ -248,11 +267,48 @@ public class DossierService {
         ev.setTypeEvolution(r.typeEvolution());
         ev.setMotif(r.motif().trim());
         evolutions.saveAndFlush(ev);
+        audit.tracer(AuditAction.CREATION, "EVOLUTION_SALAIRE", ev.getId(), id,
+                new AuditService.Diff().montant("salaireBrut", ancien, nouveau).champ("typeEvolution", null, ev.getTypeEvolution())
+                        .champ("dateEffet", null, ev.getDateEffet()).liste(), ev.getMotif());
         return new PointSalaire(ev.getDateEffet(), ancien, nouveau, ev.getDevise(), "EVOLUTION",
                 ev.getTypeEvolution().name(), ev.getMotif(), contrat.getId(), ev.getId());
     }
 
     // ------------------------------------------------------------------ internes
+
+    private static final Set<String> CHAMPS_SENSIBLES = Set.of("numCin", "numCnaps", "ribCodeBanque", "ribCodeGuichet",
+            "ribNumeroCompte", "ribCle", "iban");
+
+    private static String t(Object o) { return o == null ? null : o.toString(); }
+
+    private static Map<String, String> instantane(Employe e) {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("civilite", e.getCivilite()); m.put("nom", e.getNom()); m.put("prenom", e.getPrenom());
+        m.put("dateNaissance", t(e.getDateNaissance())); m.put("lieuNaissance", e.getLieuNaissance());
+        m.put("nationalite", e.getNationalite()); m.put("sexe", e.getSexe()); m.put("situationFamiliale", t(e.getSituationFamiliale()));
+        m.put("numCin", e.getNumCin()); m.put("numCnaps", e.getNumCnaps());
+        m.put("emailProfessionnel", e.getEmailProfessionnel()); m.put("telephone", e.getTelephone());
+        m.put("emailPersonnel", e.getEmailPersonnel()); m.put("telephonePersonnel", e.getTelephonePersonnel());
+        m.put("adresseLigne1", e.getAdresseLigne1()); m.put("adresseLigne2", e.getAdresseLigne2());
+        m.put("codePostal", e.getCodePostal()); m.put("ville", e.getVille()); m.put("pays", e.getPays());
+        m.put("urgenceNom", e.getUrgenceNom()); m.put("urgenceLien", e.getUrgenceLien()); m.put("urgenceTelephone", e.getUrgenceTelephone());
+        m.put("banqueNom", e.getBanqueNom()); m.put("ribCodeBanque", e.getRibCodeBanque()); m.put("ribCodeGuichet", e.getRibCodeGuichet());
+        m.put("ribNumeroCompte", e.getRibNumeroCompte()); m.put("ribCle", e.getRibCle()); m.put("iban", e.getIban());
+        m.put("titulaireCompte", e.getTitulaireCompte());
+        return m;
+    }
+
+    /** Journalise chaque champ modifié (ancienne et nouvelle valeur) ; les identifiants et coordonnées bancaires sont masqués. */
+    private void tracerModifications(Employe e, Map<String, String> avant) {
+        List<AuditService.Changement> changements = new ArrayList<>();
+        instantane(e).forEach((champ, apres) -> {
+            String ancienne = avant.get(champ);
+            if (Objects.equals(ancienne, apres)) return;
+            boolean sensible = CHAMPS_SENSIBLES.contains(champ);
+            changements.add(new AuditService.Changement(champ, sensible ? masquer(ancienne) : ancienne, sensible ? masquer(apres) : apres, sensible));
+        });
+        audit.tracer(AuditAction.MODIFICATION, "EMPLOYE", e.getId(), e.getId(), changements, null);
+    }
 
     private record Entree(LocalDate date, int ordre, long id, PointSalaire point) {}
 

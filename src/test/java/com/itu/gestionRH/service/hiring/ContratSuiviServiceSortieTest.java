@@ -51,7 +51,7 @@ class ContratSuiviServiceSortieTest {
         when(contrats.findById(1L)).thenReturn(Optional.of(c));
         when(contrats.findByEmployeIdAndStatutContratIn(any(), any())).thenReturn(List.of(c));
         var service = new ContratSuiviService(contrats, mock(AffectationRepository.class), employes,
-                mock(PosteRepository.class), mock(PosteMachine.class));
+                mock(PosteRepository.class), mock(PosteMachine.class), mock(com.itu.gestionRH.service.audit.AuditService.class));
 
         service.terminer(1L, LocalDate.of(2025, 3, 31), "Démission",
                 WorkflowContext.of("rh", Set.of(), Set.of(), "Fin de contrat"));
@@ -69,7 +69,7 @@ class ContratSuiviServiceSortieTest {
         when(contrats.findById(1L)).thenReturn(Optional.of(c));
         when(contrats.findByEmployeIdAndStatutContratIn(any(), any())).thenReturn(List.of(c));
         var service = new ContratSuiviService(contrats, mock(AffectationRepository.class), mock(EmployeRepository.class),
-                mock(PosteRepository.class), mock(PosteMachine.class));
+                mock(PosteRepository.class), mock(PosteMachine.class), mock(com.itu.gestionRH.service.audit.AuditService.class));
 
         service.terminer(1L, LocalDate.of(2025, 3, 31), WorkflowContext.of("rh", Set.of(), Set.of(), "Fin de contrat"));
 

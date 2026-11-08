@@ -156,8 +156,12 @@ public class AccessScope {
     public Document requireDocument(Long id) {
         Document d=documents.findById(id).orElseThrow(()->new NotFoundException("Document introuvable."));
         if (d.getStatutDocument() == DocumentStatut.SUPPRIME) throw new NotFoundException("Document introuvable.");
+        // Niveau STRICT : réservé à DOCUMENT_STRICT_CONSULTER (et à l'administrateur), même pour DOCUMENT_CONSULTER_TOUS.
+        if (d.getConfidentialite() == DocumentConfidentialite.STRICT) {
+            if (has("PERM_DOCUMENT_STRICT_CONSULTER") || has("PERM_UTILISATEUR_ADMIN")) return d;
+            throw new NotFoundException("Document introuvable.");
+        }
         if(has("PERM_DOCUMENT_CONSULTER_TOUS") || has("PERM_UTILISATEUR_ADMIN")) return d;
-        if (d.getConfidentialite() == DocumentConfidentialite.STRICT) throw new NotFoundException("Document introuvable.");
         if (has("PERM_DOCUMENT_CONSULTER_PERSO") && estProprietaire(d)) return d;
         try {
             DocumentEntite type=d.getEntiteRattachement();

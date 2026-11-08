@@ -6,6 +6,12 @@ import com.itu.gestionRH.entity.documents.Document;
 import com.itu.gestionRH.entity.enums.DocumentConfidentialite;
 import com.itu.gestionRH.entity.enums.DocumentEntite;
 import com.itu.gestionRH.entity.enums.DocumentStatut;
+import com.itu.gestionRH.entity.enums.DocumentValidation;
+import com.itu.gestionRH.entity.enums.AuditAction;
+import com.itu.gestionRH.repository.security.UtilisateurRepository;
+import com.itu.gestionRH.service.audit.AuditService;
+import java.time.LocalDate;
+import org.springframework.http.HttpStatus;
 import com.itu.gestionRH.entity.enums.LogAccesType;
 import com.itu.gestionRH.entity.enums.TypeDocument;
 import com.itu.gestionRH.entity.security.LogAccesDocument;
@@ -37,7 +43,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentService {
     public record DocumentDto(Long id, String nomFichier, TypeDocument typeDocument, DocumentEntite entiteRattachement,
             Long entiteId, String typeMime, Long tailleOctets, Integer numeroVersion, Long documentPrecedentId,
-            DocumentConfidentialite confidentialite, DocumentStatut statutDocument, LocalDateTime dateCreation) {}
+            DocumentConfidentialite confidentialite, DocumentStatut statutDocument, LocalDateTime dateCreation,
+            LocalDate dateEmission, LocalDate dateExpiration, DocumentValidation statutValidation, Long valideParId,
+            LocalDateTime dateValidation, String motifRefus) {}
     public record FichierTelecharge(DocumentDto document, InputStreamResource contenu) {}
 
     private static final Set<String> EXTENSIONS = Set.of("pdf", "docx", "png", "jpg");
@@ -46,15 +54,25 @@ public class DocumentService {
     private final StockageGed stockage;
     private final AntivirusScanner antivirus;
     private final AccessScope accessScope;
+    private final AuditService audit;
+    private final UtilisateurRepository utilisateurs;
     private final long tailleMax;
 
     public DocumentService(DocumentRepository documents, LogAccesDocumentRepository logs, StockageGed stockage,
-            AntivirusScanner antivirus, AccessScope accessScope, @Value("${app.ged.max-size-bytes:5242880}") long tailleMax) {
-        this.documents=documents; this.logs=logs; this.stockage=stockage; this.antivirus=antivirus; this.accessScope=accessScope; this.tailleMax=tailleMax;
+            AntivirusScanner antivirus, AccessScope accessScope, AuditService audit, UtilisateurRepository utilisateurs,
+            @Value("${app.ged.max-size-bytes:5242880}") long tailleMax) {
+        this.documents=documents; this.logs=logs; this.stockage=stockage; this.antivirus=antivirus; this.accessScope=accessScope;
+        this.audit=audit; this.utilisateurs=utilisateurs; this.tailleMax=tailleMax;
     }
 
     public DocumentDto televerser(MultipartFile fichier, TypeDocument type, DocumentEntite entite, Long entiteId, HttpServletRequest request) {
+        return televerser(fichier, type, entite, entiteId, null, null, request);
+    }
+
+    public DocumentDto televerser(MultipartFile fichier, TypeDocument type, DocumentEntite entite, Long entiteId,
+            LocalDate dateEmission, LocalDate dateExpiration, HttpServletRequest request) {
         accessScope.requireDocumentTarget(entite, entiteId);
+        verifierDates(dateEmission, dateExpiration);
         Valide val = valider(fichier, type);
         Document d = Document.nouvelle();
         remplir(d, fichier, val, type, entite, entiteId);
@@ -62,9 +80,13 @@ public class DocumentService {
         d.setDocumentPrecedent(null);
         d.setConfidentialite(confidentialiteParDefaut(type));
         d.setStatutDocument(DocumentStatut.ACTIF);
+        d.setDateEmission(dateEmission);
+        d.setDateExpiration(dateExpiration);
+        d.setStatutValidation(DocumentValidation.A_VALIDER);
         d.setUrlStockageGed(stocker(entite, entiteId, val.bytes()));
         Document saved = documents.saveAndFlush(d);
         journaliser(saved, LogAccesType.TELEVERSEMENT, request);
+        tracerDossier(AuditAction.CREATION, saved, "Dépôt (" + type.name() + ", v1)");
         return dto(saved);
     }
 
@@ -84,7 +106,13 @@ public class DocumentService {
     }
 
     public DocumentDto remplacer(Long id, MultipartFile fichier, HttpServletRequest request) {
+        return remplacer(id, fichier, null, null, request);
+    }
+
+    /** Nouvelle version : elle repart « à valider » et porte ses propres dates de validité. */
+    public DocumentDto remplacer(Long id, MultipartFile fichier, LocalDate dateEmission, LocalDate dateExpiration, HttpServletRequest request) {
         Document precedent = accessible(id);
+        verifierDates(dateEmission, dateExpiration);
         if (precedent.getStatutDocument() != DocumentStatut.ACTIF) throw new BusinessRuleException("DOCUMENT_NON_ACTIF", "Seule la version active peut être remplacée.");
         Valide val = valider(fichier, precedent.getTypeDocument());
         Document nouvelleVersion = Document.nouvelle();
@@ -93,11 +121,15 @@ public class DocumentService {
         nouvelleVersion.setDocumentPrecedent(precedent);
         nouvelleVersion.setConfidentialite(precedent.getConfidentialite());
         nouvelleVersion.setStatutDocument(DocumentStatut.ACTIF);
+        nouvelleVersion.setDateEmission(dateEmission);
+        nouvelleVersion.setDateExpiration(dateExpiration);
+        nouvelleVersion.setStatutValidation(DocumentValidation.A_VALIDER);
         nouvelleVersion.setUrlStockageGed(stocker(precedent.getEntiteRattachement(), precedent.getEntiteId(), val.bytes()));
         precedent.setStatutDocument(DocumentStatut.ARCHIVE);
         documents.save(precedent);
         Document saved = documents.saveAndFlush(nouvelleVersion);
         journaliser(saved, LogAccesType.TELEVERSEMENT, request);
+        tracerDossier(AuditAction.CREATION, saved, "Nouvelle version v" + saved.getNumeroVersion() + " (remplace #" + precedent.getId() + ")");
         return dto(saved);
     }
 
@@ -108,6 +140,100 @@ public class DocumentService {
             documents.save(d);
         }
         journaliser(d, LogAccesType.SUPPRESSION, request);
+        tracerDossier(AuditAction.SUPPRESSION, d, "Archivage du document");
+    }
+
+    // ---- validation, confidentialité, validité (Bloc 5)
+
+    public DocumentDto valider(Long id) {
+        Document d = documentATraiter(id);
+        if (d.getDateExpiration() != null && d.getDateExpiration().isBefore(LocalDate.now()))
+            throw new BusinessRuleException("DOCUMENT_EXPIRE", "Un document expiré ne peut pas être validé : demandez une nouvelle version.");
+        decider(d, DocumentValidation.VALIDE, null);
+        tracerChamp(AuditAction.VALIDATION, d, "statutValidation", DocumentValidation.A_VALIDER, DocumentValidation.VALIDE, null);
+        return dto(documents.saveAndFlush(d));
+    }
+
+    public DocumentDto refuser(Long id, String motif) {
+        if (motif == null || motif.isBlank()) throw new BusinessRuleException("MOTIF_REFUS_REQUIS", "Le motif du refus est obligatoire.", HttpStatus.BAD_REQUEST);
+        Document d = documentATraiter(id);
+        String m = motif.trim().length() <= 500 ? motif.trim() : motif.trim().substring(0, 500);
+        decider(d, DocumentValidation.REFUSE, m);
+        tracerChamp(AuditAction.REFUS, d, "statutValidation", DocumentValidation.A_VALIDER, DocumentValidation.REFUSE, m);
+        return dto(documents.saveAndFlush(d));
+    }
+
+    /** Qui voit quoi : STRICT exige DOCUMENT_STRICT_CONSULTER, aussi bien pour y placer un document que pour l'en sortir. */
+    public DocumentDto changerConfidentialite(Long id, DocumentConfidentialite niveau) {
+        if (niveau == null) throw new BusinessRuleException("CONFIDENTIALITE_REQUISE", "Le niveau de confidentialité est obligatoire.", HttpStatus.BAD_REQUEST);
+        Document d = accessible(id);
+        if (d.getStatutDocument() == DocumentStatut.SUPPRIME) throw new NotFoundException("Document introuvable.");
+        boolean strict = d.getConfidentialite() == DocumentConfidentialite.STRICT || niveau == DocumentConfidentialite.STRICT;
+        if (strict && !accessScope.hasPermission("DOCUMENT_STRICT_CONSULTER") && !accessScope.hasPermission("UTILISATEUR_ADMIN"))
+            throw new BusinessRuleException("NIVEAU_STRICT_RESERVE", "Le niveau « strict » est réservé aux profils habilités.", HttpStatus.FORBIDDEN);
+        DocumentConfidentialite avant = d.getConfidentialite();
+        if (avant == niveau) return dto(d);
+        d.setConfidentialite(niveau);
+        tracerChamp(AuditAction.MODIFICATION, d, "confidentialite", avant, niveau, null);
+        return dto(documents.saveAndFlush(d));
+    }
+
+    /** Corrige les dates de validité d'une pièce sans nouvelle version ; la pièce repasse « à valider ». */
+    public DocumentDto modifierValidite(Long id, LocalDate dateEmission, LocalDate dateExpiration) {
+        Document d = accessible(id);
+        if (d.getStatutDocument() != DocumentStatut.ACTIF) throw new BusinessRuleException("DOCUMENT_NON_ACTIF", "Seule la version active peut être modifiée.");
+        verifierDates(dateEmission, dateExpiration);
+        var diff = new AuditService.Diff().champ("dateEmission", d.getDateEmission(), dateEmission)
+                .champ("dateExpiration", d.getDateExpiration(), dateExpiration);
+        if (diff.vide()) return dto(d);
+        d.setDateEmission(dateEmission);
+        d.setDateExpiration(dateExpiration);
+        if (d.getStatutValidation() != DocumentValidation.A_VALIDER) {
+            diff.champ("statutValidation", d.getStatutValidation(), DocumentValidation.A_VALIDER);
+            d.setStatutValidation(DocumentValidation.A_VALIDER);
+            d.setValidePar(null); d.setDateValidation(null); d.setMotifRefus(null);
+        }
+        Document saved = documents.saveAndFlush(d);
+        if (estDossier(saved)) audit.tracer(AuditAction.MODIFICATION, "DOCUMENT", saved.getId(), employeDe(saved), diff.liste(), null);
+        return dto(saved);
+    }
+
+    private Document documentATraiter(Long id) {
+        Document d = accessible(id);
+        if (d.getStatutDocument() != DocumentStatut.ACTIF) throw new BusinessRuleException("DOCUMENT_NON_ACTIF", "Seule la version active peut être validée ou refusée.");
+        if (d.getEntiteRattachement() != DocumentEntite.EMPLOYE && d.getEntiteRattachement() != DocumentEntite.CONTRAT)
+            throw new BusinessRuleException("VALIDATION_NON_APPLICABLE", "La validation ne concerne que les pièces du dossier salarié.");
+        if (d.getEntiteRattachement() == DocumentEntite.EMPLOYE && accessScope.estSoiMeme(d.getEntiteId()))
+            throw new BusinessRuleException("AUTO_VALIDATION_INTERDITE", "Vous ne pouvez pas valider vos propres pièces.", HttpStatus.FORBIDDEN);
+        if (d.getStatutValidation() != DocumentValidation.A_VALIDER)
+            throw new BusinessRuleException("DOCUMENT_DEJA_TRAITE", "Cette pièce a déjà été traitée. Déposez une nouvelle version pour une nouvelle décision.");
+        return d;
+    }
+
+    private void decider(Document d, DocumentValidation decision, String motif) {
+        d.setStatutValidation(decision);
+        d.setValidePar(utilisateurs.findById(accessScope.currentUserId()).orElse(null));
+        d.setDateValidation(LocalDateTime.now());
+        d.setMotifRefus(motif);
+    }
+
+    private void verifierDates(LocalDate emission, LocalDate expiration) {
+        if (emission != null && emission.isAfter(LocalDate.now()))
+            throw new BusinessRuleException("DATE_EMISSION_INVALIDE", "La date d'émission ne peut pas être dans le futur.", HttpStatus.BAD_REQUEST);
+        if (emission != null && expiration != null && expiration.isBefore(emission))
+            throw new BusinessRuleException("DATES_VALIDITE_INVALIDES", "La date d'expiration précède la date d'émission.", HttpStatus.BAD_REQUEST);
+    }
+
+    private boolean estDossier(Document d) {
+        return d.getEntiteRattachement() == DocumentEntite.EMPLOYE || d.getEntiteRattachement() == DocumentEntite.CONTRAT;
+    }
+    private Long employeDe(Document d) { return d.getEntiteRattachement() == DocumentEntite.EMPLOYE ? d.getEntiteId() : null; }
+    private void tracerDossier(AuditAction action, Document d, String motif) {
+        if (estDossier(d)) audit.tracer(action, "DOCUMENT", d.getId(), employeDe(d), motif);
+    }
+    private void tracerChamp(AuditAction action, Document d, String champ, Object avant, Object apres, String motif) {
+        if (estDossier(d)) audit.tracer(action, "DOCUMENT", d.getId(), employeDe(d),
+                List.of(new AuditService.Changement(champ, String.valueOf(avant), String.valueOf(apres), false)), motif);
     }
 
     private Document accessible(Long id) {
@@ -141,8 +267,9 @@ public class DocumentService {
 
     private Set<String> extensionsAutorisees(TypeDocument type) {
         return switch (type) {
-            case CV, LETTRE_MOTIVATION, CONTRAT_SIGNE, FICHE_POSTE, PROPOSITION -> Set.of("pdf", "docx");
-            case RIB, PIECE_IDENTITE, CARTE_VITALE, REGLEMENT_SIGNE, AUTRE -> EXTENSIONS;
+            case CV, LETTRE_MOTIVATION, CONTRAT_SIGNE, FICHE_POSTE, PROPOSITION, AVENANT_SIGNE -> Set.of("pdf", "docx");
+            case RIB, PIECE_IDENTITE, CARTE_VITALE, REGLEMENT_SIGNE, AUTRE, DIPLOME, PERMIS_TRAVAIL, CERTIFICAT_MEDICAL,
+                    ACTE_NAISSANCE, JUSTIFICATIF_DOMICILE, CASIER_JUDICIAIRE, ATTESTATION_CNAPS -> EXTENSIONS;
         };
     }
     private String detecterMime(byte[] b) {
@@ -186,8 +313,8 @@ public class DocumentService {
     }
     private DocumentConfidentialite confidentialiteParDefaut(TypeDocument type) {
         return switch (type) {
-            case CV, CONTRAT_SIGNE, RIB, PIECE_IDENTITE, CARTE_VITALE, REGLEMENT_SIGNE -> DocumentConfidentialite.CONFIDENTIEL;
-            default -> DocumentConfidentialite.INTERNE;
+            case LETTRE_MOTIVATION, FICHE_POSTE, PROPOSITION, AUTRE -> DocumentConfidentialite.INTERNE;
+            default -> DocumentConfidentialite.CONFIDENTIEL;
         };
     }
     private void remplir(Document d, MultipartFile original, Valide val, TypeDocument type, DocumentEntite entite, Long entiteId) {
@@ -212,6 +339,8 @@ public class DocumentService {
     private DocumentDto dto(Document d) {
         Long precedent = d.getDocumentPrecedent() == null ? null : d.getDocumentPrecedent().getId();
         return new DocumentDto(d.getId(), d.getNomFichier(), d.getTypeDocument(), d.getEntiteRattachement(), d.getEntiteId(),
-                d.getTypeMime(), d.getTailleOctets(), d.getNumeroVersion(), precedent, d.getConfidentialite(), d.getStatutDocument(), d.getDateCreation());
+                d.getTypeMime(), d.getTailleOctets(), d.getNumeroVersion(), precedent, d.getConfidentialite(), d.getStatutDocument(), d.getDateCreation(),
+                d.getDateEmission(), d.getDateExpiration(), d.getStatutValidation(),
+                d.getValidePar() == null ? null : d.getValidePar().getId(), d.getDateValidation(), d.getMotifRefus());
     }
 }

@@ -36,6 +36,9 @@ public class AdminController {
     @GetMapping("/permissions")
     public List<AdminService.PermissionView> permissions() { return service.permissions(); }
 
+    @GetMapping("/roles/{code}/permissions")
+    public List<String> permissionsDuRole(@PathVariable String code) { return service.permissionsDuRole(code); }
+
     @PutMapping("/roles/{code}/permissions")
     public List<String> remplacerPermissions(@PathVariable String code, @NotNull @RequestBody List<@NotBlank String> codes) {
         return service.remplacerPermissions(code,codes);

@@ -153,6 +153,7 @@ public class NotificationService {
             case "ONBOARDING_TACHE_ASSIGNEE" -> "Une tâche d'intégration vous est assignée";
             case "ONBOARDING_TACHE_EN_RETARD" -> "Une tâche d'intégration est en retard";
             case "CONTRAT_FIN_PROCHE" -> "Échéance prochaine d'un contrat";
+            case "DOCUMENT_EXPIRATION_PROCHE" -> "Pièces du dossier à renouveler";
             default -> throw new IllegalArgumentException("Modèle de notification non supporté : " + modele);
         };
     }
