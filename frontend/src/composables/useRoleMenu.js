@@ -22,6 +22,7 @@ const MENUS = {
     { to: '/manager/entretiens', label: 'Mes entretiens', icon: 'calendar-event', permission: 'EVALUATION_SAISIR' },
     { to: '/manager/onboarding', label: 'Tâches d’intégration', icon: 'person-check', permission: 'DEMANDE_CREER' },
     { to: '/manager/temps-travail', label: 'Temps de travail', icon: 'clock', permission: 'DEMANDE_CREER' },
+    { to: '/manager/validation-travail', label: 'Validation des travaux', icon: 'clipboard-check', permission: 'DEMANDE_CREER' },
     { to: '/manager/pointages', label: 'Pointages', icon: 'fingerprint', permission: 'DEMANDE_CREER' },
     { to: '/manager/pointages-dashboard', label: 'Synthèse des pointages', icon: 'bar-chart', permission: 'DEMANDE_CREER' },
     { to: '/manager/conges', label: 'Validation des congés', icon: 'calendar-x', permission: 'DEMANDE_CREER' },

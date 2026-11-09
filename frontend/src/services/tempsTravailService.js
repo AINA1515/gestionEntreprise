@@ -9,6 +9,7 @@ export const tempsTravailService={
  changerStatutCreneau:(id,statut)=>http.patch(`/temps-travail/creneaux/${id}/statut`,{statut}).then(r=>r.data),
  declarerCreneau:(id,statutEmploye,commentaireEmploye)=>http.patch(`/temps-travail/creneaux/${id}/declaration`,{statutEmploye,commentaireEmploye}).then(r=>r.data),
  validerCreneau:(id,statut)=>http.patch(`/temps-travail/creneaux/${id}/validation`,{statut}).then(r=>r.data),
+ aValider:()=>http.get('/temps-travail/creneaux/a-valider').then(r=>r.data),
  supprimerPlanning:(id)=>http.delete(`/temps-travail/plannings/${id}`),
  modifierPlanning:(id,payload)=>http.put(`/temps-travail/plannings/${id}`,payload).then(r=>r.data),
 }

@@ -138,6 +138,9 @@ public class TempsTravailController {
         if (courant != null) c.setValidateur(employes.findById(courant).orElse(null));
         return creneaux.save(c);
     }
+    @GetMapping("/creneaux/a-valider")
+    @PreAuthorize("hasAnyAuthority('PERM_DEMANDE_CREER','PERM_CONTRAT_GERER')")
+    public List<CreneauTravail> travauxAValider() { return creneaux.findAll(); }
 
     @DeleteMapping("/creneaux/{id}")
     @Transactional
