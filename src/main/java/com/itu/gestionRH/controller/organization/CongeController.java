@@ -42,6 +42,12 @@ public class CongeController {
     private double dispo(Long id) {
         return soldes.findByEmployeIdOrderByAnneeAsc(id).stream().mapToDouble(CongeSolde::getDisponible).sum();
     }
+    private double joursOuvres(LocalDate debut, LocalDate fin) {
+        if (debut == null || fin == null || fin.isBefore(debut)) return 0;
+        double n = 0; for (LocalDate d = debut; !d.isAfter(fin); d = d.plusDays(1))
+            if (d.getDayOfWeek() != DayOfWeek.SATURDAY && d.getDayOfWeek() != DayOfWeek.SUNDAY) n++;
+        return n;
+    }
 
     @GetMapping("/solde")
     @PreAuthorize("isAuthenticated()")
@@ -65,14 +71,18 @@ public class CongeController {
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public DemandeConge demander(@RequestBody Demande r) {
-        if (r.joursDemandes() <= 0 || dispo(r.employeId()) < r.joursDemandes())
-            throw new IllegalArgumentException("Solde de congés insuffisant");
+        Long employeId = r.employeId() == null ? eid() : r.employeId();
+        double jours = joursOuvres(r.dateDebut(), r.dateFin());
+        if (employeId == null) throw new IllegalArgumentException("Aucun employé connecté n'est associé à ce compte");
+        if (jours <= 0) throw new IllegalArgumentException("Les dates doivent contenir au moins un jour ouvré");
+        if ("ANNUEL".equalsIgnoreCase(r.typeConge()) && dispo(employeId) < jours)
+            throw new IllegalArgumentException("Solde annuel insuffisant : disponible=" + dispo(employeId) + ", demandé=" + jours);
         DemandeConge d = new DemandeConge();
-        d.setEmploye(employes.findById(r.employeId()).orElseThrow());
+        d.setEmploye(employes.findById(employeId).orElseThrow());
         d.setTypeConge(r.typeConge());
         d.setDateDebut(r.dateDebut());
         d.setDateFin(r.dateFin());
-        d.setJoursDemandes(r.joursDemandes());
+        d.setJoursDemandes(jours);
         d.setMotif(r.motif());
         return demandes.save(d);
     }
@@ -88,7 +98,7 @@ public class CongeController {
         Long v = eid();
         if (v != null)
             d.setValidateur(employes.findById(v).orElse(null));
-        if ("VALIDEE".equals(r.statut())) {
+        if ("VALIDEE".equals(r.statut()) && "ANNUEL".equalsIgnoreCase(d.getTypeConge())) {
             double reste = d.getJoursDemandes();
             for (CongeSolde s : soldes.findByEmployeIdOrderByAnneeAsc(d.getEmploye().getId())) {
                 double n = Math.min(reste, s.getDisponible());
