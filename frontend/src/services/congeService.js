@@ -1,0 +1,2 @@
+import http from './http'
+export const congeService={solde:()=>http.get('/conges/solde').then(r=>r.data),mes:()=>http.get('/conges/mes-demandes').then(r=>r.data),demander:p=>http.post('/conges',p).then(r=>r.data),aValider:()=>http.get('/conges/a-valider').then(r=>r.data),decision:(id,p)=>http.patch(`/conges/${id}/decision`,p).then(r=>r.data),soldes:()=>http.get('/conges/soldes').then(r=>r.data),enregistrerSolde:p=>http.post('/conges/soldes',p).then(r=>r.data)}

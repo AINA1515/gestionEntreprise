@@ -1,4 +1,4 @@
-/* Enregistre le salaire éventuellement proposé par le candidat. NULL signifie qu'il accepte le budget de référence. */
+-- /* Enregistre le salaire éventuellement proposé par le candidat. NULL signifie qu'il accepte le budget de référence. */
 DECLARE
   v_count NUMBER;
 BEGIN

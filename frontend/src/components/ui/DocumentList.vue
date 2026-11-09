@@ -10,7 +10,7 @@ defineProps({
   canChangeConfidentiality: { type: Boolean, default: false },
   showValidity: { type: Boolean, default: false },
 })
-defineEmits(['download', 'replace', 'archive', 'validate', 'refuse', 'confidentiality'])
+defineEmits(['download', 'preview', 'replace', 'archive', 'validate', 'refuse', 'confidentiality'])
 const dates = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' })
 const jour = (value) => (value ? dates.format(new Date(value)) : '—')
 const expire = (d) => d.dateExpiration && new Date(d.dateExpiration) < new Date(new Date().toDateString())
@@ -52,6 +52,7 @@ const expire = (d) => d.dateExpiration && new Date(d.dateExpiration) < new Date(
             </td>
           </template>
           <td class="text-end text-nowrap">
+            <button v-if="canDownload" class="btn btn-sm btn-outline-secondary me-1" type="button" :aria-label="`Ouvrir ${document.nomFichier}`" @click="$emit('preview', document)"><i class="bi bi-eye" aria-hidden="true"></i></button>
             <button v-if="canDownload" class="btn btn-sm btn-outline-primary me-1" type="button" :aria-label="`Télécharger ${document.nomFichier}`" @click="$emit('download', document)"><i class="bi bi-download" aria-hidden="true"></i></button>
             <template v-if="canValidate && document.statutDocument === 'ACTIF' && document.statutValidation === 'A_VALIDER'">
               <button class="btn btn-sm btn-success me-1" type="button" @click="$emit('validate', document)">Valider</button>

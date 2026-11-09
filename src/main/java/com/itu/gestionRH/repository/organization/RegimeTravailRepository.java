@@ -1,0 +1,1 @@
+package com.itu.gestionRH.repository.organization; import com.itu.gestionRH.entity.organization.RegimeTravail; import org.springframework.data.jpa.repository.JpaRepository; public interface RegimeTravailRepository extends JpaRepository<RegimeTravail,Long>{}

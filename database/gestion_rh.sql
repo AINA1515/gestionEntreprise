@@ -102,6 +102,13 @@
 @@08_migrations/013_espace_salarie_historique_onboarding.sql
 @@08_migrations/014_type_emploi_domaines.sql
 @@08_migrations/015_dossier_salarie.sql
+@@08_migrations/016_dossier_manager_documents.sql
+@@08_migrations/017_dossier_modification_roles.sql
+@@08_migrations/018_demandes_modification_dossier.sql
+@@08_migrations/019_demandes_modification_champs.sql
+@@08_migrations/020_historique_dossier_roles.sql
+@@08_migrations/021_temps_travail_pointage.sql
+@@08_migrations/022_pointage_heures_sup.sql
 
 UPDATE ROLE_RH
    SET EST_ACTIF = 0,

@@ -79,6 +79,13 @@ async function telecharger(doc) {
   lien.click()
   URL.revokeObjectURL(url)
 }
+async function visualiser(doc) {
+  const reponse = await run(() => documentService.visualiser(doc.id))
+  if (!reponse) return
+  const url = URL.createObjectURL(reponse.data)
+  window.open(url, '_blank', 'noopener,noreferrer')
+  setTimeout(() => URL.revokeObjectURL(url), 60000)
+}
 async function valider(doc) { if (await run(() => documentService.valider(doc.id), { successMessage: 'Pièce validée.' })) await charger() }
 function demanderRefus(doc) { refus.value = { ouvert: true, document: doc, motif: '' } }
 async function confirmerRefus() {
@@ -147,7 +154,7 @@ async function confidentialite(doc, niveau) {
       </div>
       <DocumentList :documents="documents" :loading="loading" show-validity :can-manage="peutDeposer" :can-validate="peutValider"
         :can-change-confidentiality="peutConfidentialite" @download="telecharger" @replace="nouvelleVersion" @archive="archiver"
-        @validate="valider" @refuse="demanderRefus" @confidentiality="confidentialite" />
+        @validate="valider" @refuse="demanderRefus" @confidentiality="confidentialite" @preview="visualiser" />
     </div></section>
 
     <ConfirmModal v-model="refus.ouvert" v-model:justification="refus.motif" title="Refuser la pièce" confirm-text="Refuser" variant="danger"

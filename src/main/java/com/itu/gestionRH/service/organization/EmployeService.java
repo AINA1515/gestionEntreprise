@@ -72,7 +72,7 @@ public class EmployeService {
                     poste.getStatutPoste().name(), current.getDateDebut(),
                     current.getSuperieur() == null ? null : current.getSuperieur().getId());
         }
-        return new EmployeDto(e.getId(), e.getMatricule(), e.getNom(), e.getPrenom(), e.getEmailProfessionnel(), e.getTelephone(),
+        return new EmployeDto(e.getId(), e.getCandidat() == null ? null : e.getCandidat().getId(), e.getMatricule(), e.getNom(), e.getPrenom(), e.getEmailProfessionnel(), e.getTelephone(),
                 e.getStatutActivite(), departementId, departement, affectation, contratsDuSalarie);
     }
 }

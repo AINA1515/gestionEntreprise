@@ -1,0 +1,1 @@
+package com.itu.gestionRH.repository.organization; import com.itu.gestionRH.entity.organization.PlanningTravail; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface PlanningTravailRepository extends JpaRepository<PlanningTravail,Long>{List<PlanningTravail> findByEmployeIdOrderByDateDebutDesc(Long employeId);}

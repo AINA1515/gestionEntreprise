@@ -443,7 +443,8 @@ public class DossierService {
                         e.getRibNumeroCompte(), e.getRibCle(), e.getIban(), e.getTitulaireCompte())
                 : new CoordonneesBancaires(e.getBanqueNom(), masquer(e.getRibCodeBanque()), masquer(e.getRibCodeGuichet()),
                         masquer(e.getRibNumeroCompte()), masquer(e.getRibCle()), masquer(e.getIban()), e.getTitulaireCompte());
-        Droits droits = new Droits(sensibles, salaire, accessScope.hasPermission("DOSSIER_MODIFIER"),
+        Droits droits = new Droits(sensibles, salaire, accessScope.hasPermission("DOSSIER_MODIFIER")
+                || (accessScope.hasPermission("DOSSIER_MODIFIER_PERSO") && accessScope.estSoiMeme(id)),
                 accessScope.hasPermission("DOSSIER_MODIFIER_PERSO") && accessScope.estSoiMeme(id));
         return new DossierDto(id, e.getMatricule(), e.getStatutActivite(), e.getDateEmbaucheInitiale(), e.getDateSortie(),
                 e.getMotifSortie(), e.getVersionLigne(), identite, coordonnees, urgence, banque, departementId,

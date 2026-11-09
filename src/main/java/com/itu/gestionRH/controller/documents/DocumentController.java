@@ -83,6 +83,18 @@ public class DocumentController {
     }
 
     @PreAuthorize(DOCUMENT_ACCESS)
+    @GetMapping("/{id}/contenu/visualiser")
+    public ResponseEntity<InputStreamResource> visualiser(@PathVariable Long id, HttpServletRequest request) {
+        var fichier = service.telecharger(id, request);
+        var dto = fichier.document();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(dto.typeMime()));
+        headers.setContentLength(dto.tailleOctets());
+        headers.setContentDisposition(ContentDisposition.inline().filename(dto.nomFichier(), StandardCharsets.UTF_8).build());
+        return new ResponseEntity<>(fichier.contenu(), headers, HttpStatus.OK);
+    }
+
+    @PreAuthorize(DOCUMENT_ACCESS)
     @PostMapping(value = "/{id}/versions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentService.DocumentDto> remplacer(@PathVariable Long id,
             @RequestPart("fichier") MultipartFile fichier, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateEmission,

@@ -1,0 +1,1 @@
+package com.itu.gestionRH.repository.organization; import com.itu.gestionRH.entity.organization.HoraireTravail; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface HoraireTravailRepository extends JpaRepository<HoraireTravail,Long>{List<HoraireTravail> findByRegimeIdOrderByJourSemaineAsc(Long regimeId);}

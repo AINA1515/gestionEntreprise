@@ -23,6 +23,7 @@ export const documentService = {
     }).then((r) => r.data)
   },
   telecharger: (id) => http.get(`/documents/${id}/contenu`, { responseType: 'blob' }),
+  visualiser: (id) => http.get(`/documents/${id}/contenu/visualiser`, { responseType: 'blob' }),
   archiver: (id) => http.delete(`/documents/${id}`),
   valider: (id) => http.post(`/documents/${id}/validation`).then((r) => r.data),
   refuser: (id, motif) => http.post(`/documents/${id}/refus`, { motif }).then((r) => r.data),

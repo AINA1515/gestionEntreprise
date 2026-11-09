@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { dossierService } from '@/services/dossierService'
+import { dossierModificationService } from '@/services/dossierModificationService'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { usePermissions } from '@/composables/usePermissions'
 import { useToast } from '@/composables/useToast'
@@ -50,7 +51,8 @@ const onglets = computed(() => {
   ]
 })
 const actif = computed(() => (onglets.value.some((o) => o.code === route.query.onglet) ? route.query.onglet : 'identite'))
-function choisir(code) { router.replace({ query: { ...route.query, onglet: code } }) }
+function choisir(code) { router.replace({ query: { ...route.query, onglet: code, ...(code === 'historique' && route.query.onglet ? { historiqueSource: route.query.onglet } : {}) } }) }
+function ouvrirHistorique(source) { router.replace({ query: { ...route.query, onglet: 'historique', historiqueSource: source } }) }
 
 const vide = (bloc) => Object.fromEntries(Object.entries(bloc || {}).map(([k, v]) => [k, v === '' ? null : v]))
 
@@ -68,18 +70,18 @@ async function enregistrer(partiel) {
       })
     }
     const c = { ...d.coordonnees, ...partiel.coordonnees }
-    return dossierService.modifierCoordonnees(vide({
-      version: d.version, emailPersonnel: c.emailPersonnel, telephonePersonnel: c.telephonePersonnel, adresseLigne1: c.adresseLigne1,
-      adresseLigne2: c.adresseLigne2, codePostal: c.codePostal, ville: c.ville, pays: c.pays,
-      contactUrgence: vide({ ...d.contactUrgence, ...partiel.contactUrgence }),
-    }))
+    const identite = { ...d.identite, ...partiel.identite }
+    const contactUrgence = { ...d.contactUrgence, ...partiel.contactUrgence }
+    const anciennesValeurs = { ...d.coordonnees, ...d.identite, ...d.contactUrgence }
+    const nouvellesValeurs = { ...c, ...identite, ...contactUrgence }
+    return dossierModificationService.creer({ anciennesValeurs, nouvellesValeurs, motif: 'Modification demandée par le salarié' })
   })
   if (!maj) {
     if (saveError.value?.includes('modifié entre-temps')) await charger()
     return false
   }
   dossier.value = maj
-  toast.success('Dossier mis à jour.')
+  toast.success(mode.value === 'moi' ? 'Demande envoyée à votre supérieur pour validation.' : 'Dossier mis à jour.')
   return true
 }
 </script>
@@ -105,9 +107,9 @@ async function enregistrer(partiel) {
 
       <ul class="nav nav-tabs mb-3 flex-nowrap overflow-auto" role="tablist">
         <li v-for="onglet in onglets" :key="onglet.code" class="nav-item" role="presentation">
-          <button class="nav-link text-nowrap" :class="{ active: actif === onglet.code }" type="button" role="tab" :aria-selected="actif === onglet.code" @click="choisir(onglet.code)">
+          <div class="d-flex align-items-center"><button class="nav-link text-nowrap" :class="{ active: actif === onglet.code }" type="button" role="tab" :aria-selected="actif === onglet.code" @click="choisir(onglet.code)">
             <i :class="`bi bi-${onglet.icon} me-1`" aria-hidden="true"></i>{{ onglet.label }}
-          </button>
+          </button><button v-if="!['historique', 'carriere', 'remuneration'].includes(onglet.code) && can('AUDIT_CONSULTER')" class="btn btn-sm btn-link text-secondary px-1" type="button" :title="`Historique : ${onglet.label}`" @click="ouvrirHistorique(onglet.code)"><i class="bi bi-clock-history" aria-hidden="true"></i></button></div>
         </li>
       </ul>
 
@@ -119,7 +121,7 @@ async function enregistrer(partiel) {
       <RemunerationTab v-else-if="actif === 'remuneration'" :employe-id="mode === 'rh' ? dossier.id : null" :mode="mode" />
       <DocumentsTab v-else-if="actif === 'documents'" :dossier="dossier" :mode="mode" />
       <IntegrationTab v-else-if="actif === 'integration'" :employe-id="dossier.id" />
-      <HistoriqueTab v-else-if="actif === 'historique'" :employe-id="dossier.id" />
+      <HistoriqueTab v-else-if="actif === 'historique'" :employe-id="dossier.id" :source="route.query.historiqueSource || ''" />
     </template>
   </div>
 </template>

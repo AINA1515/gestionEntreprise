@@ -67,8 +67,13 @@ public class ManagerOnboardingController {
     @GetMapping("/employes")
     @Transactional(readOnly = true)
     public List<EmployeOption> employesDuDepartement() {
-        Long departementId = departementManager();
-        return employes.findActifsByDepartementId(departementId).stream()
+        Long managerEmployeId = utilisateurs.findById(accessScope.currentUserId())
+                .map(Utilisateur::getEmployeId)
+                .orElseThrow(() -> new NotFoundException("Manager introuvable."));
+        var directs = affectations.findBySuperieurIdAndDateFinIsNull(managerEmployeId).stream()
+                .map(a -> a.getEmploye()).distinct().toList();
+        var candidats = directs.isEmpty() ? employes.findActifsByDepartementId(departementManager()) : directs;
+        return candidats.stream()
                 .map(e -> new EmployeOption(e.getId(), e.getMatricule(), e.getNom(), e.getPrenom())).toList();
     }
 
@@ -87,13 +92,18 @@ public class ManagerOnboardingController {
     @PatchMapping("/taches/{tacheId}/assigner")
     @Transactional
     public TacheManager assigner(@PathVariable Long tacheId, @RequestBody AttributionRequest request) {
-        if (request == null || request.utilisateurId() == null)
-            throw new BusinessRuleException("RESPONSABLE_REQUIS", "Choisissez un salarié responsable de cette tâche.");
+        if (request == null)
+            throw new BusinessRuleException("ATTRIBUTION_REQUISE", "La demande d'attribution est obligatoire.");
         OnboardingTache tache = taches.findById(tacheId).orElseThrow(() -> new NotFoundException("Tâche introuvable."));
         Long employeId = tache.getOnboarding().getEmploye().getId();
         Long departementId = departementEmploye(employeId);
         if (tache.getStatutTache() == TacheStatut.VALIDEE)
             throw new BusinessRuleException("TACHE_DEJA_VALIDEE", "Une tâche validée ne peut plus être réattribuée.");
+        if (request.utilisateurId() == null) {
+            tache.setAssigneeAId(null);
+            taches.saveAndFlush(tache);
+            return dto(tache);
+        }
         Utilisateur nouvelAssigne = utilisateurs.findById(request.utilisateurId())
                 .filter(u -> u.getStatutCompte() == com.itu.gestionRH.entity.enums.CompteStatut.ACTIF)
                 .orElseThrow(() -> new NotFoundException("Utilisateur à qui attribuer la tâche introuvable."));
@@ -123,12 +133,22 @@ public class ManagerOnboardingController {
         if (!departementsResponsabilite.isEmpty()) return departementsResponsabilite.get(0).getId();
         return affectations.findFirstByEmployeIdAndDateFinIsNullOrderByDateDebutDesc(manager.getEmployeId())
                 .map(a -> a.getPoste().getDepartement().getId())
+                .or(() -> affectations.findBySuperieurIdAndDateFinIsNull(manager.getEmployeId()).stream()
+                        .findFirst()
+                        .map(a -> a.getPoste().getDepartement().getId()))
                 .orElseThrow(() -> new NotFoundException("Aucun département actif n'est associé à ce manager."));
     }
 
     private Long departementEmploye(Long employeId) {
         Long departmentManager = departementManager();
-        Long departmentSalarie = affectations.findFirstByEmployeIdAndDateFinIsNullOrderByDateDebutDesc(employeId)
+        var affectation = affectations.findFirstByEmployeIdAndDateFinIsNullOrderByDateDebutDesc(employeId)
+                .orElseThrow(() -> new NotFoundException("Affectation du salarié introuvable."));
+        Long managerEmployeId = utilisateurs.findById(accessScope.currentUserId())
+                .map(Utilisateur::getEmployeId)
+                .orElseThrow(() -> new NotFoundException("Manager introuvable."));
+        if (affectation.getSuperieur() != null && managerEmployeId.equals(affectation.getSuperieur().getId()))
+            return affectation.getPoste().getDepartement().getId();
+        Long departmentSalarie = java.util.Optional.of(affectation)
                 .map(a -> a.getPoste().getDepartement().getId())
                 .orElseThrow(() -> new NotFoundException("Affectation du salarié introuvable."));
         if (!departmentManager.equals(departmentSalarie)) throw new NotFoundException("Salarié hors du département du manager.");

@@ -21,6 +21,11 @@ const MENUS = {
     { to: '/manager/demandes', label: 'Mes demandes', icon: 'card-list', permission: 'DEMANDE_CONSULTER' },
     { to: '/manager/entretiens', label: 'Mes entretiens', icon: 'calendar-event', permission: 'EVALUATION_SAISIR' },
     { to: '/manager/onboarding', label: 'Tâches d’intégration', icon: 'person-check', permission: 'DEMANDE_CREER' },
+    { to: '/manager/temps-travail', label: 'Temps de travail', icon: 'clock', permission: 'DEMANDE_CREER' },
+    { to: '/manager/pointages', label: 'Pointages', icon: 'fingerprint', permission: 'DEMANDE_CREER' },
+    { to: '/manager/pointages-dashboard', label: 'Synthèse des pointages', icon: 'bar-chart', permission: 'DEMANDE_CREER' },
+    { to: '/manager/conges', label: 'Validation des congés', icon: 'calendar-x', permission: 'DEMANDE_CREER' },
+    { to: '/manager/conges-soldes', label: 'Soldes de congés', icon: 'calendar2-check', permission: 'DEMANDE_CREER' },
   ],
   GESTIONNAIRE_RH: [
     { to: '/rh/accueil', label: 'Accueil RH', icon: 'grid' },
@@ -42,6 +47,11 @@ const MENUS = {
     { to: '/salarie/accueil', label: 'Accueil', icon: 'house' },
     { to: '/salarie/dossier', label: 'Mon dossier', icon: 'person-vcard', permission: 'DOSSIER_CONSULTER_PERSO' },
     { to: '/salarie/contrats', label: 'Mes contrats', icon: 'file-earmark-text', permission: 'DOCUMENT_CONSULTER_PERSO' },
+    { to: '/salarie/cv', label: 'Mon CV', icon: 'file-person', permission: 'DOCUMENT_CONSULTER_PERSO' },
+    { to: '/salarie/temps-travail', label: 'Mon temps de travail', icon: 'calendar3' },
+    { to: '/salarie/pointages', label: 'Mes pointages', icon: 'fingerprint' },
+    { to: '/salarie/pointages-dashboard', label: 'Synthèse', icon: 'bar-chart' },
+    { to: '/salarie/conges', label: 'Mes congés', icon: 'calendar-x' },
   ],
   CANDIDAT: [
     { to: '/candidat/cv', label: 'Mon CV', icon: 'file-person', permission: 'DOCUMENT_CONSULTER_PERSO' },
@@ -67,7 +77,7 @@ export function useRoleMenu() {
     const propres = MENUS[principal.value] ?? []
     // Un manager, un RH… est aussi salarié : il garde l'accès à ses propres contrats.
     const contrats = principal.value !== 'SALARIE' && auth.hasRole('SALARIE') && auth.hasPermission('DOCUMENT_CONSULTER_PERSO')
-      ? [{ to: '/salarie/contrats', label: 'Mes contrats', icon: 'file-earmark-text' }] : []
+      ? [{ to: '/salarie/contrats', label: 'Mes contrats', icon: 'file-earmark-text' }, { to: '/salarie/cv', label: 'Mon CV', icon: 'file-person' }] : []
     const dossier = principal.value !== 'SALARIE' && auth.hasRole('SALARIE') && auth.hasPermission('DOSSIER_CONSULTER_PERSO')
       ? [{ to: '/salarie/dossier', label: 'Mon dossier', icon: 'person-vcard' }] : []
     return [...propres, ...contrats, ...dossier, ...COMMUNS].filter((item) => !item.permission || auth.hasPermission(item.permission))

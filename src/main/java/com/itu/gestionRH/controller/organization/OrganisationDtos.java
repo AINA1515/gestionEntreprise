@@ -26,7 +26,7 @@ public final class OrganisationDtos {
             java.math.BigDecimal salaireBrut, String devise, String statut) {}
     public record AffectationResume(Long posteId, String codePoste, String intitule, String statutPoste,
             LocalDate dateDebut, Long superieurId) {}
-    public record EmployeDto(Long id, String matricule, String nom, String prenom, String emailProfessionnel,
+    public record EmployeDto(Long id, Long candidatId, String matricule, String nom, String prenom, String emailProfessionnel,
             String telephone, EmployeStatut statutActivite, Long departementId, String departement,
             AffectationResume affectationCourante, List<ContratResume> contrats) {}
 }

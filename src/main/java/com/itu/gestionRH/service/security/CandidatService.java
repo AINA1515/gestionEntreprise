@@ -59,6 +59,11 @@ public class CandidatService {
     }
 
     @Transactional(readOnly = true)
+    public CvDto cvDuCandidat(Long candidatId) {
+        return versDto(candidats.findById(candidatId).orElseThrow(() -> new NotFoundException("Candidat introuvable.")));
+    }
+
+    @Transactional(readOnly = true)
     public boolean possedeCv() {
         Candidat candidat = candidatCourant();
         return (candidat.getCvUrl() != null && !candidat.getCvUrl().isBlank())

@@ -1,0 +1,7 @@
+package com.itu.gestionRH.entity.organization;
+import jakarta.persistence.*; import java.time.LocalDate;
+@Entity @Table(name="PLANNING_TRAVAIL") public class PlanningTravail {
+ @Id @GeneratedValue(strategy=GenerationType.SEQUENCE,generator="planningGen") @SequenceGenerator(name="planningGen",sequenceName="SEQ_PLANNING_TRAVAIL",allocationSize=1) private Long id;
+ @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="EMPLOYE_ID",nullable=false) private Employe employe; @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="REGIME_ID",nullable=false) private RegimeTravail regime; @Column(name="DATE_DEBUT") private LocalDate dateDebut; @Column(name="DATE_FIN") private LocalDate dateFin; @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="ASSIGNE_PAR_ID") private Employe assignePar; @Column(length=500) private String motif;
+ public Long getId(){return id;} public Employe getEmploye(){return employe;} public void setEmploye(Employe v){employe=v;} public RegimeTravail getRegime(){return regime;} public void setRegime(RegimeTravail v){regime=v;} public LocalDate getDateDebut(){return dateDebut;} public void setDateDebut(LocalDate v){dateDebut=v;} public LocalDate getDateFin(){return dateFin;} public void setDateFin(LocalDate v){dateFin=v;} public Employe getAssignePar(){return assignePar;} public void setAssignePar(Employe v){assignePar=v;} public String getMotif(){return motif;} public void setMotif(String v){motif=v;}
+}

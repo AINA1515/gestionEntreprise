@@ -40,13 +40,22 @@ async function chargerParcours() {
 }
 
 async function assigner(tache) {
-  if (!affectations.value[tache.id]) return
+  if (!employeId.value) return
   loading.value = true
   error.value = ''
   success.value = ''
   try {
-    await onboardingService.assignerTache(tache.id, Number(affectations.value[tache.id]))
-    success.value = 'La tâche a été attribuée.'
+    let utilisateurId = null
+    if (!tache.assigneeId) {
+      const responsable = parcours.value.assignables.find((u) => Number(u.employeId) === Number(employeId.value))
+      if (!responsable) {
+        error.value = 'Ce salarié ne possède pas encore de compte utilisateur actif.'
+        return
+      }
+      utilisateurId = Number(responsable.utilisateurId)
+    }
+    await onboardingService.assignerTache(tache.id, utilisateurId)
+    success.value = tache.assigneeId ? 'La tâche a été annulée.' : 'La tâche a été attribuée.'
     await chargerParcours()
   } catch (e) { error.value = e.message || 'Impossible d’attribuer cette tâche.' }
   finally { loading.value = false }
@@ -99,17 +108,14 @@ onMounted(chargerCollaborateurs)
             <span class="badge text-bg-light align-self-start">{{ tache.statut.replaceAll('_', ' ') }}</span>
           </div>
           <div class="row g-2 align-items-end">
-            <div class="col-md-8">
-              <label class="form-label" :for="`responsable-${tache.id}`">Responsable de la tâche</label>
-              <select :id="`responsable-${tache.id}`" v-model="affectations[tache.id]" class="form-select" :disabled="tache.statut === 'VALIDEE' || !parcours.assignables.length">
-                <option value="">Choisir un salarié du département</option>
-                <option v-for="u in parcours.assignables" :key="u.utilisateurId" :value="String(u.utilisateurId)">{{ u.nom || `Utilisateur #${u.utilisateurId}` }}</option>
-              </select>
+            <div class="col-md-8 small text-body-secondary">
+              Responsable sélectionné : <strong>le salarié choisi ci-dessus</strong>
             </div>
             <div class="col-md-4">
-              <button class="btn btn-primary w-100" type="button" :disabled="loading || tache.statut === 'VALIDEE' || !affectations[tache.id]" @click="assigner(tache)">
-                <i class="bi bi-person-plus me-2" aria-hidden="true"></i>{{ tache.assigneeId ? 'Modifier le responsable' : 'Ajouter un responsable' }}
+              <button v-if="tache.statut !== 'VALIDEE'" :class="tache.assigneeId ? 'btn btn-outline-danger w-100' : 'btn btn-primary w-100'" type="button" :disabled="loading || !employeId" @click="assigner(tache)">
+                <i :class="['bi me-2', tache.assigneeId ? 'bi-x-circle' : 'bi-person-plus']" aria-hidden="true"></i>{{ tache.assigneeId ? 'Annuler la tâche' : 'Attribuer la tâche' }}
               </button>
+              <span v-else class="badge text-bg-success w-100 p-2"><i class="bi bi-check-circle me-2" aria-hidden="true"></i>Déjà faite</span>
             </div>
           </div>
           <p v-if="!parcours.assignables.length" class="small text-danger mt-2 mb-0">Aucun salarié avec un compte actif n’est disponible dans ce département.</p>
