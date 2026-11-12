@@ -26,6 +26,9 @@ const form = reactive({
 })
 
 onMounted(async () => {
+  // Le store Pinia survit aux changements de page : ne pas réafficher une
+  // erreur provenant d'une action précédente lorsqu'on ouvre ce formulaire.
+  demandes.effacerErreur()
   await Promise.all([
     chargement.run(() => referentiel.chargerDepartements()),
     chargement.run(() => referentiel.chargerNiveauxFormation()),

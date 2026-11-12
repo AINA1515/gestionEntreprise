@@ -12,6 +12,11 @@ export const useDemandesStore = defineStore('demandes', () => {
   const recentes = ref([])
   const { loading, error, details: errorDetails, run } = useAsyncAction()
 
+  const effacerErreur = () => {
+    error.value = null
+    errorDetails.value = []
+  }
+
   const chargerDashboard = () =>
     run(async () => {
       const data = await demandeService.dashboard()
@@ -58,5 +63,5 @@ export const useDemandesStore = defineStore('demandes', () => {
   const supprimer = async (id) => !!(await run(() => demandeService.supprimer(id), { successMessage: 'La demande a été supprimée.' }))
 
   return { demandes, page, demandeSelectionnee, nombreDemandes, parStatut, recentes, loading, error, errorDetails,
-    chargerDashboard, charger, obtenir, creer, modifier, soumettre, valider, supprimer }
+    effacerErreur, chargerDashboard, charger, obtenir, creer, modifier, soumettre, valider, supprimer }
 })
