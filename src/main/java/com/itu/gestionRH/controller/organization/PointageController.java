@@ -10,6 +10,8 @@ import java.util.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/api/v1/pointages")
@@ -29,7 +31,7 @@ public class PointageController {
         scope = s;
     }
 
-    public record PointageRequest(Long employeId, LocalDate datePointage, LocalDateTime entreePrevue,
+    public record PointageRequest(@NotNull Long employeId, @NotNull LocalDate datePointage, LocalDateTime entreePrevue,
             LocalDateTime sortiePrevue, LocalDateTime entreeReelle, LocalDateTime sortieReelle, Integer minutesRetard,
             Integer minutesHeuresSup, String statut) {
     }
@@ -79,7 +81,7 @@ public class PointageController {
     @PostMapping
     @Transactional
     @PreAuthorize("hasAnyAuthority('PERM_DEMANDE_CREER','PERM_CONTRAT_GERER')")
-    public PointageJournalier saisir(@RequestBody PointageRequest r) {
+    public PointageJournalier saisir(@Valid @RequestBody PointageRequest r) {
         Long c = eid();
         if (!global() && !equipe(r.employeId(), c))
             deny();

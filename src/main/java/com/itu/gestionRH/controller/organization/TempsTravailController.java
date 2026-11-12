@@ -11,6 +11,9 @@ import java.util.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/api/v1/temps-travail")
@@ -37,10 +40,10 @@ public class TempsTravailController {
         tempsService = t;
     }
 
-    public record PlanningRequest(Long employeId, Long regimeId, LocalDate dateDebut, LocalDate dateFin, String motif) {
+    public record PlanningRequest(@NotNull Long employeId, @NotNull Long regimeId, @NotNull LocalDate dateDebut, LocalDate dateFin, String motif) {
     }
 
-    public record CreneauRequest(Long planningId, LocalDateTime dateDebut, LocalDateTime dateFin, String typeCreneau,
+    public record CreneauRequest(@NotNull Long planningId, @NotNull LocalDateTime dateDebut, @NotNull LocalDateTime dateFin, @NotBlank String typeCreneau,
             String libelle) {
     }
 
@@ -76,14 +79,14 @@ public class TempsTravailController {
     @PostMapping("/plannings")
     @Transactional
     @PreAuthorize("hasAnyAuthority('PERM_DEMANDE_CREER','PERM_CONTRAT_GERER')")
-    public PlanningTravail creer(@RequestBody PlanningRequest r) {
+    public PlanningTravail creer(@Valid @RequestBody PlanningRequest r) {
         return tempsService.creerPlanning(r.employeId(), r.regimeId(), r.dateDebut(), r.dateFin(), r.motif());
     }
 
     @PutMapping("/plannings/{id}")
     @Transactional
     @PreAuthorize("hasAnyAuthority('PERM_DEMANDE_CREER','PERM_CONTRAT_GERER')")
-    public PlanningTravail modifierPlanning(@PathVariable Long id, @RequestBody PlanningRequest r) {
+    public PlanningTravail modifierPlanning(@PathVariable Long id, @Valid @RequestBody PlanningRequest r) {
         return tempsService.modifierPlanning(id, r.regimeId(), r.dateDebut(), r.dateFin(), r.motif());
     }
 
@@ -97,14 +100,14 @@ public class TempsTravailController {
     @PostMapping("/creneaux")
     @Transactional
     @PreAuthorize("hasAnyAuthority('PERM_DEMANDE_CREER','PERM_CONTRAT_GERER')")
-    public CreneauTravail creerCreneau(@RequestBody CreneauRequest r) {
+    public CreneauTravail creerCreneau(@Valid @RequestBody CreneauRequest r) {
         return tempsService.creerCreneau(r.planningId(), r.dateDebut(), r.dateFin(), r.typeCreneau(), r.libelle());
     }
 
     @PutMapping("/creneaux/{id}")
     @Transactional
     @PreAuthorize("hasAnyAuthority('PERM_DEMANDE_CREER','PERM_CONTRAT_GERER')")
-    public CreneauTravail modifierCreneau(@PathVariable Long id, @RequestBody CreneauRequest r) {
+    public CreneauTravail modifierCreneau(@PathVariable Long id, @Valid @RequestBody CreneauRequest r) {
         return tempsService.modifierCreneau(id, r.dateDebut(), r.dateFin(), r.typeCreneau(), r.libelle());
     }
 

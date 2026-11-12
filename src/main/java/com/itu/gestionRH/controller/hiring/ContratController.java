@@ -21,6 +21,10 @@ import com.itu.gestionRH.entity.enums.ContratType;
 import com.itu.gestionRH.common.NotFoundException;
 import com.itu.gestionRH.common.BusinessRuleException;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/api/v1/onboarding")
@@ -34,9 +38,9 @@ public class ContratController {
             EmployeRepository employes, PosteRepository postes, com.itu.gestionRH.service.audit.AuditService audit) {
         this.accessScope=accessScope; this.contrats=contrats; this.employes=employes; this.postes=postes; this.audit=audit;
     }
-    public record ContratRequest(Long employeId, Long posteId, String typeContrat,
-                                 String typeActe, Long contratPrecedentId, LocalDate dateDebut,
-                                 LocalDate dateFin, BigDecimal salaireBrut) {}
+    public record ContratRequest(@NotNull Long employeId, Long posteId, @NotBlank String typeContrat,
+                                 @NotBlank String typeActe, Long contratPrecedentId, @NotNull LocalDate dateDebut,
+                                 LocalDate dateFin, @NotNull @DecimalMin("0.00") BigDecimal salaireBrut) {}
     public record ContratResponse(Long id, Long employeId, Long posteId, String typeContrat,
                                   String typeActe, Long contratPrecedentId, LocalDate dateDebut,
                                   LocalDate dateFin, LocalDate dateFinEffective, BigDecimal salaireBrut,
@@ -45,7 +49,7 @@ public class ContratController {
     @PreAuthorize("hasAuthority('PERM_CONTRAT_GERER')")
     @PostMapping("/contrats")
     @Transactional
-    public ContratResponse creer(@RequestBody ContratRequest request) {
+    public ContratResponse creer(@Valid @RequestBody ContratRequest request) {
         var employe = employes.findById(request.employeId()).orElseThrow(() -> new NotFoundException("Employé introuvable."));
         ContratType type;
         ContratActe acte;

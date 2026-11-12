@@ -132,7 +132,7 @@ async function enregistrerPermissions() {
             <tr v-if="edition?.id === u.id"><td colspan="4" class="bg-body-tertiary">
               <div class="mb-2 fw-semibold">Rôles de {{ u.nomAffichage }}</div>
               <div class="form-check form-check-inline" v-for="r in rolesActifs" :key="r.code"><input :id="`er-${u.id}-${r.code}`" v-model="edition.roles" class="form-check-input" type="checkbox" :value="r.code" /><label class="form-check-label" :for="`er-${u.id}-${r.code}`" :title="r.description">{{ r.libelle || r.code }}</label></div>
-              <div class="mt-2 d-flex gap-2"><button class="btn btn-sm btn-primary" type="button" :disabled="enregistrement" @click="enregistrerRoles">Enregistrer</button><button class="btn btn-sm btn-outline-secondary" type="button" @click="edition = null">Annuler</button></div>
+              <div class="mt-2 d-flex gap-2"><button class="btn btn-sm btn-primary" type="button" :disabled="enregistrement || !edition.roles.length" @click="enregistrerRoles">Enregistrer</button><button class="btn btn-sm btn-outline-secondary" type="button" @click="edition = null">Annuler</button></div>
             </td></tr>
           </template>
         </tbody>

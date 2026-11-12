@@ -94,14 +94,14 @@ async function enregistrer(soumettre = false) {
 
     <form class="card shadow-sm" @submit.prevent="enregistrer(false)">
       <div class="card-body p-4">
-        <FormField id="departement" label="Département" :error="fieldErrors.departementId">
+        <FormField id="departement" label="Département *" :error="fieldErrors.departementId">
           <select id="departement" v-model="form.departementId" class="form-select" :class="{ 'is-invalid': fieldErrors.departementId }" required>
             <option value="" disabled>-- Choisir un département --</option>
             <option v-for="d in referentiel.departements" :key="d.id" :value="d.id">{{ d.libelle }}</option>
           </select>
         </FormField>
 
-        <FormField id="poste" label="Poste demandé" :error="fieldErrors.posteId">
+        <FormField id="poste" label="Poste demandé *" :error="fieldErrors.posteId">
           <select id="poste" v-model="form.posteId" class="form-select" :class="{ 'is-invalid': fieldErrors.posteId }" required :disabled="!form.departementId">
             <option value="" disabled>-- Choisir un poste --</option>
             <option v-for="p in referentiel.postes" :key="p.id" :value="p.id">{{ p.intitule }}</option>
@@ -123,7 +123,7 @@ async function enregistrer(soumettre = false) {
           </select>
         </FormField>
 
-        <FormField id="typeDemande" label="Type de demande" :error="fieldErrors.typeDemande">
+        <FormField id="typeDemande" label="Type de demande *" :error="fieldErrors.typeDemande">
           <select id="typeDemande" v-model="form.typeDemande" class="form-select" required>
             <option value="CREATION">Création</option>
             <option value="REMPLACEMENT">Remplacement</option>
@@ -137,17 +137,17 @@ async function enregistrer(soumettre = false) {
           </select>
         </FormField>
 
-        <FormField id="effectif" label="Effectif demandé" :error="fieldErrors.effectif">
+        <FormField id="effectif" label="Effectif demandé *" :error="fieldErrors.effectif">
           <input id="effectif" v-model.number="form.effectif" type="number" min="1" max="999" class="form-control" :class="{ 'is-invalid': fieldErrors.effectif }" required />
         </FormField>
-        <FormField id="motif" label="Motif de la demande" :error="fieldErrors.motif">
+        <FormField id="motif" label="Motif de la demande *" :error="fieldErrors.motif">
           <textarea id="motif" v-model="form.motif" rows="4" class="form-control" :class="{ 'is-invalid': fieldErrors.motif }" required></textarea>
         </FormField>
         <FormField id="budget" label="Budget estimé · salaire de référence" :error="fieldErrors.budget">
           <input id="budget" v-model.number="form.budget" type="number" min="0" step="0.01" class="form-control" :class="{ 'is-invalid': fieldErrors.budget }" />
           <div class="form-text">Ce montant sera proposé comme référence aux candidats de l’offre.</div>
         </FormField>
-        <FormField id="dateSouhaitee" label="Date souhaitée" :error="fieldErrors.dateSouhaitee">
+        <FormField id="dateSouhaitee" label="Date souhaitée *" :error="fieldErrors.dateSouhaitee">
           <input id="dateSouhaitee" v-model="form.dateSouhaitee" type="date" class="form-control" :class="{ 'is-invalid': fieldErrors.dateSouhaitee }" required />
         </FormField>
 

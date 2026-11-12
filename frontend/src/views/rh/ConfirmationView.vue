@@ -51,7 +51,7 @@ async function confirmer() {
         <AlertMessage :message="candidatures.error" />
 
         <form @submit.prevent="confirmer">
-          <FormField id="candidature" label="Candidat retenu">
+          <FormField id="candidature" label="Candidat retenu *">
             <select id="candidature" v-model="form.candidatureId" class="form-select" required>
               <option value="" disabled>-- Sélectionner un candidat --</option>
               <option v-for="c in retenues" :key="c.id" :value="String(c.id)">{{ c.candidat }} — {{ c.poste }}</option>
@@ -62,26 +62,26 @@ async function confirmer() {
             E-mail : <strong>{{ candidature.email ?? '—' }}</strong> · Poste obtenu: <strong>{{ candidature.poste }}</strong>
           </p>
 
-          <FormField id="contrat" label="Type de contrat">
+          <FormField id="contrat" label="Type de contrat *">
             <select id="contrat" v-model="form.typeContrat" class="form-select" required>
               <option value="" disabled>-- Sélectionner le contrat --</option>
               <option v-for="t in TYPES_CONTRAT" :key="t.value" :value="t.value">{{ t.label }}</option>
             </select>
           </FormField>
 
-          <FormField id="salaireBrut" label="Salaire brut proposé (facultatif)">
-            <input id="salaireBrut" v-model="form.salaireBrut" type="number" min="0" step="0.01" class="form-control" />
+          <FormField id="salaireBrut" :label="candidature?.salairePropose == null && candidature?.salaireReference == null ? 'Salaire brut proposé *' : 'Salaire brut proposé (facultatif)'}">
+            <input id="salaireBrut" v-model="form.salaireBrut" type="number" min="0" step="0.01" class="form-control" :required="candidature?.salairePropose == null && candidature?.salaireReference == null" />
           </FormField>
 
           <FormField id="debut" label="Date de début du travail">
             <input id="debut" v-model="form.dateDebut" type="date" class="form-control" />
           </FormField>
 
-          <FormField v-if="form.typeContrat !== 'CDI'" id="dateFin" label="Date de fin du contrat">
+          <FormField v-if="form.typeContrat !== 'CDI'" id="dateFin" label="Date de fin du contrat *">
             <input id="dateFin" v-model="form.dateFin" type="date" class="form-control" :min="form.dateDebut || new Date().toISOString().slice(0, 10)" required />
           </FormField>
 
-          <FormField id="dateLimiteReponse" label="Date limite de réponse du candidat">
+          <FormField id="dateLimiteReponse" label="Date limite de réponse du candidat *">
             <input id="dateLimiteReponse" v-model="form.dateLimiteReponse" type="date" class="form-control" :min="new Date().toISOString().slice(0, 10)" required />
           </FormField>
 

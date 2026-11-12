@@ -9,6 +9,10 @@ import java.util.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 @RestController
 @RequestMapping("/api/v1/conges")
@@ -28,7 +32,8 @@ public class CongeController {
         scope = a;
     }
 
-    public record Demande(Long employeId, String typeConge, LocalDate dateDebut, LocalDate dateFin,
+    public record Demande(Long employeId, @NotBlank @Pattern(regexp = "ANNUEL|MALADIE|MATERNITE|SANS_SOLDE") String typeConge,
+            @NotNull LocalDate dateDebut, @NotNull LocalDate dateFin,
             double joursDemandes, String motif) {
     }
 
@@ -70,7 +75,7 @@ public class CongeController {
     @PostMapping
     @Transactional
     @PreAuthorize("isAuthenticated()")
-    public DemandeConge demander(@RequestBody Demande r) {
+    public DemandeConge demander(@Valid @RequestBody Demande r) {
         Long employeId = r.employeId() == null ? eid() : r.employeId();
         double jours = joursOuvres(r.dateDebut(), r.dateFin());
         if (employeId == null) throw new IllegalArgumentException("Aucun employé connecté n'est associé à ce compte");

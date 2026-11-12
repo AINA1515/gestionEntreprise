@@ -42,10 +42,10 @@ async function fermer(id) { await action.run(() => store.fermerPoste(id)); if (!
         <template #cell-actions="{ row }"><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" :disabled="row.statut === 'FERME'" @click="edit(row)">Modifier</button><button v-if="row.statut !== 'FERME'" class="btn btn-outline-danger" @click="fermer(row.id)">Fermer</button></div></template>
       </DataTable></div></div>
       <div class="col-xl-4"><form class="card card-body" @submit.prevent="save"><h2 class="h5">{{ editId ? 'Modifier le poste' : 'Créer un poste' }}</h2>
-        <FormField id="codePoste" label="Code poste"><input id="codePoste" v-model="form.codePoste" class="form-control" maxlength="30" required /></FormField>
-        <FormField id="intitule" label="Intitulé"><input id="intitule" v-model="form.intitule" class="form-control" maxlength="200" required /></FormField>
+        <FormField id="codePoste" label="Code poste *"><input id="codePoste" v-model.trim="form.codePoste" class="form-control" maxlength="30" required /></FormField>
+        <FormField id="intitule" label="Intitulé *"><input id="intitule" v-model.trim="form.intitule" class="form-control" maxlength="200" required /></FormField>
         <FormField id="description" label="Description"><textarea id="description" v-model="form.description" class="form-control" rows="3" maxlength="4000"></textarea></FormField>
-        <FormField id="departementId" label="Département"><select id="departementId" v-model="form.departementId" class="form-select" required><option value="">Choisir</option><option v-for="d in store.departements.filter(x => x.estActif)" :key="d.id" :value="d.id">{{ d.libelle }}</option></select></FormField>
+        <FormField id="departementId" label="Département *"><select id="departementId" v-model="form.departementId" class="form-select" required><option value="" disabled>Choisir</option><option v-for="d in store.departements.filter(x => x.estActif)" :key="d.id" :value="d.id">{{ d.libelle }}</option></select></FormField>
         <p v-if="!editId" class="small text-body-secondary">Le poste sera créé puis ouvert au statut Vacant.</p>
         <div class="d-flex gap-2"><button class="btn btn-primary" type="submit" :disabled="action.loading.value">{{ editId ? 'Enregistrer' : 'Créer' }}</button><button v-if="editId" class="btn btn-outline-secondary" type="button" @click="reset">Annuler</button></div>
       </form></div>

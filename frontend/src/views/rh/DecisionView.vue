@@ -72,7 +72,7 @@ async function enregistrer() {
 
           <FormField id="observations" label="Observations du RH">
             <textarea id="observations" v-model="form.observations" rows="4" class="form-control"
-                      placeholder="Commentaires, résultats de l'entretien, évaluation..."></textarea>
+                      placeholder="Commentaires, résultats de l'entretien, évaluation..." required></textarea>
           </FormField>
 
           <div class="d-flex flex-wrap gap-2">

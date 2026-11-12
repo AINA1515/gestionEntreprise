@@ -54,7 +54,7 @@ async function ajouter() {
         <div class="row g-3">
           <div class="col-md-3"><label class="form-label" for="ev-date">Date d’effet</label><input id="ev-date" v-model="form.dateEffet" type="date" class="form-control" required /></div>
           <div class="col-md-3"><label class="form-label" for="ev-sal">Nouveau salaire brut</label><input id="ev-sal" v-model="form.salaireBrutNouveau" type="number" min="0" step="0.01" class="form-control" required /></div>
-          <div class="col-md-3"><label class="form-label" for="ev-type">Type</label><select id="ev-type" v-model="form.typeEvolution" class="form-select"><option v-for="(libelle, code) in EVOLUTIONS_SALAIRE" :key="code" :value="code">{{ libelle }}</option></select></div>
+          <div class="col-md-3"><label class="form-label" for="ev-type">Type</label><select id="ev-type" v-model="form.typeEvolution" class="form-select" required><option v-for="(libelle, code) in EVOLUTIONS_SALAIRE" :key="code" :value="code">{{ libelle }}</option></select></div>
           <div class="col-md-12"><label class="form-label" for="ev-motif">Motif</label><input id="ev-motif" v-model="form.motif" class="form-control" maxlength="500" required /></div>
         </div>
         <div class="mt-3 d-flex gap-2">
