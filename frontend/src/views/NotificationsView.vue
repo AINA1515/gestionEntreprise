@@ -22,6 +22,9 @@ function categorieNotification(item) {
   if (code.startsWith('DOCUMENT_') || code === 'EMPLOYE_CREE') return 'Dossier'
   return 'Recrutement'
 }
+function echeanceProche(item) {
+  return ['ONBOARDING_TACHE_EN_RETARD', 'CONTRAT_FIN_PROCHE', 'DOCUMENT_EXPIRATION_PROCHE'].includes(item.codeModele)
+}
 </script>
 
 <template>
@@ -42,7 +45,7 @@ function categorieNotification(item) {
         <div>
           <h2 class="h6 mb-1">{{ item.sujet }}</h2>
           <p v-if="texteNotification(item)" class="small mb-1">{{ texteNotification(item) }}</p>
-          <div class="small text-body-secondary"><span class="badge text-bg-light me-2">{{ categorieNotification(item) }}</span>{{ dates.format(new Date(item.dateCreation)) }}</div>
+          <div class="small text-body-secondary"><span class="badge text-bg-light me-2">{{ categorieNotification(item) }}</span><span v-if="echeanceProche(item)" class="badge text-bg-warning me-2">Échéance à traiter</span>{{ dates.format(new Date(item.dateCreation)) }}</div>
         </div>
         <div class="d-flex flex-column gap-1 align-items-end">
           <RouterLink v-if="lienNotification(item, auth)" class="btn btn-sm btn-primary text-nowrap" :to="lienNotification(item, auth)" @click="lire(item)">Ouvrir</RouterLink>
