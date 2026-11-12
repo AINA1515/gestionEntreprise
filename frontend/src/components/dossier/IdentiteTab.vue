@@ -4,10 +4,11 @@ import { useFormatters } from '@/composables/useFormatters'
 import { SITUATIONS_FAMILIALES } from '@/composables/useDossierLabels'
 import AlertMessage from '@/components/ui/AlertMessage.vue'
 
-const props = defineProps({ dossier: { type: Object, required: true }, enregistrer: { type: Function, required: true }, saving: Boolean, erreur: { type: String, default: null } })
+const props = defineProps({ dossier: { type: Object, required: true }, mode: { type: String, default: 'moi' }, enregistrer: { type: Function, required: true }, saving: Boolean, erreur: { type: String, default: null } })
 const { formatDate } = useFormatters()
 const edition = ref(false)
 const form = ref({})
+const peutModifierDonneesSensibles = () => props.mode === 'rh' && props.dossier.droits.donneesSensiblesVisibles
 
 function ouvrir() { form.value = { ...props.dossier.identite }; edition.value = true }
 async function valider() { if (await props.enregistrer({ identite: form.value })) edition.value = false }
@@ -44,9 +45,10 @@ const sensible = (valeur) => valeur || 'Non renseigné'
         <div class="col-md-4"><label class="form-label" for="id-nat">Nationalité</label><input id="id-nat" v-model="form.nationalite" class="form-control" maxlength="60" /></div>
         <div class="col-md-4"><label class="form-label" for="id-sexe">Sexe</label><select id="id-sexe" v-model="form.sexe" class="form-select"><option :value="null">—</option><option value="M">Masculin</option><option value="F">Féminin</option></select></div>
         <div class="col-md-4"><label class="form-label" for="id-sf">Situation familiale</label><select id="id-sf" v-model="form.situationFamiliale" class="form-select"><option :value="null">—</option><option v-for="(libelle, code) in SITUATIONS_FAMILIALES" :key="code" :value="code">{{ libelle }}</option></select></div>
-        <div class="col-md-6"><label class="form-label" for="id-cin">N° CIN</label><input id="id-cin" v-model="form.numCin" class="form-control" maxlength="30" :disabled="!dossier.droits.donneesSensiblesVisibles" /></div>
-        <div class="col-md-6"><label class="form-label" for="id-cnaps">N° CNaPS</label><input id="id-cnaps" v-model="form.numCnaps" class="form-control" maxlength="30" :disabled="!dossier.droits.donneesSensiblesVisibles" /></div>
+        <div class="col-md-6"><label class="form-label" for="id-cin">N° CIN</label><input id="id-cin" v-model="form.numCin" class="form-control" maxlength="30" :disabled="!peutModifierDonneesSensibles()" /></div>
+        <div class="col-md-6"><label class="form-label" for="id-cnaps">N° CNaPS</label><input id="id-cnaps" v-model="form.numCnaps" class="form-control" maxlength="30" :disabled="!peutModifierDonneesSensibles()" /></div>
       </div>
+      <p v-if="mode !== 'rh' || !dossier.droits.donneesSensiblesVisibles" class="form-text mt-2 mb-0">Les numéros CIN et CNaPS sont modifiables par les Ressources humaines uniquement.</p>
       <div class="mt-3 d-flex gap-2">
         <button class="btn btn-primary" type="submit" :disabled="saving">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</button>
         <button class="btn btn-outline-secondary" type="button" :disabled="saving" @click="edition = false">Annuler</button>

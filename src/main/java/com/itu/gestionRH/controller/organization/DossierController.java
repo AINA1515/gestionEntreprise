@@ -40,6 +40,12 @@ public class DossierController {
         return service.modifierCoordonnees(accessScope.currentUserId(), request);
     }
 
+    @PutMapping("/moi/identite")
+    @PreAuthorize("hasAuthority('PERM_DOSSIER_MODIFIER_PERSO')")
+    public DossierDto modifierMonIdentite(@Valid @RequestBody IdentitePersonnelleRequest request) {
+        return service.modifierIdentite(accessScope.currentUserId(), request);
+    }
+
     @GetMapping("/moi/carriere")
     @PreAuthorize("hasAuthority('PERM_DOSSIER_CONSULTER_PERSO')")
     public List<CarriereEvenement> maCarriere() {

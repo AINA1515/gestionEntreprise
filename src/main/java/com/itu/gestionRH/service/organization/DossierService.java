@@ -153,6 +153,36 @@ public class DossierService {
         return dto(e);
     }
 
+    /** Mise à jour des informations d'identité par le salarié lui-même. */
+    @Transactional
+    public DossierDto modifierIdentite(Long utilisateurId, IdentitePersonnelleRequest r) {
+        Employe e = trouver(employeIdDe(utilisateurId));
+        verifierVersion(e, r.version());
+        Map<String, String> avant = instantane(e);
+        Identite i = r.identite();
+        boolean sensibles = accessScope.hasPermission("DONNEES_SENSIBLES_CONSULTER");
+        String cin = sensibles ? valeurSensible(e.getNumCin(), i.numCin()) : e.getNumCin();
+        String cnaps = sensibles ? valeurSensible(e.getNumCnaps(), i.numCnaps()) : e.getNumCnaps();
+        if (cin != null && !cin.equals(e.getNumCin()) && employes.compterParCin(normaliser(cin), e.getId()) > 0)
+            throw new BusinessRuleException("CIN_DEJA_UTILISE", "Ce numéro de CIN est déjà enregistré pour un autre salarié.");
+        if (cnaps != null && !cnaps.equals(e.getNumCnaps()) && employes.compterParCnaps(normaliser(cnaps), e.getId()) > 0)
+            throw new BusinessRuleException("CNAPS_DEJA_UTILISE", "Ce numéro CNaPS est déjà enregistré pour un autre salarié.");
+
+        e.setCivilite(nettoyer(i.civilite()));
+        e.setNom(i.nom().trim());
+        e.setPrenom(i.prenom().trim());
+        e.setDateNaissance(i.dateNaissance());
+        e.setLieuNaissance(nettoyer(i.lieuNaissance()));
+        e.setNationalite(nettoyer(i.nationalite()));
+        e.setSexe(nettoyer(i.sexe()));
+        e.setSituationFamiliale(i.situationFamiliale());
+        e.setNumCin(cin);
+        e.setNumCnaps(cnaps);
+        employes.saveAndFlush(e);
+        tracerModifications(e, avant);
+        return dto(e);
+    }
+
     // ------------------------------------------------------------------ carrière
 
     /** Chronologie unique : embauche, contrats, avenants, mutations, changements de salaire, fin de contrat, sortie. */

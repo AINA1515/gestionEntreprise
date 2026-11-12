@@ -61,6 +61,9 @@ public final class DossierDtos {
             @Size(max = 200) String adresseLigne2, @Size(max = 10) String codePostal, @Size(max = 100) String ville,
             @Size(max = 60) String pays, @Valid ContactUrgence contactUrgence) {}
 
+    /** Mise à jour par le salarié de ses informations d'identité. */
+    public record IdentitePersonnelleRequest(Long version, @NotNull @Valid Identite identite) {}
+
     public enum CarriereEvenementType {
         EMBAUCHE, CONTRAT, AVENANT, RENOUVELLEMENT, FIN_CONTRAT, AFFECTATION, MUTATION, CHANGEMENT_SALAIRE, SORTIE
     }

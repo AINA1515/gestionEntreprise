@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { dossierService } from '@/services/dossierService'
-import { dossierModificationService } from '@/services/dossierModificationService'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { usePermissions } from '@/composables/usePermissions'
 import { useToast } from '@/composables/useToast'
@@ -70,18 +69,30 @@ async function enregistrer(partiel) {
       })
     }
     const c = { ...d.coordonnees, ...partiel.coordonnees }
-    const identite = { ...d.identite, ...partiel.identite }
     const contactUrgence = { ...d.contactUrgence, ...partiel.contactUrgence }
-    const anciennesValeurs = { ...d.coordonnees, ...d.identite, ...d.contactUrgence }
-    const nouvellesValeurs = { ...c, ...identite, ...contactUrgence }
-    return dossierModificationService.creer({ anciennesValeurs, nouvellesValeurs, motif: 'Modification demandée par le salarié' })
+    if (partiel.identite) {
+      return dossierService.modifierIdentite({ version: d.version, identite: partiel.identite })
+    }
+    return dossierService.modifierCoordonnees({
+        version: d.version,
+        emailPersonnel: c.emailPersonnel,
+        telephonePersonnel: c.telephonePersonnel,
+        adresseLigne1: c.adresseLigne1,
+        adresseLigne2: c.adresseLigne2,
+        codePostal: c.codePostal,
+        ville: c.ville,
+        pays: c.pays,
+        contactUrgence,
+      })
   })
   if (!maj) {
     if (saveError.value?.includes('modifié entre-temps')) await charger()
     return false
   }
   dossier.value = maj
-  toast.success(mode.value === 'moi' ? 'Demande envoyée à votre supérieur pour validation.' : 'Dossier mis à jour.')
+  toast.success(mode.value === 'moi'
+    ? (partiel.identite ? 'Identité mise à jour.' : 'Coordonnées mises à jour.')
+    : 'Dossier mis à jour.')
   return true
 }
 </script>
@@ -113,7 +124,7 @@ async function enregistrer(partiel) {
         </li>
       </ul>
 
-      <IdentiteTab v-if="actif === 'identite'" :dossier="dossier" :enregistrer="enregistrer" :saving="saving" :erreur="saveError" />
+      <IdentiteTab v-if="actif === 'identite'" :dossier="dossier" :mode="mode" :enregistrer="enregistrer" :saving="saving" :erreur="saveError" />
       <CoordonneesTab v-else-if="actif === 'coordonnees'" :dossier="dossier" :mode="mode" :enregistrer="enregistrer" :saving="saving" :erreur="saveError" />
       <SituationTab v-else-if="actif === 'situation'" :dossier="dossier" />
       <ContratsTab v-else-if="actif === 'contrats'" :dossier="dossier" :mode="mode" />
