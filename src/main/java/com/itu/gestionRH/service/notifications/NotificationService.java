@@ -91,10 +91,14 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<NotificationDto> mesNotifications(Long destinataireId, int page, int size) {
+    public PageResponse<NotificationDto> mesNotifications(Long destinataireId, int page, int size, Boolean lue, String categorie) {
+        String filtreCategorie = categorie == null || categorie.isBlank() || "TOUTES".equalsIgnoreCase(categorie)
+                ? null : categorie.toUpperCase(java.util.Locale.ROOT);
+        if (filtreCategorie != null && !List.of("RECRUTEMENT", "DOSSIER", "INTEGRATION", "CONTRAT").contains(filtreCategorie))
+            throw new IllegalArgumentException("Catégorie de notification invalide.");
         var pageable = PageRequest.of(Math.max(0, page), Math.min(Math.max(1, size), 100),
                 Sort.by(Sort.Order.asc("estLue"), Sort.Order.desc("dateCreation")));
-        return PageResponse.from(repository.findByDestinataireIdOrderByEstLueAscDateCreationDesc(destinataireId, pageable).map(NotificationService::dto));
+        return PageResponse.from(repository.rechercherPourDestinataire(destinataireId, lue, filtreCategorie, pageable).map(NotificationService::dto));
     }
 
     @Transactional(readOnly = true)

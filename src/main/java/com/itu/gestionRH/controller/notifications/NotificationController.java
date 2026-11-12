@@ -24,8 +24,9 @@ public class NotificationController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping
     public PageResponse<NotificationService.NotificationDto> mesNotifications(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return service.mesNotifications(accessScope.currentUserId(), page, size);
+            @RequestParam(defaultValue = "20") int size, @RequestParam(required = false) Boolean lue,
+            @RequestParam(required = false) String categorie) {
+        return service.mesNotifications(accessScope.currentUserId(), page, size, lue, categorie);
     }
 
     @PreAuthorize("isAuthenticated()")

@@ -13,6 +13,8 @@ import com.itu.gestionRH.workflow.PropositionEmbaucheMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,12 +44,16 @@ public class NotificationReminderService {
     @Transactional
     public void programmerRappels() {
         LocalDate aujourdHui=LocalDate.now();
+        Map<Long, List<String>> tachesEnRetardParAssigne = new LinkedHashMap<>();
         for (var tache : taches.findByDateLimiteBeforeAndStatutTacheIn(aujourdHui, List.of(TacheStatut.A_FAIRE, TacheStatut.EN_COURS))) {
             if (tache.getAssigneeAId() == null) continue;
-            utilisateurs.findById(tache.getAssigneeAId()).ifPresent(user -> notifications.programmerUneFoisParJour(
-                    "ONBOARDING_TACHE_EN_RETARD", List.of(user), Map.of("reference", "Tâche #" + tache.getId(),
-                            "message", tache.getIntituleTache()), "ONBOARDING_TACHE", tache.getId()));
+            tachesEnRetardParAssigne.computeIfAbsent(tache.getAssigneeAId(), id -> new ArrayList<>())
+                    .add("Tâche #" + tache.getId() + " — " + tache.getIntituleTache());
         }
+        tachesEnRetardParAssigne.forEach((assigneId, liste) -> utilisateurs.findById(assigneId).ifPresent(user ->
+                notifications.programmerUneFoisParJour("ONBOARDING_TACHE_EN_RETARD", List.of(user),
+                        Map.of("reference", liste.size() + " tâche(s) d’intégration en retard",
+                                "message", String.join(" ; ", liste)), "ONBOARDING_ASSIGNE", assigneId)));
 
         for (var proposition : propositions.findByStatutPropositionAndDateLimiteReponseBefore(PropositionStatut.ENVOYEE, aujourdHui)) {
             propositionMachine.transition(proposition, "expirer", WorkflowContext.of("SYSTEME", Set.of(), Set.of("PROPOSITION_EMETTRE"), "Expiration automatique"));

@@ -19,10 +19,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
     unreadCount.value = count
     return response
   }
-  async function chargerPage(pageNumber = 0, size = 20) {
+  async function chargerPage(pageNumber = 0, size = 20, filtres = {}) {
     loading.value = true
     try {
-      page.value = await notificationService.lister({ page: pageNumber, size })
+      page.value = await notificationService.lister({ page: pageNumber, size, ...filtres })
       return page.value
     } finally { loading.value = false }
   }

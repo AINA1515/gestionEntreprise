@@ -15,6 +15,18 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     Page<Notification> findByDestinataireIdOrderByEstLueAscDateCreationDesc(Long destinataireId, Pageable pageable);
+    @Query("""
+            select n from Notification n
+            where n.destinataire.id = :destinataireId
+              and (:lue is null or n.estLue = :lue)
+              and (:categorie is null
+                or (:categorie = 'RECRUTEMENT' and (n.codeModele like 'DEMANDE_%' or n.codeModele like 'OFFRE_%' or n.codeModele like 'CANDIDATURE_%' or n.codeModele like 'PROPOSITION_%'))
+                or (:categorie = 'DOSSIER' and (n.codeModele like 'DOCUMENT_%' or n.codeModele = 'EMPLOYE_CREE'))
+                or (:categorie = 'INTEGRATION' and n.codeModele like 'ONBOARDING_%')
+                or (:categorie = 'CONTRAT' and n.codeModele like 'CONTRAT_%'))
+            """)
+    Page<Notification> rechercherPourDestinataire(@Param("destinataireId") Long destinataireId,
+            @Param("lue") Boolean lue, @Param("categorie") String categorie, Pageable pageable);
     long countByDestinataireIdAndEstLueFalse(Long destinataireId);
     Optional<Notification> findByIdAndDestinataireId(Long id, Long destinataireId);
     boolean existsByCodeModeleAndEntiteRattachementAndEntiteIdAndDestinataireIdAndDateCreationAfter(
