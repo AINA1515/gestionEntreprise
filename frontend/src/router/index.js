@@ -41,6 +41,7 @@ const routes = [
       { path: 'offres/:id/candidatures', name: 'rh-offre-candidatures', component: () => import('@/views/rh/OffreCandidaturesView.vue'), meta: { permissions: ['CANDIDATURE_CONSULTER'] } },
       { path: 'offres/:id/modifier', name: 'rh-offre-modifier', component: () => import('@/views/rh/OffreFormView.vue'), meta: { permissions: ['OFFRE_PUBLIER'] } },
       { path: 'candidatures', name: 'rh-candidatures', component: () => import('@/views/rh/CandidaturesView.vue'), meta: { permissions: ['CANDIDATURE_CONSULTER'] } },
+      { path: 'documents-a-valider', name: 'rh-documents-a-valider', component: () => import('@/views/rh/DocumentsAValiderView.vue'), meta: { permissions: ['DOCUMENT_VALIDER'] } },
       { path: 'departements', name: 'rh-departements', component: () => import('@/views/rh/DepartementsView.vue'), meta: { permissions: ['CONTRAT_GERER'] } },
       { path: 'postes', name: 'rh-postes', component: () => import('@/views/rh/PostesView.vue'), meta: { permissions: ['CONTRAT_GERER'] } },
       { path: 'employes', name: 'rh-employes', component: () => import('@/views/rh/EmployesView.vue'), meta: { permissions: ['CONTRAT_GERER'] } },

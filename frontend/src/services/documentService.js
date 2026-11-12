@@ -1,6 +1,7 @@
 import http from './http'
 
 export const documentService = {
+  aValider: () => http.get('/documents/a-valider').then((r) => r.data),
   lister: (entite, id) => http.get('/documents', { params: { entite, id } }).then((r) => r.data),
   televerser: (fichier, { typeDocument, entiteRattachement, entiteId, dateEmission, dateExpiration, onUploadProgress } = {}) => {
     const data = new FormData()

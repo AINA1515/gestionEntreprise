@@ -50,9 +50,10 @@ const profileItems = [
         </div>
         <div class="small text-uppercase text-white-50 px-2 mb-2">Menu principal</div>
         <nav class="nav nav-pills flex-column gap-1">
-          <RouterLink v-for="item in visibleItems" :key="item.to" :to="item.to" class="nav-link text-white"
+          <RouterLink v-for="item in visibleItems" :key="item.to" :to="item.to" class="nav-link text-white d-flex align-items-center"
             active-class="active">
-            <i :class="`bi bi-${item.icon} me-2`" aria-hidden="true"></i>{{ item.label }}
+            <i :class="`bi bi-${item.icon} me-2`" aria-hidden="true"></i><span>{{ item.label }}</span>
+            <span v-if="item.badge?.() > 0" class="badge rounded-pill text-bg-danger ms-auto">{{ item.badge() }}</span>
           </RouterLink>
         </nav>
         <div class="mt-auto pt-4 border-top border-secondary small text-white-50">

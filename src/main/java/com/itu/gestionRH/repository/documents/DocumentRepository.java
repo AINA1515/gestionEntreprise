@@ -12,6 +12,7 @@ import java.util.Optional;
 import com.itu.gestionRH.entity.enums.DocumentEntite;
 import com.itu.gestionRH.entity.enums.DocumentStatut;
 import com.itu.gestionRH.entity.enums.TypeDocument;
+import com.itu.gestionRH.entity.enums.DocumentValidation;
 
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
@@ -26,4 +27,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> expirantEntre(@Param("type") TypeDocument type, @Param("debut") LocalDate debut, @Param("fin") LocalDate fin);
 
     List<Document> findByEntiteRattachementAndEntiteIdInAndStatutDocument(DocumentEntite entite, Collection<Long> entiteIds, DocumentStatut statut);
+    List<Document> findByStatutValidationAndStatutDocumentOrderByDateCreationAsc(
+            DocumentValidation statutValidation, DocumentStatut statutDocument);
 }

@@ -96,6 +96,14 @@ public class DocumentService {
         return items.stream().filter(this::accessibleSansErreur).peek(d -> journaliser(d, LogAccesType.CONSULTATION, request)).map(this::dto).toList();
     }
 
+    public List<DocumentDto> aValider(HttpServletRequest request) {
+        return documents.findByStatutValidationAndStatutDocumentOrderByDateCreationAsc(
+                        DocumentValidation.A_VALIDER, DocumentStatut.ACTIF).stream()
+                .filter(this::accessibleSansErreur)
+                .peek(d -> journaliser(d, LogAccesType.CONSULTATION, request))
+                .map(this::dto).toList();
+    }
+
     public FichierTelecharge telecharger(Long id, HttpServletRequest request) {
         Document d = accessible(id);
         InputStream stream;
@@ -201,8 +209,9 @@ public class DocumentService {
     private Document documentATraiter(Long id) {
         Document d = accessible(id);
         if (d.getStatutDocument() != DocumentStatut.ACTIF) throw new BusinessRuleException("DOCUMENT_NON_ACTIF", "Seule la version active peut être validée ou refusée.");
-        if (d.getEntiteRattachement() != DocumentEntite.EMPLOYE && d.getEntiteRattachement() != DocumentEntite.CONTRAT)
-            throw new BusinessRuleException("VALIDATION_NON_APPLICABLE", "La validation ne concerne que les pièces du dossier salarié.");
+        if (d.getEntiteRattachement() != DocumentEntite.EMPLOYE && d.getEntiteRattachement() != DocumentEntite.CONTRAT
+                && d.getEntiteRattachement() != DocumentEntite.CANDIDAT && d.getEntiteRattachement() != DocumentEntite.CANDIDATURE)
+            throw new BusinessRuleException("VALIDATION_NON_APPLICABLE", "La validation ne concerne pas ce type de document.");
         if (d.getEntiteRattachement() == DocumentEntite.EMPLOYE && accessScope.estSoiMeme(d.getEntiteId()))
             throw new BusinessRuleException("AUTO_VALIDATION_INTERDITE", "Vous ne pouvez pas valider vos propres pièces.", HttpStatus.FORBIDDEN);
         if (d.getStatutValidation() != DocumentValidation.A_VALIDER)
@@ -232,7 +241,7 @@ public class DocumentService {
         if (estDossier(d)) audit.tracer(action, "DOCUMENT", d.getId(), employeDe(d), motif);
     }
     private void tracerChamp(AuditAction action, Document d, String champ, Object avant, Object apres, String motif) {
-        if (estDossier(d)) audit.tracer(action, "DOCUMENT", d.getId(), employeDe(d),
+        audit.tracer(action, "DOCUMENT", d.getId(), employeDe(d),
                 List.of(new AuditService.Changement(champ, String.valueOf(avant), String.valueOf(apres), false)), motif);
     }
 

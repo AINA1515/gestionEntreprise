@@ -1,6 +1,5 @@
 <script setup>
 import AppLayout from './AppLayout.vue'
-
 const items = [
   { to: '/rh/accueil', label: 'Accueil RH', icon: 'grid', roles: ['GESTIONNAIRE_RH'] },
   { to: '/rh/demandes-a-traiter', label: 'Demandes à vérifier', icon: 'clipboard-check', roles: ['GESTIONNAIRE_RH'], permission: 'DEMANDE_VERIFIER_RH' },

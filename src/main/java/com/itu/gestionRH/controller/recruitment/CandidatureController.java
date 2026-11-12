@@ -33,10 +33,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.itu.gestionRH.entity.recruitment.Candidature;
 import com.itu.gestionRH.entity.enums.CandidatureStatut;
+import com.itu.gestionRH.entity.enums.DocumentEntite;
+import com.itu.gestionRH.entity.enums.DocumentStatut;
+import com.itu.gestionRH.entity.enums.DocumentValidation;
 import com.itu.gestionRH.entity.enums.OffreStatut;
 import com.itu.gestionRH.repository.recruitment.OffreEmploiRepository;
 import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
 import com.itu.gestionRH.repository.security.CandidatRepository;
+import com.itu.gestionRH.repository.documents.DocumentRepository;
 import com.itu.gestionRH.service.security.CandidatService;
 import com.itu.gestionRH.workflow.CandidatureMachine;
 import com.itu.gestionRH.workflow.WorkflowContext;
@@ -52,7 +56,8 @@ public class CandidatureController {
                                       BigDecimal salaireReference, List<String> actionsDisponibles,
                                       String niveauFormationCandidat, String niveauFormationRequis,
                                       BigDecimal plafondSalairePreselection, Boolean preselectionnee,
-                                      String motifPreselection, String typeEmploiRequis, Boolean typeEmploiConforme) {}
+                                      String motifPreselection, String typeEmploiRequis, Boolean typeEmploiConforme,
+                                      boolean documentsAValider, Long candidatId) {}
 
     public record StatsCandidatures(long recues, long entretiensAOrganiser, long retenues) {}
 
@@ -71,10 +76,12 @@ public class CandidatureController {
     private final CandidatRepository candidatRepository;
     private final NiveauFormationRepository niveauFormationRepository;
     private final ObjectMapper objectMapper;
+    private final DocumentRepository documentRepository;
 
     public CandidatureController(CandidatureRepository candidatureRepository, CandidatureMachine machine, AccessScope accessScope,
                                  OffreEmploiRepository offreRepository, CandidatRepository candidatRepository,
-                                 NiveauFormationRepository niveauFormationRepository, ObjectMapper objectMapper) {
+                                 NiveauFormationRepository niveauFormationRepository, ObjectMapper objectMapper,
+                                 DocumentRepository documentRepository) {
         this.candidatureRepository = candidatureRepository;
         this.machine = machine;
         this.accessScope = accessScope;
@@ -82,6 +89,7 @@ public class CandidatureController {
         this.candidatRepository = candidatRepository;
         this.niveauFormationRepository = niveauFormationRepository;
         this.objectMapper = objectMapper;
+        this.documentRepository = documentRepository;
     }
 
     /** Ex-page /rh/candidatures. */
@@ -96,7 +104,16 @@ public class CandidatureController {
                 actives.size(),
                 actives.stream().filter(c -> c.getStatutCandidature() == CandidatureStatut.PRESELECTIONNEE).count(),
                 actives.stream().filter(c -> c.getStatutCandidature() == CandidatureStatut.RETENUE).count());
-        return new SuiviCandidaturesResponse(stats, toutes.stream().map(this::toResponse).toList());
+        var idsCandidatures = toutes.stream().map(Candidature::getId).toList();
+        var idsCandidats = toutes.stream().filter(c -> c.getCandidat() != null).map(c -> c.getCandidat().getId()).distinct().toList();
+        var docsCandidatures = idsCandidatures.isEmpty() ? java.util.Set.<Long>of() : documentRepository
+                .findByEntiteRattachementAndEntiteIdInAndStatutDocument(DocumentEntite.CANDIDATURE, idsCandidatures, DocumentStatut.ACTIF).stream()
+                .filter(d -> d.getStatutValidation() == DocumentValidation.A_VALIDER).map(d -> d.getEntiteId()).collect(Collectors.toSet());
+        var docsCandidats = idsCandidats.isEmpty() ? java.util.Set.<Long>of() : documentRepository
+                .findByEntiteRattachementAndEntiteIdInAndStatutDocument(DocumentEntite.CANDIDAT, idsCandidats, DocumentStatut.ACTIF).stream()
+                .filter(d -> d.getStatutValidation() == DocumentValidation.A_VALIDER).map(d -> d.getEntiteId()).collect(Collectors.toSet());
+        return new SuiviCandidaturesResponse(stats, toutes.stream().map(c -> toResponse(c, null,
+                c.getCandidat() != null && docsCandidats.contains(c.getCandidat().getId()) || docsCandidatures.contains(c.getId()))).toList());
     }
 
     /** Ex-page /candidat/candidature (depot d'une candidature). */
@@ -211,10 +228,14 @@ public class CandidatureController {
     }
 
     private CandidatureResponse toResponse(Candidature c) {
-        return toResponse(c, null);
+        return toResponse(c, null, false);
     }
 
     private CandidatureResponse toResponse(Candidature c, EvaluationPreselection evaluation) {
+        return toResponse(c, evaluation, false);
+    }
+
+    private CandidatureResponse toResponse(Candidature c, EvaluationPreselection evaluation, boolean documentsAValider) {
         var cand = c.getCandidat();
         String nom = cand == null ? null : ((cand.getPrenom() == null ? "" : cand.getPrenom() + " ")
                 + (cand.getNom() == null ? "" : cand.getNom())).trim();
@@ -229,7 +250,8 @@ public class CandidatureController {
                 evaluation == null ? null : evaluation.retenue(),
                 evaluation == null ? null : evaluation.motif(),
                 evaluation == null ? null : evaluation.typeEmploiRequis(),
-                evaluation == null ? null : evaluation.typeEmploiConforme());
+                evaluation == null ? null : evaluation.typeEmploiConforme(), documentsAValider,
+                cand == null ? null : cand.getId());
     }
 
     private record EvaluationPreselection(String niveauCandidat, String niveauRequis,

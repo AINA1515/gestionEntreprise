@@ -1,5 +1,6 @@
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useDocumentsAValiderStore } from '@/stores/documentsAValider'
 
 // Même priorité que la page d'accueil après connexion (stores/auth.js) : le menu ne dépend
 // que du profil de l'utilisateur, jamais de la page affichée.
@@ -33,6 +34,7 @@ const MENUS = {
     { to: '/rh/demandes-a-traiter', label: 'Demandes à vérifier', icon: 'clipboard-check', permission: 'DEMANDE_VERIFIER_RH' },
     { to: '/rh/demandes-direction', label: 'Décisions de la Direction', icon: 'building-check', permission: 'DEMANDE_VERIFIER_RH' },
     { to: '/rh/candidatures', label: 'Candidatures', icon: 'people', permission: 'CANDIDATURE_CONSULTER' },
+    { to: '/rh/documents-a-valider', label: 'Documents à valider', icon: 'file-earmark-check', permission: 'DOCUMENT_VALIDER', badge: true },
     { to: '/rh/confirmation', label: 'Propositions', icon: 'envelope-check', permission: 'PROPOSITION_EMETTRE' },
     { to: '/rh/offres', label: 'Offres d’emploi', icon: 'briefcase', permission: 'OFFRE_PUBLIER' },
     { to: '/rh/departements', label: 'Départements', icon: 'diagram-3', permission: 'CONTRAT_GERER' },
@@ -72,10 +74,16 @@ const COMMUNS = [
 
 export function useRoleMenu() {
   const auth = useAuthStore()
+  const documentsAValider = useDocumentsAValiderStore()
+  watch(() => auth.hasPermission('DOCUMENT_VALIDER'), (autorise) => {
+    if (autorise) documentsAValider.charger()
+  }, { immediate: true })
   const principal = computed(() => PRIORITE.find((role) => auth.hasRole(role)) ?? null)
   const espace = computed(() => ESPACES[principal.value] ?? 'Espace personnel')
   const items = computed(() => {
-    const propres = MENUS[principal.value] ?? []
+    const propres = (MENUS[principal.value] ?? []).map((item) => item.badge === true
+      ? { ...item, badge: () => documentsAValider.nombre }
+      : item)
     // Un manager, un RH… est aussi salarié : il garde l'accès à ses propres contrats.
     const contrats = principal.value !== 'SALARIE' && auth.hasRole('SALARIE') && auth.hasPermission('DOCUMENT_CONSULTER_PERSO')
       ? [{ to: '/salarie/contrats', label: 'Mes contrats', icon: 'file-earmark-text' }, { to: '/salarie/cv', label: 'Mon CV', icon: 'file-person' }] : []

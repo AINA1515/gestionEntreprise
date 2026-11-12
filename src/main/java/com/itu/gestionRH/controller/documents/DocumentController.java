@@ -3,6 +3,8 @@ package com.itu.gestionRH.controller.documents;
 import com.itu.gestionRH.entity.enums.DocumentEntite;
 import com.itu.gestionRH.entity.enums.TypeDocument;
 import com.itu.gestionRH.service.documents.DocumentService;
+import com.itu.gestionRH.repository.security.CandidatRepository;
+import com.itu.gestionRH.repository.recruitment.CandidatureRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -43,16 +45,21 @@ public class DocumentController {
     private static final String DOCUMENT_ACCESS = "hasAnyAuthority('PERM_DOCUMENT_CONSULTER_TOUS','PERM_DOCUMENT_CONSULTER_PERSO','PERM_CANDIDATURE_PRESELECTIONNER','PERM_EVALUATION_SAISIR','PERM_DEMANDE_CREER','PERM_CONTRAT_GERER','PERM_ONBOARDING_ADMIN','PERM_TACHE_TRAITER','PERM_OFFRE_PUBLIER','PERM_PROPOSITION_EMETTRE','PERM_UTILISATEUR_ADMIN')";
     private final DocumentService service;
     private final DocumentObligatoireRepository obligatoires;
+    private final CandidatRepository candidats;
+    private final CandidatureRepository candidatures;
 
     public record ObligatoireDto(Long id, String typeDocument, String typeContrat, String libelle, Integer delaiAlerteJours, Integer ordre, Boolean estActif) {}
+    public record DocumentAValiderDto(DocumentService.DocumentDto document, String candidat, String email,
+            String offre, Long candidatureId, Long candidatId) {}
     public record RefusRequest(@NotBlank @Size(max = 500) String motif) {}
     public record ConfidentialiteRequest(DocumentConfidentialite niveau) {}
     public record ValiditeRequest(@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateEmission,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateExpiration) {}
     public record ObligatoirePatch(@Min(0) @Max(365) Integer delaiAlerteJours, Boolean estActif) {}
 
-    public DocumentController(DocumentService service, DocumentObligatoireRepository obligatoires) {
-        this.service = service; this.obligatoires = obligatoires;
+    public DocumentController(DocumentService service, DocumentObligatoireRepository obligatoires,
+            CandidatRepository candidats, CandidatureRepository candidatures) {
+        this.service = service; this.obligatoires = obligatoires; this.candidats = candidats; this.candidatures = candidatures;
     }
 
     @PreAuthorize(DOCUMENT_ACCESS)
@@ -68,6 +75,25 @@ public class DocumentController {
     @GetMapping
     public List<DocumentService.DocumentDto> lister(@RequestParam DocumentEntite entite, @RequestParam Long id, HttpServletRequest request) {
         return service.lister(entite, id, request);
+    }
+
+    @PreAuthorize("hasAuthority('PERM_DOCUMENT_VALIDER')")
+    @GetMapping("/a-valider")
+    @Transactional(readOnly = true)
+    public List<DocumentAValiderDto> aValider(HttpServletRequest request) {
+        return service.aValider(request).stream().map(document -> {
+            Long candidatureId = document.entiteRattachement() == DocumentEntite.CANDIDATURE ? document.entiteId() : null;
+            var candidature = candidatureId == null ? null : candidatures.findById(candidatureId).orElse(null);
+            Long candidatId = document.entiteRattachement() == DocumentEntite.CANDIDAT
+                    ? document.entiteId() : candidature == null || candidature.getCandidat() == null ? null : candidature.getCandidat().getId();
+            var candidat = candidatId == null ? null : candidats.findById(candidatId).orElse(null);
+            return new DocumentAValiderDto(document,
+                    candidat == null ? null : ((candidat.getPrenom() == null ? "" : candidat.getPrenom() + " ")
+                            + (candidat.getNom() == null ? "" : candidat.getNom())).trim(),
+                    candidat == null ? null : candidat.getEmail(),
+                    candidature == null || candidature.getOffre() == null ? null : candidature.getOffre().getTitre(),
+                    candidatureId, candidatId);
+        }).toList();
     }
 
     @PreAuthorize(DOCUMENT_ACCESS)

@@ -16,6 +16,7 @@ const columns = [
   { key: 'datePostulation', label: 'Date de réception' },
   { key: 'salairePropose', label: 'Salaire souhaité' },
   { key: 'statut', label: 'Statut' },
+  { key: 'documentsAValider', label: 'Documents' },
   { key: 'actions', label: 'Action' },
 ]
 
@@ -51,6 +52,10 @@ onMounted(store.charger)
         <template #cell-datePostulation="{ value }">{{ formatDate(value) }}</template>
         <template #cell-salairePropose="{ row }">{{ formatMontant(row.salairePropose ?? row.salaireReference) }}<span v-if="row.salairePropose == null && row.salaireReference != null" class="d-block small text-body-secondary">Salaire de référence accepté</span></template>
         <template #cell-statut="{ value }"><StatusBadge type="candidature" :value="value" /></template>
+        <template #cell-documentsAValider="{ row }">
+          <RouterLink v-if="row.documentsAValider" class="badge text-bg-warning text-decoration-none" :to="{ name: 'rh-documents-a-valider', query: { candidatureId: row.id, candidatId: row.candidatId } }">Pièce à vérifier</RouterLink>
+          <span v-else class="text-body-secondary">—</span>
+        </template>
         <template #cell-actions="{ row }">
           <div class="d-flex gap-2">
             <RouterLink class="btn btn-sm btn-outline-secondary" :to="{ name: 'candidature-detail', params: { id: row.id } }">Détail</RouterLink>
