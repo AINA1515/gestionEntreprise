@@ -1,6 +1,7 @@
 package com.itu.gestionRH.controller.organization;
 
 import com.itu.gestionRH.entity.organization.PointageJournalier;
+import com.itu.gestionRH.common.BusinessRuleException;
 import com.itu.gestionRH.repository.hiring.AffectationRepository;
 import com.itu.gestionRH.repository.organization.*;
 import com.itu.gestionRH.repository.security.UtilisateurRepository;
@@ -82,6 +83,14 @@ public class PointageController {
     @Transactional
     @PreAuthorize("hasAnyAuthority('PERM_DEMANDE_CREER','PERM_CONTRAT_GERER')")
     public PointageJournalier saisir(@Valid @RequestBody PointageRequest r) {
+        String statut = r.statut() == null ? "PRESENT" : r.statut();
+        if (r.entreePrevue() == null || r.sortiePrevue() == null)
+            throw new BusinessRuleException("HEURES_PREVUES_REQUISES", "Les heures d’entrée et de sortie prévues sont obligatoires.");
+        if (!Set.of("PRESENT", "RETARD", "ABSENT", "CONGE", "JUSTIFIE").contains(statut))
+            throw new BusinessRuleException("STATUT_POINTAGE_INVALIDE", "Le statut du pointage est invalide.");
+        if (("PRESENT".equals(statut) || "RETARD".equals(statut))
+                && (r.entreeReelle() == null || r.sortieReelle() == null))
+            throw new BusinessRuleException("HEURES_REELLES_REQUISES", "Pour un salarié présent ou en retard, les heures d’entrée et de sortie réelles sont obligatoires.");
         Long c = eid();
         if (!global() && !equipe(r.employeId(), c))
             deny();
@@ -100,7 +109,7 @@ public class PointageController {
             sup = (int) Math.max(0, java.time.Duration.between(r.sortiePrevue(), r.sortieReelle()).toMinutes());
         p.setMinutesRetard(retard);
         p.setMinutesHeuresSup(sup);
-        p.setStatut(r.statut() == null ? (retard > 0 ? "RETARD" : "PRESENT") : r.statut());
+        p.setStatut(r.statut() == null ? (retard > 0 ? "RETARD" : "PRESENT") : statut);
         p.setSaisiPar(c == null ? null : employes.findById(c).orElse(null));
         return pointages.save(p);
     }
