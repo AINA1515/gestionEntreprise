@@ -69,7 +69,7 @@ async function confirmer() {
             </select>
           </FormField>
 
-          <FormField id="salaireBrut" :label="candidature?.salairePropose == null && candidature?.salaireReference == null ? 'Salaire brut proposé *' : 'Salaire brut proposé (facultatif)'}">
+          <FormField id="salaireBrut" :label="candidature?.salairePropose == null && candidature?.salaireReference == null ? 'Salaire brut proposé *' : 'Salaire brut proposé (facultatif)'">
             <input id="salaireBrut" v-model="form.salaireBrut" type="number" min="0" step="0.01" class="form-control" :required="candidature?.salairePropose == null && candidature?.salaireReference == null" />
           </FormField>
 
